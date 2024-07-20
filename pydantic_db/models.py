@@ -1,24 +1,25 @@
 import sqlite3
 from types import NoneType
-from typing import Union
+from typing import Any, Literal, Union
 
 from pydantic import BaseModel
 
 
 class DBModel(BaseModel):
     @classmethod
-    def create_table(cls):
+    def create_table(cls) -> None:
         sql = (
             f"CREATE TABLE IF NOT EXISTS {cls.__name__.lower()} (id INTEGER PRIMARY KEY"
         )
-        for name, field_info in cls.model_fields.items():
-            sql += f", {name} {cls._get_sql_type(field_info.annotation)}"
+        for field_name, field_info in cls.model_fields.items():
+            field_type = cls._get_sql_type(field_info.annotation)
+            sql += f", {field_name} {field_type}"
             if field_info.is_required():
                 sql += " NOT NULL"
         sql += ")"
         cls._execute_sql(sql)
 
-    def save(self):
+    def save(self) -> None:
         fields = ", ".join(self.__annotations__.keys())
         values = ", ".join(
             f"'{getattr(self, field)}'" for field in self.__annotations__.keys()
@@ -27,7 +28,7 @@ class DBModel(BaseModel):
         self._execute_sql(sql)
 
     @classmethod
-    def _execute_sql(cls, sql: str):
+    def _execute_sql(cls, sql: str) -> None:
         con = sqlite3.connect("db.sqlite3")
         cur = con.cursor()
         cur.execute(sql)
@@ -35,5 +36,5 @@ class DBModel(BaseModel):
         con.close()
 
     @classmethod
-    def _get_sql_type(cls, annotation):
+    def _get_sql_type(cls, annotation: Any) -> Literal["INTEGER", "TEXT"]:
         return "INTEGER" if annotation in [int, Union[int, NoneType]] else "TEXT"
