@@ -1,4 +1,6 @@
 import sqlite3
+from types import NoneType
+from typing import Union
 
 from pydantic import BaseModel
 
@@ -9,13 +11,10 @@ class DBModel(BaseModel):
         sql = (
             f"CREATE TABLE IF NOT EXISTS {cls.__name__.lower()} (id INTEGER PRIMARY KEY"
         )
-        for name, value in cls.__annotations__.items():
-            if value.__name__ == "str":
-                sql += f", {name} TEXT NOT NULL"
-            elif value.__name__ == "int":
-                sql += f", {name} INTEGER NOT NULL"
-            else:
-                raise ValueError(f"Unsupported type {value.__name__}")
+        for name, field_info in cls.model_fields.items():
+            sql += f", {name} {cls._get_sql_type(field_info.annotation)}"
+            if field_info.is_required():
+                sql += " NOT NULL"
         sql += ")"
         cls._execute_sql(sql)
 
@@ -34,3 +33,7 @@ class DBModel(BaseModel):
         cur.execute(sql)
         con.commit()
         con.close()
+
+    @classmethod
+    def _get_sql_type(cls, annotation):
+        return "INTEGER" if annotation in [int, Union[int, NoneType]] else "TEXT"
