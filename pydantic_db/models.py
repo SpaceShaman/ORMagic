@@ -5,6 +5,10 @@ from pydantic import BaseModel
 from .sql_utils import execute_sql, get_sql_type
 
 
+class NotExist(Exception):
+    pass
+
+
 class DBModel(BaseModel):
     id: int | None = None
 
@@ -42,4 +46,6 @@ class DBModel(BaseModel):
         cursor = execute_sql(sql)
         data = cursor.fetchone()
         cursor.connection.close()
-        return cls(**dict(zip(cls.model_fields.keys(), data)))
+        if data:
+            return cls(**dict(zip(cls.model_fields.keys(), data)))
+        raise NotExist("Object does not exist")
