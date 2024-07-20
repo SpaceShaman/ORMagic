@@ -14,25 +14,26 @@ class DBModel(BaseModel):
 
     @classmethod
     def create_table(cls) -> None:
-        sql = (
-            f"CREATE TABLE IF NOT EXISTS {cls.__name__.lower()} (id INTEGER PRIMARY KEY"
-        )
+        columns = ["id INTEGER PRIMARY KEY"]
         for field_name, field_info in cls.model_fields.items():
             if field_name == "id":
                 continue
             field_type = get_sql_type(field_info.annotation)
-            sql += f", {field_name} {field_type}"
+            column_def = f"{field_name} {field_type}"
             if field_info.is_required():
-                sql += " NOT NULL"
-        sql += ")"
+                column_def += " NOT NULL"
+            columns.append(column_def)
+
+        sql = (
+            f"CREATE TABLE IF NOT EXISTS {cls.__name__.lower()} ({', '.join(columns)})"
+        )
         cursor = execute_sql(sql)
         cursor.connection.close()
 
     def save(self) -> None:
-        fields = ", ".join(self.__annotations__.keys())
-        values = ", ".join(
-            f"'{getattr(self, field)}'" for field in self.__annotations__.keys()
-        )
+        model_dict = self.model_dump(exclude={"id"})
+        fields = ", ".join(model_dict.keys())
+        values = ", ".join(f"'{value}'" for value in model_dict.values())
         sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
