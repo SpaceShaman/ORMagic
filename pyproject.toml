@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "pypi-workflow"
+version = "0.1.2"
+description = "Simple template for creating PyPI packages with automated publishing using GitHub Actions."
+license = "MIT"
+authors = ["SpaceShaman <spaceshaman@tuta.io>"]
+readme = "README.md"
+homepage = "https://github.com/SpaceShaman/pypi-workflow"
+repository = "https://github.com/SpaceShaman/pypi-workflow"
+
+[tool.poetry.dependencies]
+python = ">=3.10.0,<4.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+pytest-cov = "^5.0.0"
+ruff = "^0.5.1"
+mypy = "^1.10.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

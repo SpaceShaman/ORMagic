@@ -1,0 +1,36 @@
+name: Publish to test PyPI
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+  pre-release:
+    runs-on: ubuntu-22.04
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Setup a local virtual environment
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+      - uses: actions/cache@v3
+        name: Define a cache for the virtual environment based on the dependencies lock file
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install
+      - name: Configure poetry for publishing to test PyPI
+        run: |
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_TOKEN }}
+      - name: Publish package to test PyPI
+        run: poetry publish --build -r testpypi
