@@ -1,14 +1,15 @@
 import sqlite3
+from sqlite3.dbapi2 import Cursor
 from types import NoneType
 from typing import Any, Literal, Union
 
 
-def execute_sql(sql: str) -> None:
-    con = sqlite3.connect("db.sqlite3")
-    cur = con.cursor()
-    cur.execute(sql)
-    con.commit()
-    con.close()
+def execute_sql(sql: str) -> Cursor:
+    connection = sqlite3.connect("db.sqlite3")
+    cursor = connection.cursor()
+    cursor = cursor.execute(sql)
+    connection.commit()
+    return cursor
 
 
 def get_sql_type(annotation: Any) -> Literal["INTEGER", "TEXT"]:
