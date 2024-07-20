@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from .sql_utils import execute_sql, get_sql_type
 
 
-class NotExist(Exception):
+class ObjectNotFound(Exception):
     pass
 
 
@@ -48,4 +48,4 @@ class DBModel(BaseModel):
         cursor.connection.close()
         if data:
             return cls(**dict(zip(cls.model_fields.keys(), data)))
-        raise NotExist("Object does not exist")
+        raise ObjectNotFound
