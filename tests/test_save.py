@@ -67,3 +67,18 @@ def test_save_object_with_datetime_field_to_db(prepare_db, db_cursor):
     data = res.fetchall()
     assert data == [(1, "John", "2021-01-01 12:00:00")]
     assert user.created_at == datetime(2021, 1, 1, 12, 0, 0)
+
+
+def test_save_object_with_default_value_to_db(prepare_db, db_cursor):
+    class UserWithDefault(DBModel):
+        name: str
+        age: int = 30
+
+    UserWithDefault.create_table()
+
+    user = UserWithDefault(name="John").save()
+
+    res = db_cursor.execute("SELECT * FROM userwithdefault")
+    data = res.fetchall()
+    assert data == [(1, "John", 30)]
+    assert user.age == 30
