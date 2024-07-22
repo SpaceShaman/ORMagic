@@ -46,6 +46,14 @@ class DBModel(BaseModel):
             return cls(**dict(zip(cls.model_fields.keys(), data)))
         raise ObjectNotFound
 
+    def delete(self) -> None:
+        cursor = execute_sql(
+            f"DELETE FROM {self.__class__.__name__.lower()} WHERE id={self.id}"
+        )
+        cursor.connection.close()
+        if cursor.rowcount == 0:
+            raise ObjectNotFound
+
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(model_dict.keys())
@@ -59,10 +67,9 @@ class DBModel(BaseModel):
     def _update(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(f"{field}='{value}'" for field, value in model_dict.items())
-        sql = (
+        cursor = execute_sql(
             f"UPDATE {self.__class__.__name__.lower()} SET {fields} WHERE id={self.id}"
         )
-        cursor = execute_sql(sql)
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
