@@ -9,7 +9,7 @@ homepage = "https://github.com/SpaceShaman/ORMagic"
 repository = "https://github.com/SpaceShaman/ORMagic"
 
 [tool.poetry.dependencies]
-python = ">=3.10.0,<4.0.0"
+python = "^3.11"
 pydantic = "^2.8.2"
 
 [tool.poetry.group.dev.dependencies]
