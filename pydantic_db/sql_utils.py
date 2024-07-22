@@ -12,5 +12,5 @@ def execute_sql(sql: str) -> Cursor:
     return cursor
 
 
-def get_sql_type(annotation: Any) -> Literal["INTEGER", "TEXT"]:
+def convert_to_sql_type(annotation: Any) -> Literal["INTEGER", "TEXT"]:
     return "INTEGER" if annotation in [int, Union[int, NoneType]] else "TEXT"
