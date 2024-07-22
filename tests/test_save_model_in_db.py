@@ -1,6 +1,6 @@
 import pytest
 
-from pydantic_db.models import DBModel
+from pydantic_db.models import DBModel, ObjectNotFound
 
 
 @pytest.fixture
@@ -42,3 +42,8 @@ def test_override_object_in_db(prepare_db, db_cursor):
     res = db_cursor.execute("SELECT * FROM user")
     data = res.fetchall()
     assert data == [(1, "Jane", 25)]
+
+
+def test_try_override_non_existing_object_in_db(prepare_db, db_cursor):
+    with pytest.raises(ObjectNotFound):
+        User(id=1, name="Jane", age=25).save()

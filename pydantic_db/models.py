@@ -64,4 +64,6 @@ class DBModel(BaseModel):
         )
         cursor = execute_sql(sql)
         cursor.connection.close()
+        if cursor.rowcount == 0:
+            raise ObjectNotFound
         return self
