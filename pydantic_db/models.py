@@ -30,13 +30,8 @@ class DBModel(BaseModel):
         cursor = execute_sql(sql)
         cursor.connection.close()
 
-    def save(self) -> None:
-        model_dict = self.model_dump(exclude={"id"})
-        fields = ", ".join(model_dict.keys())
-        values = ", ".join(f"'{value}'" for value in model_dict.values())
-        sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
-        cursor = execute_sql(sql)
-        cursor.connection.close()
+    def save(self) -> Self:
+        return self._update() if self.id else self._insert()
 
     @classmethod
     def get(cls, **kwargs) -> Self:
@@ -50,3 +45,23 @@ class DBModel(BaseModel):
         if data:
             return cls(**dict(zip(cls.model_fields.keys(), data)))
         raise ObjectNotFound
+
+    def _insert(self) -> Self:
+        model_dict = self.model_dump(exclude={"id"})
+        fields = ", ".join(model_dict.keys())
+        values = ", ".join(f"'{value}'" for value in model_dict.values())
+        sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
+        cursor = execute_sql(sql)
+        cursor.connection.close()
+        self.id = cursor.lastrowid
+        return self
+
+    def _update(self) -> Self:
+        model_dict = self.model_dump(exclude={"id"})
+        fields = ", ".join(f"{field}='{value}'" for field, value in model_dict.items())
+        sql = (
+            f"UPDATE {self.__class__.__name__.lower()} SET {fields} WHERE id={self.id}"
+        )
+        cursor = execute_sql(sql)
+        cursor.connection.close()
+        return self
