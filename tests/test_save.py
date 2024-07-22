@@ -7,8 +7,9 @@ from pydantic_db.models import DBModel, ObjectNotFound
 
 @pytest.fixture
 def prepare_db(db_cursor):
-    create_table_sql = "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    db_cursor.execute(create_table_sql)
+    db_cursor.execute(
+        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+    )
     db_cursor.connection.commit()
 
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlite3 import OperationalError
 
 import pytest
@@ -7,8 +8,9 @@ from pydantic_db.models import DBModel, ObjectNotFound
 
 @pytest.fixture
 def prepare_db(db_cursor):
-    create_table_sql = "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    db_cursor.execute(create_table_sql)
+    db_cursor.execute(
+        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+    )
     db_cursor.connection.commit()
     data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
     db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
@@ -52,3 +54,17 @@ def test_try_to_get_non_existing_object_from_db(prepare_db):
 def test_try_to_get_object_from_db_with_wrong_condition(prepare_db):
     with pytest.raises(OperationalError):
         User.get(wrong_field="John")
+
+
+def test_get_object_from_db_with_datetime_field(prepare_db, db_cursor):
+    class UserWithDatetime(DBModel):
+        name: str
+        created_at: datetime
+
+    UserWithDatetime.create_table()
+    UserWithDatetime(name="John", created_at=datetime(2022, 3, 1, 12, 0, 0)).save()
+
+    user_from_db = UserWithDatetime.get(id=1)
+    assert user_from_db.id == 1
+    assert user_from_db.name == "John"
+    assert user_from_db.created_at == datetime(2022, 3, 1, 12, 0, 0)
