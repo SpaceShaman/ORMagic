@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from pydantic_db.models import DBModel, ObjectNotFound
@@ -47,3 +49,20 @@ def test_override_object_in_db(prepare_db, db_cursor):
 def test_try_override_non_existing_object_in_db(prepare_db, db_cursor):
     with pytest.raises(ObjectNotFound):
         User(id=1, name="Jane", age=25).save()
+
+
+def test_save_object_with_datetime_field_to_db(prepare_db, db_cursor):
+    class UserWithDatetime(DBModel):
+        name: str
+        created_at: datetime
+
+    UserWithDatetime.create_table()
+
+    user = UserWithDatetime(
+        name="John", created_at=datetime(2021, 1, 1, 12, 0, 0)
+    ).save()
+
+    res = db_cursor.execute("SELECT * FROM userwithdatetime")
+    data = res.fetchall()
+    assert data == [(1, "John", "2021-01-01 12:00:00")]
+    assert user.created_at == datetime(2021, 1, 1, 12, 0, 0)
