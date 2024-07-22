@@ -37,3 +37,17 @@ def test_create_db_table_with_optional_field(db_cursor):
         (3, "optional_field", "TEXT", 0, None, 0),
         (4, "another_optional_field", "INTEGER", 0, None, 0),
     ]
+
+
+def test_create_db_table_with_default_value(db_cursor):
+    class User(DBModel):
+        default_field: str = "default value"
+
+    User.create_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "default_field", "TEXT", 0, "'default value'", 0),
+    ]

@@ -1,6 +1,7 @@
 from typing import Self
 
 from pydantic import BaseModel
+from pydantic_core import PydanticUndefined
 
 from .sql_utils import convert_to_sql_type, execute_sql
 
@@ -20,6 +21,8 @@ class DBModel(BaseModel):
                 continue
             field_type = convert_to_sql_type(field_info.annotation)
             column_def = f"{field_name} {field_type}"
+            if field_info.default not in (PydanticUndefined, None):
+                column_def += f" DEFAULT '{field_info.default}'"
             if field_info.is_required():
                 column_def += " NOT NULL"
             columns.append(column_def)
