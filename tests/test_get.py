@@ -3,7 +3,7 @@ from sqlite3 import OperationalError
 
 import pytest
 
-from pydantic_db.models import DBModel, ObjectNotFound
+from ormagic.models import DBModel, ObjectNotFound
 
 
 @pytest.fixture

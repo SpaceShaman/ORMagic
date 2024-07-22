@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic_db.models import DBModel
+from ormagic.models import DBModel
 
 
 def test_create_db_table(db_cursor):

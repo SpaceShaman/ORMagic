@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "pydantic-db"
+name = "ORMagic"
 version = "0.1.0"
-description = "Simple database orm using pydantic models"
+description = "Simple ORM based on Pydantic and sqlite3 with minimalistic API"
 license = "MIT"
 authors = ["SpaceShaman <spaceshaman@tuta.io>"]
 readme = "README.md"
-homepage = "https://github.com/SpaceShaman/pydantic-db"
-repository = "https://github.com/SpaceShaman/pydantic-db"
+homepage = "https://github.com/SpaceShaman/ORMagic"
+repository = "https://github.com/SpaceShaman/ORMagic"
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<4.0.0"

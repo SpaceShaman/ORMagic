@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from pydantic_db.models import DBModel, ObjectNotFound
+from ormagic.models import DBModel, ObjectNotFound
 
 
 @pytest.fixture

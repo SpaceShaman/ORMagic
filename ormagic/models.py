@@ -15,6 +15,7 @@ class DBModel(BaseModel):
 
     @classmethod
     def create_table(cls) -> None:
+        """Create a table in the database for the model."""
         columns = ["id INTEGER PRIMARY KEY"]
         for field_name, field_info in cls.model_fields.items():
             if field_name == "id":
@@ -34,10 +35,12 @@ class DBModel(BaseModel):
         cursor.connection.close()
 
     def save(self) -> Self:
+        """Save object to the database."""
         return self._update() if self.id else self._insert()
 
     @classmethod
     def get(cls, **kwargs) -> Self:
+        """Get an object from the database based on the given keyword arguments."""
         conditions = " AND ".join(
             f"{field}='{value}'" for field, value in kwargs.items()
         )
@@ -50,6 +53,7 @@ class DBModel(BaseModel):
         raise ObjectNotFound
 
     def delete(self) -> None:
+        """Delete the object from the database."""
         cursor = execute_sql(
             f"DELETE FROM {self.__class__.__name__.lower()} WHERE id={self.id}"
         )

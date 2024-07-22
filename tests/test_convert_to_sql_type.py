@@ -1,7 +1,7 @@
 from types import NoneType
 from typing import Union
 
-from pydantic_db.sql_utils import convert_to_sql_type
+from ormagic.sql_utils import convert_to_sql_type
 
 
 def test_convert_to_sql_type_int():
