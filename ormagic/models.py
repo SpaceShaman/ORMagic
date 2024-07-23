@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Self, get_args
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
@@ -39,6 +39,18 @@ class DBModel(BaseModel):
         return self._update() if self.id else self._insert()
 
     @classmethod
+    def _create_instance_from_data(cls, data):
+        data_dict = dict(zip(cls.model_fields.keys(), data))
+        for key, value in data_dict.items():
+            annotation = cls.model_fields[key].annotation
+            types_tuple = get_args(annotation)
+            if (not types_tuple and annotation and issubclass(annotation, DBModel)) or (
+                types_tuple and issubclass(types_tuple[0], DBModel)
+            ):
+                data_dict[key] = annotation.get(id=value)  # type: ignore
+        return cls(**data_dict)
+
+    @classmethod
     def get(cls, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
         conditions = " AND ".join(
@@ -49,7 +61,8 @@ class DBModel(BaseModel):
         data = cursor.fetchone()
         cursor.connection.close()
         if data:
-            return cls(**dict(zip(cls.model_fields.keys(), data)))
+            # return cls(**dict(zip(cls.model_fields.keys(), data)))
+            return cls._create_instance_from_data(data)
         raise ObjectNotFound
 
     def delete(self) -> None:

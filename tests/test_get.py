@@ -68,3 +68,24 @@ def test_get_object_from_db_with_datetime_field(prepare_db, db_cursor):
     assert user_from_db.id == 1
     assert user_from_db.name == "John"
     assert user_from_db.created_at == datetime(2022, 3, 1, 12, 0, 0)
+
+
+def test_get_object_from_db_with_foreign_key(db_cursor):
+    class Team(DBModel):
+        name: str
+
+    class Player(DBModel):
+        name: str
+        team: Team
+
+    Team.create_table()
+    Player.create_table()
+
+    team = Team(name="Barcelona").save()
+    Player(name="Messi", team=team).save()
+
+    player_from_db = Player.get(id=1)
+    assert player_from_db.id == 1
+    assert player_from_db.name == "Messi"
+    assert player_from_db.team.id == 1
+    assert player_from_db.team.name == "Barcelona"
