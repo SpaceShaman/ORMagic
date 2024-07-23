@@ -39,18 +39,6 @@ class DBModel(BaseModel):
         return self._update() if self.id else self._insert()
 
     @classmethod
-    def _create_instance_from_data(cls, data):
-        data_dict = dict(zip(cls.model_fields.keys(), data))
-        for key, value in data_dict.items():
-            annotation = cls.model_fields[key].annotation
-            types_tuple = get_args(annotation)
-            if (not types_tuple and annotation and issubclass(annotation, DBModel)) or (
-                types_tuple and issubclass(types_tuple[0], DBModel)
-            ):
-                data_dict[key] = annotation.get(id=value)  # type: ignore
-        return cls(**data_dict)
-
-    @classmethod
     def get(cls, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
         conditions = " AND ".join(
@@ -76,6 +64,37 @@ class DBModel(BaseModel):
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(model_dict.keys())
+        values = self._prepare_values_to_insert(model_dict)
+        sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
+        cursor = execute_sql(sql)
+        cursor.connection.close()
+        self.id = cursor.lastrowid
+        return self
+
+    def _update(self) -> Self:
+        model_dict = self.model_dump(exclude={"id"})
+        fields = self._prepare_fields_to_update(model_dict)
+        cursor = execute_sql(
+            f"UPDATE {self.__class__.__name__.lower()} SET {fields} WHERE id={self.id}"
+        )
+        cursor.connection.close()
+        if cursor.rowcount == 0:
+            raise ObjectNotFound
+        return self
+
+    @classmethod
+    def _create_instance_from_data(cls, data) -> Self:
+        data_dict = dict(zip(cls.model_fields.keys(), data))
+        for key, value in data_dict.items():
+            annotation = cls.model_fields[key].annotation
+            types_tuple = get_args(annotation)
+            if not types_tuple and annotation and issubclass(annotation, DBModel):
+                data_dict[key] = annotation.get(id=value)
+            elif types_tuple and issubclass(types_tuple[0], DBModel):
+                data_dict[key] = types_tuple[0].get(id=value)
+        return cls(**data_dict)
+
+    def _prepare_values_to_insert(self, model_dict: dict) -> str:
         values = ""
         for key, value in model_dict.items():
             annotation = self.model_fields[key].annotation
@@ -96,26 +115,13 @@ class DBModel(BaseModel):
                     values += f"'{value['id']}', "
             else:
                 values += f"'{value}', "
-        values = values[:-2]
+        return values[:-2]
 
-        sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
-        cursor = execute_sql(sql)
-        cursor.connection.close()
-        self.id = cursor.lastrowid
-        return self
-
-    def _update(self) -> Self:
-        model_dict = self.model_dump(exclude={"id"})
-        fields = ", ".join(
+    @classmethod
+    def _prepare_fields_to_update(cls, model_dict: dict) -> str:
+        return ", ".join(
             f"{field}='{value.get('id')}'"
             if isinstance(value, dict)
             else f"{field}='{value}'"
             for field, value in model_dict.items()
         )
-        cursor = execute_sql(
-            f"UPDATE {self.__class__.__name__.lower()} SET {fields} WHERE id={self.id}"
-        )
-        cursor.connection.close()
-        if cursor.rowcount == 0:
-            raise ObjectNotFound
-        return self
