@@ -76,10 +76,28 @@ class DBModel(BaseModel):
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(model_dict.keys())
-        values = ", ".join(
-            f"'{value.get('id')}'" if isinstance(value, dict) else f"'{value}'"
-            for value in model_dict.values()
-        )
+        values = ""
+        for key, value in model_dict.items():
+            annotation = self.model_fields[key].annotation
+            types_tuple = get_args(annotation)
+            if not types_tuple and annotation and issubclass(annotation, DBModel):
+                if not value["id"]:
+                    value = annotation(**value).save()
+                    values += f"'{value.id}', "
+                    getattr(self, key).id = value.id
+                else:
+                    values += f"'{value['id']}', "
+            elif types_tuple and issubclass(types_tuple[0], DBModel):
+                if not value["id"]:
+                    value = types_tuple[0](**value).save()
+                    values += f"'{value.id}', "
+                    getattr(self, key).id = value.id
+                else:
+                    values += f"'{value['id']}', "
+            else:
+                values += f"'{value}', "
+        values = values[:-2]
+
         sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
