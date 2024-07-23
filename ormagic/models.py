@@ -61,7 +61,6 @@ class DBModel(BaseModel):
         data = cursor.fetchone()
         cursor.connection.close()
         if data:
-            # return cls(**dict(zip(cls.model_fields.keys(), data)))
             return cls._create_instance_from_data(data)
         raise ObjectNotFound
 
