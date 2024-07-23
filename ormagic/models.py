@@ -83,7 +83,7 @@ class DBModel(BaseModel):
         return self
 
     @classmethod
-    def _create_instance_from_data(cls, data) -> Self:
+    def _create_instance_from_data(cls, data: tuple) -> Self:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, value in data_dict.items():
             annotation = cls.model_fields[key].annotation
