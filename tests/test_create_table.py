@@ -76,5 +76,5 @@ def test_create_db_tables_with_one_to_many_relationship(db_cursor):
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
         (1, "title", "TEXT", 1, None, 0),
-        (2, "user_id", "INTEGER", 1, None, 0),
+        (2, "user", "INTEGER", 1, None, 0),
     ]

@@ -20,13 +20,8 @@ class DBModel(BaseModel):
         for field_name, field_info in cls.model_fields.items():
             if field_name == "id":
                 continue
-            # Check if the field is a foreign key
-            if field_info.annotation and issubclass(field_info.annotation, DBModel):
-                field_type = "INTEGER"
-                column_def = f"{field_name}_id {field_type}"
-            else:
-                field_type = convert_to_sql_type(field_info.annotation)
-                column_def = f"{field_name} {field_type}"
+            field_type = convert_to_sql_type(field_info.annotation)
+            column_def = f"{field_name} {field_type}"
             if field_info.default not in (PydanticUndefined, None):
                 column_def += f" DEFAULT '{field_info.default}'"
             if field_info.is_required():
