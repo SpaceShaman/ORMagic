@@ -23,6 +23,10 @@ pip install ORMagic
 
 ## Usage
 
+### Define a model
+
+To define a model, create a class that inherits from `DBModel` and define the fields using Pydantic's field types.
+
 ```python
 from ormagic import DBModel
 
@@ -33,7 +37,11 @@ class User(DBModel):
 
 # Create the table in the database
 User.create_table()
+```
 
+### Save, read, update and delete data
+
+```python
 # Save data to the database, this will create a new record or update an existing one if the primary key is already present
 user = User(name="John", age=30)
 user.save()
@@ -45,6 +53,38 @@ print(user)
 
 # Delete data from the database
 user.delete()
+
+# Update data
+user = User.get(id=1)
+user.age = 31
+user.save()
+```
+
+### Define foreign keys
+
+To define a foreign key, use other models as fields in the model.
+
+```python
+from ormagic import DBModel
+
+class User(DBModel):
+    name: str
+
+class Post(DBModel):
+    title: str
+    content: str
+    user: User
+
+User.create_table()
+Post.create_table()
+
+user = User(name="John")
+user.save()
+
+Post(title="Hello", content="World", user=user).save()
+
+# You can also save child models with new parent object in one step, this will save the parent object first and then the child object
+Post(title="Hello", content="World", user=User(name="Alice")).save()
 ```
 
 ## Features and Roadmap
@@ -55,12 +95,22 @@ user.delete()
   - [x] Read data from the database
   - [x] Update data in the database
   - [x] Delete data from the database
+- [ ] Relationships between tables
+  - [ ] One-to-many
+    - [x] Create a tables with a foreign key
+    - [x] Save data with a foreign key
+    - [x] Read data with a foreign key
+    - [x] Update data with a foreign key
+    - [ ] Delete data with a foreign key
+      - [ ] Set null
+      - [ ] Cascade
+      - [ ] Restrict
+      - [ ] No action
+      - [ ] Set default
+  - [ ] One-to-one
+  - [ ] Many-to-many
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
-- [ ] Relationships between tables
-  - [ ] One-to-one
-  - [ ] One-to-many
-  - [ ] Many-to-many
 - [ ] Migrations
 
 ## License
