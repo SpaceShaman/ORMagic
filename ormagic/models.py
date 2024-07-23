@@ -64,7 +64,11 @@ class DBModel(BaseModel):
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(model_dict.keys())
-        values = ", ".join(f"'{value}'" for value in model_dict.values())
+        values = "".join(
+            f"'{value.get('id')}', " if isinstance(value, dict) else f"'{value}', "
+            for value in model_dict.values()
+        )
+        values = values[:-2]
         sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()

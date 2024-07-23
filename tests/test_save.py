@@ -82,3 +82,24 @@ def test_save_object_with_default_value_to_db(prepare_db, db_cursor):
     data = res.fetchall()
     assert data == [(1, "John", 30)]
     assert user.age == 30
+
+
+def test_save_object_with_foreign_key_to_db(db_cursor):
+    class User(DBModel):
+        name: str
+        age: int
+
+    class Post(DBModel):
+        title: str
+        user: User
+
+    User.create_table()
+    Post.create_table()
+
+    user = User(name="John", age=30).save()
+    post = Post(title="First post", user=user).save()
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == [(1, "First post", 1)]
+    assert post.user.id == user.id
