@@ -26,3 +26,10 @@ def test_convert_to_sql_type_foreign_key():
         pass
 
     assert convert_to_sql_type(User) == "INTEGER"
+
+
+def test_convert_to_sql_type_foreign_key_optional():
+    class User(DBModel):
+        pass
+
+    assert convert_to_sql_type(Union[User, NoneType]) == "INTEGER"

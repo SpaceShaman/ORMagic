@@ -17,8 +17,9 @@ def convert_to_sql_type(annotation: Any) -> Literal["INTEGER", "TEXT"]:
 
     if annotation in [int, Union[int, NoneType]]:
         return "INTEGER"
-    return (
-        "INTEGER"
-        if not get_args(annotation) and issubclass(annotation, DBModel)
-        else "TEXT"
-    )
+    types_tuple = get_args(annotation)
+    if not types_tuple and issubclass(annotation, DBModel):
+        return "INTEGER"
+    if types_tuple and issubclass(types_tuple[0], DBModel):
+        return "INTEGER"
+    return "TEXT"
