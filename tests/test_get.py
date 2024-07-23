@@ -127,5 +127,5 @@ def test_get_object_from_db_with_optional_foreign_key_set(db_cursor):
     player_from_db = Player.get(id=1)
     assert player_from_db.id == 1
     assert player_from_db.name == "Messi"
-    assert player_from_db.team.id == 1
-    assert player_from_db.team.name == "Barcelona"
+    assert player_from_db.team.id == 1  # type: ignore
+    assert player_from_db.team.name == "Barcelona"  # type: ignore

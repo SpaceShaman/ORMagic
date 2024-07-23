@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 import pytest
 
@@ -156,3 +157,50 @@ def test_save_object_with_foreign_key_for_non_existing_foreign_object(db_cursor)
     assert post.user.id == 1
     assert post.user.name == "John"
     assert post.user.age == 30
+
+
+def test_save_object_with_optional_foreign_key_not_set(db_cursor):
+    class User(DBModel):
+        name: str
+        age: int
+
+    class Post(DBModel):
+        title: str
+        user: User | None = None
+
+    User.create_table()
+    Post.create_table()
+
+    post = Post(title="First post").save()
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == [(1, "First post", None)]
+
+    assert post.title == "First post"
+    assert post.user is None
+
+
+def test_save_object_with_optional_foreign_key_set(db_cursor):
+    class User(DBModel):
+        name: str
+        age: int
+
+    class Post(DBModel):
+        title: str
+        user: Optional[User] = None
+
+    User.create_table()
+    Post.create_table()
+
+    user = User(name="John", age=30).save()
+    post = Post(title="First post", user=user).save()
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == [(1, "First post", 1)]
+
+    assert post.title == "First post"
+    assert post.user.id == 1  # type: ignore
+    assert post.user.name == "John"  # type: ignore
+    assert post.user.age == 30  # type: ignore

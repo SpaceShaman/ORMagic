@@ -109,14 +109,7 @@ class DBModel(BaseModel):
                 else:
                     values += f"'{value['id']}', "
             elif types_tuple and issubclass(types_tuple[0], DBModel):
-                if not value:
-                    values += "NULL, "
-                elif not value["id"]:
-                    value = types_tuple[0](**value).save()
-                    values += f"'{value.id}', "
-                    getattr(self, key).id = value.id
-                else:
-                    values += f"'{value['id']}', "
+                values += f"'{value['id']}', " if value else "NULL, "
             else:
                 values += f"'{value}', "
         return values[:-2]
