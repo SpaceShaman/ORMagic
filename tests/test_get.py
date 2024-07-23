@@ -89,3 +89,43 @@ def test_get_object_from_db_with_foreign_key(db_cursor):
     assert player_from_db.name == "Messi"
     assert player_from_db.team.id == 1
     assert player_from_db.team.name == "Barcelona"
+
+
+def test_get_object_from_db_with_optional_foreign_key_not_set(db_cursor):
+    class Team(DBModel):
+        name: str
+
+    class Player(DBModel):
+        name: str
+        team: Team | None = None
+
+    Team.create_table()
+    Player.create_table()
+
+    Player(name="Messi").save()
+
+    player_from_db = Player.get(id=1)
+    assert player_from_db.id == 1
+    assert player_from_db.name == "Messi"
+    assert player_from_db.team is None
+
+
+def test_get_object_from_db_with_optional_foreign_key_set(db_cursor):
+    class Team(DBModel):
+        name: str
+
+    class Player(DBModel):
+        name: str
+        team: Team | None = None
+
+    Team.create_table()
+    Player.create_table()
+
+    team = Team(name="Barcelona").save()
+    Player(name="Messi", team=team).save()
+
+    player_from_db = Player.get(id=1)
+    assert player_from_db.id == 1
+    assert player_from_db.name == "Messi"
+    assert player_from_db.team.id == 1
+    assert player_from_db.team.name == "Barcelona"

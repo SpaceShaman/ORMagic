@@ -88,7 +88,9 @@ class DBModel(BaseModel):
         for key, value in data_dict.items():
             annotation = cls.model_fields[key].annotation
             types_tuple = get_args(annotation)
-            if not types_tuple and annotation and issubclass(annotation, DBModel):
+            if not value:
+                data_dict[key] = None
+            elif not types_tuple and annotation and issubclass(annotation, DBModel):
                 data_dict[key] = annotation.get(id=value)
             elif types_tuple and issubclass(types_tuple[0], DBModel):
                 data_dict[key] = types_tuple[0].get(id=value)
@@ -107,7 +109,9 @@ class DBModel(BaseModel):
                 else:
                     values += f"'{value['id']}', "
             elif types_tuple and issubclass(types_tuple[0], DBModel):
-                if not value["id"]:
+                if not value:
+                    values += "NULL, "
+                elif not value["id"]:
                     value = types_tuple[0](**value).save()
                     values += f"'{value.id}', "
                     getattr(self, key).id = value.id
