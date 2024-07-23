@@ -64,11 +64,10 @@ class DBModel(BaseModel):
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(model_dict.keys())
-        values = "".join(
-            f"'{value.get('id')}', " if isinstance(value, dict) else f"'{value}', "
+        values = ", ".join(
+            f"'{value.get('id')}'" if isinstance(value, dict) else f"'{value}'"
             for value in model_dict.values()
         )
-        values = values[:-2]
         sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
@@ -77,7 +76,12 @@ class DBModel(BaseModel):
 
     def _update(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
-        fields = ", ".join(f"{field}='{value}'" for field, value in model_dict.items())
+        fields = ", ".join(
+            f"{field}='{value.get('id')}'"
+            if isinstance(value, dict)
+            else f"{field}='{value}'"
+            for field, value in model_dict.items()
+        )
         cursor = execute_sql(
             f"UPDATE {self.__class__.__name__.lower()} SET {fields} WHERE id={self.id}"
         )

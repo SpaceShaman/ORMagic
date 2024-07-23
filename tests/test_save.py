@@ -103,3 +103,28 @@ def test_save_object_with_foreign_key_to_db(db_cursor):
     data = res.fetchall()
     assert data == [(1, "First post", 1)]
     assert post.user.id == user.id
+
+
+def test_override_object_with_foreign_key_in_db(db_cursor):
+    class User(DBModel):
+        name: str
+        age: int
+
+    class Post(DBModel):
+        title: str
+        user: User
+
+    User.create_table()
+    Post.create_table()
+
+    user = User(name="John", age=30).save()
+    post = Post(title="First post", user=user).save()
+
+    new_user = User(name="Jane", age=25).save()
+    post.user = new_user
+    post.save()
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == [(1, "First post", 2)]
+    assert post.user.id == new_user.id
