@@ -31,6 +31,8 @@ class DBModel(BaseModel):
                     action = "CASCADE"
                 elif field_info.json_schema_extra.get("on_delete") == "SET_NULL":
                     action = "SET NULL"
+                elif field_info.json_schema_extra.get("on_delete") == "RESTRICT":
+                    action = "RESTRICT"
                 else:
                     action = "CASCADE"
                 column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"

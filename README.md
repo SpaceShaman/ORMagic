@@ -102,9 +102,9 @@ Post(title="Hello", content="World", user=User(name="Alice")).save()
     - [x] Read data with a foreign key
     - [x] Update data with a foreign key
     - [ ] Delete data with a foreign key
-      - [ ] Set null
-      - [ ] Cascade
-      - [ ] Restrict
+      - [X] Cascade
+      - [x] Set null
+      - [x] Restrict
       - [ ] No action
       - [ ] Set default
   - [ ] One-to-one

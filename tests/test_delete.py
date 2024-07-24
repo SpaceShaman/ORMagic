@@ -1,3 +1,5 @@
+from sqlite3 import IntegrityError
+
 import pytest
 from pydantic import Field
 
@@ -95,3 +97,24 @@ def test_delete_object_with_foreign_key_set_null(prepare_db, db_cursor):
     res = db_cursor.execute("SELECT * FROM post")
     data = res.fetchall()
     assert data == [(1, "First post", None)]
+
+
+def test_delete_object_with_foreign_key_restrict(prepare_db, db_cursor):
+    class Post(DBModel):
+        title: str
+        user: User = Field(on_delete="RESTRICT")  # type: ignore
+
+    Post.create_table()
+    user = User(name="John", age=30).save()
+    Post(title="First post", user=user).save()
+
+    with pytest.raises(IntegrityError):
+        user.delete()
+
+    res = db_cursor.execute("SELECT * FROM user")
+    data = res.fetchall()
+    assert data == [(1, "John", 30)]
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == [(1, "First post", 1)]
