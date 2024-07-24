@@ -1,4 +1,4 @@
-from typing import Self, get_args
+from typing import Self, Type, get_args
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
@@ -26,13 +26,8 @@ class DBModel(BaseModel):
                 column_def += f" DEFAULT '{field_info.default}'"
             if field_info.is_required():
                 column_def += " NOT NULL"
-            annotation = field_info.annotation
-            if (
-                not get_args(annotation)
-                and annotation
-                and issubclass(annotation, DBModel)
-            ):
-                column_def += f", FOREIGN KEY ({field_name}) REFERENCES {annotation.__name__.lower()}(id) ON UPDATE CASCADE ON DELETE CASCADE"
+            if foreign_model := cls._get_foreign_key_model(field_name):
+                column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE CASCADE ON DELETE CASCADE"
             columns.append(column_def)
 
         sql = (
@@ -93,14 +88,10 @@ class DBModel(BaseModel):
     def _create_instance_from_data(cls, data: tuple) -> Self:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, value in data_dict.items():
-            annotation = cls.model_fields[key].annotation
-            types_tuple = get_args(annotation)
             if not value:
                 data_dict[key] = None
-            elif not types_tuple and annotation and issubclass(annotation, DBModel):
-                data_dict[key] = annotation.get(id=value)
-            elif types_tuple and issubclass(types_tuple[0], DBModel):
-                data_dict[key] = types_tuple[0].get(id=value)
+            elif foreign_model := cls._get_foreign_key_model(key):
+                data_dict[key] = foreign_model.get(id=value)
         return cls(**data_dict)
 
     def _prepare_values_to_insert(self, model_dict: dict) -> str:
@@ -129,3 +120,12 @@ class DBModel(BaseModel):
             else f"{field}='{value}'"
             for field, value in model_dict.items()
         )
+
+    @classmethod
+    def _get_foreign_key_model(cls, field_name: str) -> Type["DBModel"] | None:
+        annotation = cls.model_fields[field_name].annotation
+        types_tuple = get_args(annotation)
+        if not types_tuple and annotation and issubclass(annotation, DBModel):
+            return annotation
+        if types_tuple and issubclass(types_tuple[0], DBModel):
+            return types_tuple[0]
