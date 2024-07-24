@@ -63,6 +63,7 @@ user.save()
 ### Define foreign keys
 
 To define a foreign key, use other models as fields in the model.
+By default, the foreign key will be set to `CASCADE`, but you can change it by setting the `on_delete` parameter of the pydantic field to one of the following values: `CASCADE`, `SET_NULL`, `RESTRICT`, `SET_DEFAULT`, `NO_ACTION`.
 
 ```python
 from ormagic import DBModel
@@ -73,7 +74,7 @@ class User(DBModel):
 class Post(DBModel):
     title: str
     content: str
-    user: User
+    user: User # Define a foreign key with default on_delete=CASCADE
 
 User.create_table()
 Post.create_table()
@@ -85,6 +86,27 @@ Post(title="Hello", content="World", user=user).save()
 
 # You can also save child models with new parent object in one step, this will save the parent object first and then the child object
 Post(title="Hello", content="World", user=User(name="Alice")).save()
+```
+
+#### Define foreign key with custom on_delete
+
+```python
+from ormagic import DBModel
+
+class User(DBModel):
+    name: str
+
+class Post(DBModel):
+    title: str
+    content: str
+    user: User(default=None, on_delete="SET_NULL") # Define a foreign key with on_delete=SET_NULL
+    user: User(on_delete="RESTRICT") # Define a foreign key with on_delete=RESTRICT
+    user: User(default=1, on_delete="SET_DEFAULT") # Define a foreign key with on_delete=SET_DEFAULT
+    user: User(on_delete="NO_ACTION") # Define a foreign key with on_delete=NO_ACTION
+    user: User(on_delete="CASCADE") # Define a foreign key with on_delete=CASCADE
+
+User.create_table()
+Post.create_table()
 ```
 
 ## Features and Roadmap
