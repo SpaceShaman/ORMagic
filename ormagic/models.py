@@ -97,17 +97,15 @@ class DBModel(BaseModel):
     def _prepare_values_to_insert(self, model_dict: dict) -> str:
         values = ""
         for key, value in model_dict.items():
-            annotation = self.model_fields[key].annotation
-            types_tuple = get_args(annotation)
-            if not types_tuple and annotation and issubclass(annotation, DBModel):
+            if not value:
+                values += "NULL, "
+            elif foreign_model := self._get_foreign_key_model(key):
                 if not value["id"]:
-                    value = annotation(**value).save()
+                    value = foreign_model(**value).save()
                     values += f"'{value.id}', "
                     getattr(self, key).id = value.id
                 else:
                     values += f"'{value['id']}', "
-            elif types_tuple and issubclass(types_tuple[0], DBModel):
-                values += f"'{value['id']}', " if value else "NULL, "
             else:
                 values += f"'{value}', "
         return values[:-2]
