@@ -105,8 +105,8 @@ Post(title="Hello", content="World", user=User(name="Alice")).save()
       - [X] Cascade
       - [x] Set null
       - [x] Restrict
+      - [x] Set default
       - [ ] No action
-      - [ ] Set default
   - [ ] One-to-one
   - [ ] Many-to-many
 - [ ] Custom primary key

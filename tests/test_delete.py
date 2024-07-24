@@ -118,3 +118,24 @@ def test_delete_object_with_foreign_key_restrict(prepare_db, db_cursor):
     res = db_cursor.execute("SELECT * FROM post")
     data = res.fetchall()
     assert data == [(1, "First post", 1)]
+
+
+def test_delete_object_with_foreign_key_set_default(prepare_db, db_cursor):
+    class Post(DBModel):
+        title: str
+        user: User = Field(default=1, on_delete="SET_DEFAULT")  # type: ignore
+
+    Post.create_table()
+    User(name="Jane", age=25).save()
+    user = User(name="John", age=30).save()
+    Post(title="First post", user=user).save()
+
+    user.delete()
+
+    res = db_cursor.execute("SELECT * FROM user")
+    data = res.fetchall()
+    assert data == [(1, "Jane", 25)]
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == [(1, "First post", 1)]
