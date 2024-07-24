@@ -96,17 +96,17 @@ Post(title="Hello", content="World", user=User(name="Alice")).save()
   - [x] Update data in the database
   - [x] Delete data from the database
 - [ ] Relationships between tables
-  - [ ] One-to-many
+  - [x] One-to-many
     - [x] Create a tables with a foreign key
     - [x] Save data with a foreign key
     - [x] Read data with a foreign key
     - [x] Update data with a foreign key
-    - [ ] Delete data with a foreign key
+    - [x] Delete data with a foreign key
       - [X] Cascade
       - [x] Set null
       - [x] Restrict
       - [x] Set default
-      - [ ] No action
+      - [x] No action
   - [ ] One-to-one
   - [ ] Many-to-many
 - [ ] Custom primary key
