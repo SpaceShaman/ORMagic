@@ -4,11 +4,17 @@ from types import NoneType
 from typing import Any, Literal, Union, get_args
 
 
-def execute_sql(sql: str) -> Cursor:
+def get_cursor() -> Cursor:
     connection = sqlite3.connect("db.sqlite3")
     cursor = connection.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON;")
+    return cursor
+
+
+def execute_sql(sql: str) -> Cursor:
+    cursor = get_cursor()
     cursor = cursor.execute(sql)
-    connection.commit()
+    cursor.connection.commit()
     return cursor
 
 

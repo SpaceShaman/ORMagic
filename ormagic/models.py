@@ -26,6 +26,13 @@ class DBModel(BaseModel):
                 column_def += f" DEFAULT '{field_info.default}'"
             if field_info.is_required():
                 column_def += " NOT NULL"
+            annotation = field_info.annotation
+            if (
+                not get_args(annotation)
+                and annotation
+                and issubclass(annotation, DBModel)
+            ):
+                column_def += f", FOREIGN KEY ({field_name}) REFERENCES {annotation.__name__.lower()}(id) ON UPDATE CASCADE ON DELETE CASCADE"
             columns.append(column_def)
 
         sql = (

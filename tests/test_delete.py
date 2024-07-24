@@ -1,4 +1,5 @@
 import pytest
+from pydantic import Field
 
 from ormagic.models import DBModel, ObjectNotFound
 
@@ -30,3 +31,27 @@ def test_delete_object_from_db(prepare_db, db_cursor):
 def test_try_delete_non_existing_object_in_db(prepare_db, db_cursor):
     with pytest.raises(ObjectNotFound):
         User(id=1, name="Jane", age=25).delete()
+
+
+def test_delete_object_with_foreign_key_cascade(prepare_db, db_cursor):
+    db_cursor.execute("PRAGMA foreign_keys")
+    result = db_cursor.fetchone()
+    assert result[0] == 1
+
+    class Post(DBModel):
+        title: str
+        user: User = Field(on_delete="CASCADE")  # type: ignore
+
+    Post.create_table()
+    user = User(name="John", age=30).save()
+    Post(title="First post", user=user).save()
+
+    user.delete()
+
+    res = db_cursor.execute("SELECT * FROM user")
+    data = res.fetchall()
+    assert data == []
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == []

@@ -1,7 +1,8 @@
 import os
-import sqlite3
 
 import pytest
+
+from ormagic.sql_utils import get_cursor
 
 
 def remove_db():
@@ -12,7 +13,7 @@ def remove_db():
 @pytest.fixture
 def db_cursor():
     remove_db()
-    con = sqlite3.connect("db.sqlite3")  # type: ignore
-    yield con.cursor()
-    con.close()
+    cursor = get_cursor()
+    yield cursor
+    cursor.connection.close()
     remove_db()
