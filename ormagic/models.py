@@ -27,7 +27,13 @@ class DBModel(BaseModel):
             if field_info.is_required():
                 column_def += " NOT NULL"
             if foreign_model := cls._get_foreign_key_model(field_name):
-                column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE CASCADE ON DELETE CASCADE"
+                if not field_info.json_schema_extra:
+                    action = "CASCADE"
+                elif field_info.json_schema_extra.get("on_delete") == "SET_NULL":
+                    action = "SET NULL"
+                else:
+                    action = "CASCADE"
+                column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
             columns.append(column_def)
 
         sql = (
