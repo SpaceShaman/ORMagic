@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ORMagic"
-version = "0.4.1"
+version = "0.5.0"
 description = "Simple ORM based on Pydantic and SQLite with minimalistic API"
 license = "MIT"
 authors = ["SpaceShaman <spaceshaman@tuta.io>"]
@@ -17,7 +17,6 @@ pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
 ruff = "^0.5.1"
 mypy = "^1.10.1"
-ptpython = "^3.0.27"
 
 [build-system]
 requires = ["poetry-core"]
