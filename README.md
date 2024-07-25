@@ -100,11 +100,11 @@ class User(DBModel):
 class Post(DBModel):
     title: str
     content: str
-    user: User = Field(default=None, on_delete="SET NULL")
-    user: User = Field(on_delete="RESTRICT")
-    user: User = Field(default=1, on_delete="SET DEFAULT")
-    user: User = Field(on_delete="NO ACTION")
     user: User = Field(on_delete="CASCADE")
+    user: User = Field(on_delete="RESTRICT")
+    user: User = Field(on_delete="NO ACTION")
+    user: User = Field(on_delete="SET DEFAULT", default=1)
+    user: User = Field(on_delete="SET NULL", default=None)
 
 User.create_table()
 Post.create_table()
@@ -149,6 +149,41 @@ To update a table, use the `update_table` method. (Not implemented yet)
 
 ```python
 User.update_table()
+```
+
+### Integration with FastAPI
+
+Because ORMagic is based on Pydantic, it can be easily integrated with FastAPI.
+Below is an example of how to use ORMagic with FastAPI to create a simple crud REST API.
+
+```python
+from fastapi import FastAPI
+from ormagic import DBModel
+
+app = FastAPI()
+
+class User(DBModel):
+    name: str
+    age: int
+
+User.create_table()
+
+@app.post("/users/")
+def create_user(user: User):
+    return user.save()
+
+@app.get("/users/{id}")
+def read_user(id: int):
+    return User.get(id=id)
+
+@app.put("/users/{id}")
+def update_user(id: int, user: User):
+    return user(id=id).save()
+
+@app.delete("/users/{id}")
+def delete_user(id: int):
+    User.get(id=id).delete()
+    return {"message": "User deleted"}
 ```
 
 ## Features and Roadmap
