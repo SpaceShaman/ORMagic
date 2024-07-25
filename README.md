@@ -47,12 +47,10 @@ user.save()
 
 # Read data from the database
 user = User.get(id=1)
-print(user)
 >>> User(id=1, name='John', age=30)
 
 # Read all data from the database
 users = User.all()
-print(users)
 >>> [User(id=1, name='John', age=30), User(id=2, name='Alice', age=25), ...]
 
 # Delete data from the database
@@ -65,7 +63,6 @@ user.save()
 
 # Filter data and retrieve multiple records
 users = User.filter(age=31)
-print(users)
 >>> [User(id=1, name='John', age=31), User(id=2, name='Alice', age=31), ...]
 ```
 
