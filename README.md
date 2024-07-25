@@ -162,6 +162,7 @@ class UserProfile(DBModel):
 - [x] Unique constraints
 - [ ] Remove table
 - [ ] Update table schema
+- [ ] Filter data and retrieve multiple records
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations
