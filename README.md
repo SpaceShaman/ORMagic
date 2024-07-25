@@ -53,7 +53,7 @@ print(user)
 # Read all data from the database
 users = User.all()
 print(users)
->>> [User(id=1, name='John', age=30), ...]
+>>> [User(id=1, name='John', age=30), User(id=2, name='Alice', age=25), ...]
 
 # Delete data from the database
 user.delete()
@@ -62,6 +62,11 @@ user.delete()
 user = User.get(id=1)
 user.age = 31
 user.save()
+
+# Filter data and retrieve multiple records
+users = User.filter(age=31)
+print(users)
+>>> [User(id=1, name='John', age=31), User(id=2, name='Alice', age=31), ...]
 ```
 
 ### Define foreign keys
@@ -203,7 +208,6 @@ def delete_user(id: int):
   - [x] Read data from the database
   - [x] Update data in the database
   - [x] Delete data from the database
-  - [x] Read all data from the database
 - [ ] Relationships between tables
   - [x] One-to-many
     - [x] Create a tables with a foreign key
@@ -220,8 +224,9 @@ def delete_user(id: int):
   - [ ] Many-to-many
 - [x] Unique constraints
 - [x] Remove table
+- [x] Filter data and retrieve multiple records
+- [x] Read all data from the database
 - [ ] Update table schema
-- [ ] Filter data and retrieve multiple records
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations
