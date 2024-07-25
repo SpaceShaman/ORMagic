@@ -75,6 +75,14 @@ class DBModel(BaseModel):
         if cursor.rowcount == 0:
             raise ObjectNotFound
 
+    @classmethod
+    def all(cls) -> list[Self]:
+        """Get all objects from the database."""
+        cursor = execute_sql(f"SELECT * FROM {cls.__name__.lower()}")
+        data = cursor.fetchall()
+        cursor.connection.close()
+        return [cls._create_instance_from_data(row) for row in data]
+
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(model_dict.keys())
