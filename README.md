@@ -203,6 +203,7 @@ def delete_user(id: int):
   - [x] Read data from the database
   - [x] Update data in the database
   - [x] Delete data from the database
+  - [x] Read all data from the database
 - [ ] Relationships between tables
   - [x] One-to-many
     - [x] Create a tables with a foreign key
