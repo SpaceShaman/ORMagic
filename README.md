@@ -151,7 +151,7 @@ To update a table, use the `update_table` method. (Not implemented yet)
 User.update_table()
 ```
 
-### Integration with FastAPI
+### Integration with [FastAPI](https://fastapi.tiangolo.com/)
 
 Because ORMagic is based on [Pydantic](https://docs.pydantic.dev), it can be easily integrated with [FastAPI](https://fastapi.tiangolo.com/).
 Below is an example of how to use ORMagic with [FastAPI](https://fastapi.tiangolo.com/) to create a simple CRUD REST API.
