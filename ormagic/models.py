@@ -83,6 +83,18 @@ class DBModel(BaseModel):
         cursor.connection.close()
         return [cls._create_instance_from_data(row) for row in data]
 
+    @classmethod
+    def filter(cls, **kwargs) -> list[Self]:
+        """Get objects from the database based on the given keyword arguments."""
+        conditions = " AND ".join(
+            f"{field}='{value}'" for field, value in kwargs.items()
+        )
+        sql = f"SELECT * FROM {cls.__name__.lower()} WHERE {conditions}"
+        cursor = execute_sql(sql)
+        data = cursor.fetchall()
+        cursor.connection.close()
+        return [cls._create_instance_from_data(row) for row in data]
+
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
         fields = ", ".join(model_dict.keys())
