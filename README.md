@@ -153,8 +153,8 @@ User.update_table()
 
 ### Integration with FastAPI
 
-Because ORMagic is based on Pydantic, it can be easily integrated with FastAPI.
-Below is an example of how to use ORMagic with FastAPI to create a simple crud REST API.
+Because ORMagic is based on [Pydantic](https://docs.pydantic.dev), it can be easily integrated with [FastAPI](https://fastapi.tiangolo.com/).
+Below is an example of how to use ORMagic with [FastAPI](https://fastapi.tiangolo.com/) to create a simple CRUD REST API.
 
 ```python
 from fastapi import FastAPI
