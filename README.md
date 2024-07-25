@@ -33,7 +33,6 @@ from ormagic import DBModel
 class User(DBModel):
     name: str
     age: int
-    created_at: datetime = datetime.now()
 
 # Create the table in the database
 User.create_table()
@@ -49,7 +48,12 @@ user.save()
 # Read data from the database
 user = User.get(id=1)
 print(user)
->>> User(id=1, name='John', age=30, created_at=datetime.datetime(2021, 10, 10, 12, 0, 0))
+>>> User(id=1, name='John', age=30)
+
+# Read all data from the database
+users = User.all()
+print(users)
+>>> [User(id=1, name='John', age=30), ...]
 
 # Delete data from the database
 user.delete()
@@ -171,6 +175,10 @@ User.create_table()
 @app.post("/users/")
 def create_user(user: User):
     return user.save()
+
+@app.get("/users/")
+def read_users():
+    return User.all()
 
 @app.get("/users/{id}")
 def read_user(id: int):
