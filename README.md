@@ -160,7 +160,7 @@ class UserProfile(DBModel):
   - [x] One-to-one
   - [ ] Many-to-many
 - [x] Unique constraints
-- [ ] Remove table
+- [x] Remove table
 - [ ] Update table schema
 - [ ] Filter data and retrieve multiple records
 - [ ] Custom primary key

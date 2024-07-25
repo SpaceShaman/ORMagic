@@ -52,6 +52,12 @@ class DBModel(BaseModel):
         cursor = execute_sql(sql)
         cursor.connection.close()
 
+    @classmethod
+    def remove_table(cls) -> None:
+        """Remove the table from the database."""
+        cursor = execute_sql(f"DROP TABLE IF EXISTS {cls.__name__.lower()}")
+        cursor.connection.close()
+
     def save(self) -> Self:
         """Save object to the database."""
         return self._update() if self.id else self._insert()
