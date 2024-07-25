@@ -1,4 +1,4 @@
-from typing import Literal, Self, Type, get_args
+from typing import Any, Iterable, Literal, Self, Type, get_args
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -55,16 +55,25 @@ class DBModel(BaseModel):
     @classmethod
     def get(cls, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
-        conditions = " AND ".join(
-            f"{field}='{value}'" for field, value in kwargs.items()
-        )
-        sql = f"SELECT * FROM {cls.__name__.lower()} WHERE {conditions}"
-        cursor = execute_sql(sql)
-        data = cursor.fetchone()
-        cursor.connection.close()
-        if data:
+        if data := cls._fetch_raw_data(fetchall=False, **kwargs):
             return cls._create_instance_from_data(data)
         raise ObjectNotFound
+
+    @classmethod
+    def filter(cls, **kwargs) -> list[Self]:
+        """Get objects from the database based on the given keyword arguments."""
+        return [
+            cls._create_instance_from_data(row)
+            for row in cls._fetch_raw_data(fetchall=True, **kwargs)
+        ]
+
+    @classmethod
+    def all(cls) -> list[Self]:
+        """Get all objects from the database."""
+        return [
+            cls._create_instance_from_data(row)
+            for row in cls._fetch_raw_data(fetchall=True)
+        ]
 
     def delete(self) -> None:
         """Delete the object from the database."""
@@ -74,26 +83,6 @@ class DBModel(BaseModel):
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
-
-    @classmethod
-    def all(cls) -> list[Self]:
-        """Get all objects from the database."""
-        cursor = execute_sql(f"SELECT * FROM {cls.__name__.lower()}")
-        data = cursor.fetchall()
-        cursor.connection.close()
-        return [cls._create_instance_from_data(row) for row in data]
-
-    @classmethod
-    def filter(cls, **kwargs) -> list[Self]:
-        """Get objects from the database based on the given keyword arguments."""
-        conditions = " AND ".join(
-            f"{field}='{value}'" for field, value in kwargs.items()
-        )
-        sql = f"SELECT * FROM {cls.__name__.lower()} WHERE {conditions}"
-        cursor = execute_sql(sql)
-        data = cursor.fetchall()
-        cursor.connection.close()
-        return [cls._create_instance_from_data(row) for row in data]
 
     def _insert(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
@@ -117,7 +106,7 @@ class DBModel(BaseModel):
         return self
 
     @classmethod
-    def _create_instance_from_data(cls, data: tuple) -> Self:
+    def _create_instance_from_data(cls, data: Iterable) -> Self:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, value in data_dict.items():
             if not value:
@@ -175,3 +164,16 @@ class DBModel(BaseModel):
         if field_info.json_schema_extra.get("on_delete") == "NO ACTION":
             return "NO ACTION"
         return "CASCADE"
+
+    @classmethod
+    def _fetch_raw_data(cls, fetchall: bool, **kwargs) -> list[tuple[Any]] | tuple[Any]:
+        conditions = " AND ".join(
+            f"{field}='{value}'" for field, value in kwargs.items()
+        )
+        sql = f"SELECT * FROM {cls.__name__.lower()}"
+        if conditions:
+            sql += f" WHERE {conditions}"
+        cursor = execute_sql(sql)
+        data: tuple | list[tuple] = cursor.fetchall() if fetchall else cursor.fetchone()
+        cursor.connection.close()
+        return data
