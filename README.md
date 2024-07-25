@@ -137,6 +137,20 @@ class UserProfile(DBModel):
     bio: str
 ```
 
+### Deleting and updating tables
+
+To delete a table, use the `drop_table` method.
+
+```python
+User.drop_table()
+```
+
+To update a table, use the `update_table` method. (Not implemented yet)
+
+```python
+User.update_table()
+```
+
 ## Features and Roadmap
 
 - [x] Define table schema using Pydantic models

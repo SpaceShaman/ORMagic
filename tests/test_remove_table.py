@@ -13,7 +13,7 @@ def test_remove_table(db_cursor):
         name: str
         age: int
 
-    User.remove_table()
+    User.drop_table()
 
     res = db_cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()

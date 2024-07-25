@@ -53,7 +53,7 @@ class DBModel(BaseModel):
         cursor.connection.close()
 
     @classmethod
-    def remove_table(cls) -> None:
+    def drop_table(cls) -> None:
         """Remove the table from the database."""
         cursor = execute_sql(f"DROP TABLE IF EXISTS {cls.__name__.lower()}")
         cursor.connection.close()
