@@ -26,6 +26,10 @@ class DBModel(BaseModel):
                 column_def += f" DEFAULT '{field_info.default}'"
             if field_info.is_required():
                 column_def += " NOT NULL"
+            if field_info.json_schema_extra and field_info.json_schema_extra.get(
+                "unique"
+            ):
+                column_def += " UNIQUE"
             if foreign_model := cls._get_foreign_key_model(field_name):
                 if not field_info.json_schema_extra:
                     action = "CASCADE"

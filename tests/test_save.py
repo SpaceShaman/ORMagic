@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 import pytest
+from pydantic import Field
 
 from ormagic.models import DBModel, ObjectNotFound
 
@@ -204,3 +205,16 @@ def test_save_object_with_optional_foreign_key_set(db_cursor):
     assert post.user.id == 1  # type: ignore
     assert post.user.name == "John"  # type: ignore
     assert post.user.age == 30  # type: ignore
+
+
+def test_try_save_two_objects_with_same_values_for_unique_field():
+    class User(DBModel):
+        name: str = Field(unique=True)  # type: ignore
+        age: int
+
+    User.create_table()
+
+    User(name="John", age=30).save()
+
+    with pytest.raises(Exception):
+        User(name="John", age=20).save()

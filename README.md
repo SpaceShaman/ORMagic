@@ -92,6 +92,7 @@ Post(title="Hello", content="World", user=User(name="Alice")).save()
 
 ```python
 from ormagic import DBModel
+from pydantic import Field
 
 class User(DBModel):
     name: str
@@ -99,14 +100,41 @@ class User(DBModel):
 class Post(DBModel):
     title: str
     content: str
-    user: User(default=None, on_delete="SET_NULL") # Define a foreign key with on_delete=SET_NULL
-    user: User(on_delete="RESTRICT") # Define a foreign key with on_delete=RESTRICT
-    user: User(default=1, on_delete="SET_DEFAULT") # Define a foreign key with on_delete=SET_DEFAULT
-    user: User(on_delete="NO_ACTION") # Define a foreign key with on_delete=NO_ACTION
-    user: User(on_delete="CASCADE") # Define a foreign key with on_delete=CASCADE
+    user: User = Field(default=None, on_delete="SET_NULL") # Define a foreign key with on_delete=SET_NULL
+    user: User = Field(on_delete="RESTRICT") # Define a foreign key with on_delete=RESTRICT
+    user: User = Field(default=1, on_delete="SET_DEFAULT") # Define a foreign key with on_delete=SET_DEFAULT
+    user: User = Field(on_delete="NO_ACTION") # Define a foreign key with on_delete=NO_ACTION
+    user: User = Field(on_delete="CASCADE") # Define a foreign key with on_delete=CASCADE
 
 User.create_table()
 Post.create_table()
+```
+
+### Unique constraints
+
+To define a unique constraint, use the `unique` parameter set to `True` in the Pydantic field.
+
+```python
+from ormagic import DBModel
+from pydantic import Field
+
+class User(DBModel):
+    name: str
+    email: str = Field(unique=True)
+```
+
+You can also use the `unique` parameter to define one to one relationships between tables.
+
+```python
+from ormagic import DBModel
+from pydantic import Field
+
+class User(DBModel):
+    name: str
+
+class UserProfile(DBModel):
+    user: User = Field(unique=True)
+    bio: str
 ```
 
 ## Features and Roadmap
@@ -129,8 +157,9 @@ Post.create_table()
       - [x] Restrict
       - [x] Set default
       - [x] No action
-  - [ ] One-to-one
+  - [x] One-to-one
   - [ ] Many-to-many
+- [x] Unique constraints
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations

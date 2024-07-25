@@ -1,7 +1,7 @@
 from ormagic.models import DBModel
 
 
-def test_create_instance_from_data():
+def test_create_instance_from_data(db_cursor):
     class User(DBModel):
         name: str
         age: int
@@ -13,7 +13,7 @@ def test_create_instance_from_data():
     assert user.age == 25
 
 
-def test_create_instance_from_data_with_foreign_key():
+def test_create_instance_from_data_with_foreign_key(db_cursor):
     class User(DBModel):
         name: str
         age: int
