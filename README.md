@@ -178,7 +178,8 @@ def read_user(id: int):
 
 @app.put("/users/{id}")
 def update_user(id: int, user: User):
-    return user(id=id).save()
+    user.id = id
+    return user.save()
 
 @app.delete("/users/{id}")
 def delete_user(id: int):
