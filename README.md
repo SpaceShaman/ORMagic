@@ -13,7 +13,7 @@
 
 The main goal of ORMagic is to provide a simple and easy-to-use ORM for [Python](https://www.python.org/), that is easy to understand and use, while still providing the necessary features to interact with a database.
 The library is in the early stages of development, so it is not recommended to use it in production.
-Is based on the [Pydantic](https://docs.pydantic.dev) model and extends it with the ability ti save, read, update and delete data from a [SQLite](https://www.sqlite.org) database.
+Is based on the [Pydantic](https://docs.pydantic.dev) model and extends it with the ability to save, read, update and delete data from a [SQLite](https://www.sqlite.org) database.
 
 ## Installation
 
