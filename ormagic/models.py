@@ -1,6 +1,7 @@
-from typing import Self, Type, get_args
+from typing import Literal, Self, Type, get_args
 
 from pydantic import BaseModel
+from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
 from .sql_utils import convert_to_sql_type, execute_sql
@@ -31,18 +32,7 @@ class DBModel(BaseModel):
             ):
                 column_def += " UNIQUE"
             if foreign_model := cls._get_foreign_key_model(field_name):
-                if not field_info.json_schema_extra:
-                    action = "CASCADE"
-                elif field_info.json_schema_extra.get("on_delete") == "SET_NULL":
-                    action = "SET NULL"
-                elif field_info.json_schema_extra.get("on_delete") == "RESTRICT":
-                    action = "RESTRICT"
-                elif field_info.json_schema_extra.get("on_delete") == "SET_DEFAULT":
-                    action = "SET DEFAULT"
-                elif field_info.json_schema_extra.get("on_delete") == "NO_ACTION":
-                    action = "NO ACTION"
-                else:
-                    action = "CASCADE"
+                action = cls._get_on_delete_action(field_info)
                 column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
             columns.append(column_def)
 
@@ -149,3 +139,19 @@ class DBModel(BaseModel):
             return annotation
         if types_tuple and issubclass(types_tuple[0], DBModel):
             return types_tuple[0]
+
+    @classmethod
+    def _get_on_delete_action(
+        cls, field_info: FieldInfo
+    ) -> Literal["CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT", "NO ACTION"]:
+        if not field_info.json_schema_extra:
+            return "CASCADE"
+        if field_info.json_schema_extra.get("on_delete") == "SET NULL":
+            return "SET NULL"
+        if field_info.json_schema_extra.get("on_delete") == "RESTRICT":
+            return "RESTRICT"
+        if field_info.json_schema_extra.get("on_delete") == "SET DEFAULT":
+            return "SET DEFAULT"
+        if field_info.json_schema_extra.get("on_delete") == "NO ACTION":
+            return "NO ACTION"
+        return "CASCADE"

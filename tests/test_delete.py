@@ -82,7 +82,7 @@ def test_delete_object_with_foreign_key_cascade_by_default(prepare_db, db_cursor
 def test_delete_object_with_foreign_key_set_null(prepare_db, db_cursor):
     class Post(DBModel):
         title: str
-        user: User = Field(default=None, on_delete="SET_NULL")  # type: ignore
+        user: User = Field(default=None, on_delete="SET NULL")  # type: ignore
 
     Post.create_table()
     user = User(name="John", age=30).save()
@@ -123,7 +123,7 @@ def test_delete_object_with_foreign_key_restrict(prepare_db, db_cursor):
 def test_delete_object_with_foreign_key_set_default(prepare_db, db_cursor):
     class Post(DBModel):
         title: str
-        user: User = Field(default=1, on_delete="SET_DEFAULT")  # type: ignore
+        user: User = Field(default=1, on_delete="SET DEFAULT")  # type: ignore
 
     Post.create_table()
     User(name="Jane", age=25).save()
@@ -144,7 +144,7 @@ def test_delete_object_with_foreign_key_set_default(prepare_db, db_cursor):
 def test_delete_object_with_foreign_key_no_action(prepare_db, db_cursor):
     class Post(DBModel):
         title: str
-        user: User = Field(on_delete="NO_ACTION")  # type: ignore
+        user: User = Field(on_delete="NO ACTION")  # type: ignore
 
     Post.create_table()
     user = User(name="John", age=30).save()
