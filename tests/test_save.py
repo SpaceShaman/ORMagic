@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlite3 import IntegrityError
 from typing import Optional
 
 import pytest
@@ -207,7 +208,7 @@ def test_save_object_with_optional_foreign_key_set(db_cursor):
     assert post.user.age == 30  # type: ignore
 
 
-def test_try_save_two_objects_with_same_values_for_unique_field():
+def test_try_save_two_objects_with_same_values_for_unique_field(db_cursor):
     class User(DBModel):
         name: str = Field(unique=True)  # type: ignore
         age: int
@@ -216,5 +217,5 @@ def test_try_save_two_objects_with_same_values_for_unique_field():
 
     User(name="John", age=30).save()
 
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         User(name="John", age=20).save()

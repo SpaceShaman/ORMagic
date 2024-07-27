@@ -12,10 +12,14 @@ def get_cursor() -> Cursor:
 
 
 def execute_sql(sql: str) -> Cursor:
-    cursor = get_cursor()
-    cursor = cursor.execute(sql)
-    cursor.connection.commit()
-    return cursor
+    try:
+        cursor = get_cursor()
+        cursor = cursor.execute(sql)
+        cursor.connection.commit()
+        return cursor
+    except Exception as e:
+        cursor.connection.close()
+        raise e
 
 
 def convert_to_sql_type(annotation: Any) -> Literal["INTEGER", "TEXT"]:
