@@ -221,7 +221,15 @@ def delete_user(id: int):
   - [ ] Many-to-many
 - [x] Unique constraints
 - [x] Remove table
-- [x] Filter data and retrieve multiple records
+- [ ] Filter data and retrieve multiple records
+  - [x] Equal
+  - [ ] Not equal
+  - [ ] Greater than
+  - [ ] Greater than or equal
+  - [ ] Less than
+  - [ ] Less than or equal
+  - [ ] Contains
+  - [ ] Pagination
 - [x] Read all data from the database
 - [ ] Update table schema
 - [ ] Custom primary key
