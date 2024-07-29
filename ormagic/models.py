@@ -96,6 +96,7 @@ class DBModel(BaseModel):
         cursor = execute_sql(sql)
         cursor.connection.close()
         self.id = cursor.lastrowid
+        self._insert_many_to_many()
         return self
 
     def _update(self) -> Self:
@@ -112,6 +113,22 @@ class DBModel(BaseModel):
             raise ObjectNotFound
         return self
 
+    def _insert_many_to_many(self) -> None:
+        related_objects = []
+        for field_name, field_info in self.model_fields.items():
+            if self._is_many_to_many_field(field_info.annotation):
+                related_objects.extend(iter(getattr(self, field_name)))
+        for related_object in related_objects:
+            intermediate_table_name = self._get_intermediate_table_name(
+                related_object.__class__.__name__.lower()
+            )
+            if not related_object.id:
+                related_object = related_object.save()
+            cursor = execute_sql(
+                f"INSERT INTO {intermediate_table_name} ({self.__class__.__name__.lower()}_id, {related_object.__class__.__name__.lower()}_id) VALUES ({self.id}, {related_object.id})"
+            )
+            cursor.connection.close()
+
     @classmethod
     def _create_instance_from_data(cls, data: Iterable) -> Self:
         data_dict = dict(zip(cls.model_fields.keys(), data))
@@ -126,7 +143,9 @@ class DBModel(BaseModel):
         prepared_data = {}
         for key, value in model_dict.items():
             if foreign_model := self._get_foreign_key_model(key):
-                if not value:
+                if isinstance(value, list):
+                    continue
+                elif not value:
                     prepared_data[key] = None
                 elif not value["id"]:
                     value = foreign_model(**value).save()
@@ -199,8 +218,8 @@ class DBModel(BaseModel):
             "id INTEGER PRIMARY KEY, "
             f"{table_name}_id INTEGER, "
             f"{related_table_name}_id INTEGER, "
-            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
-            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
+            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE ON UPDATE CASCADE, "
+            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE ON UPDATE CASCADE)"
         )
 
     @classmethod
