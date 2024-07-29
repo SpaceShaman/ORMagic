@@ -22,34 +22,8 @@ class DBModel(BaseModel):
             if field_name == "id":
                 continue
             table_name = cls.__name__.lower()
-            if (
-                hasattr(field_info.annotation, "__origin__")
-                and getattr(field_info.annotation, "__origin__") is list
-                and issubclass(getattr(field_info.annotation, "__args__")[0], DBModel)
-            ):
-                related_table_name = getattr(field_info.annotation, "__args__")[
-                    0
-                ].__name__.lower()
-                # Check if the middleware table exist and create it if not
-                cursor = execute_sql(
-                    f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
-                )
-                if cursor.fetchone()[0] == 1:
-                    continue
-                cursor = execute_sql(
-                    f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
-                )
-                if cursor.fetchone()[0] == 1:
-                    continue
-                # Create middleware table for many-to-many relationship
-                execute_sql(
-                    f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
-                    "id INTEGER PRIMARY KEY, "
-                    f"{table_name}_id INTEGER, "
-                    f"{related_table_name}_id INTEGER, "
-                    f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
-                    f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
-                )
+            if cls._is_many_to_many_field(field_info.annotation):
+                cls._create_intermediate_table(field_info)
                 continue
             field_type = convert_to_sql_type(field_info.annotation)
             column_def = f"{field_name} {field_type}"
@@ -205,3 +179,38 @@ class DBModel(BaseModel):
         data: tuple | list[tuple] = cursor.fetchall() if fetchall else cursor.fetchone()
         cursor.connection.close()
         return data
+
+    @classmethod
+    def _is_many_to_many_field(cls, annotation: Any) -> bool:
+        return bool(
+            hasattr(annotation, "__origin__")
+            and getattr(annotation, "__origin__") is list
+            and issubclass(getattr(annotation, "__args__")[0], DBModel)
+        )
+
+    @classmethod
+    def _create_intermediate_table(cls, field_info: FieldInfo) -> None:
+        table_name = cls.__name__.lower()
+        related_table_name = getattr(field_info.annotation, "__args__")[
+            0
+        ].__name__.lower()
+        # Check if the intermediate table already exists
+        cursor = execute_sql(
+            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
+        )
+        if cursor.fetchone()[0] == 1:
+            return
+        cursor = execute_sql(
+            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
+        )
+        if cursor.fetchone()[0] == 1:
+            return
+        # Create the intermediate table if it doesn't exist for many-to-many relationships
+        execute_sql(
+            f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
+            "id INTEGER PRIMARY KEY, "
+            f"{table_name}_id INTEGER, "
+            f"{related_table_name}_id INTEGER, "
+            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
+            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
+        )
