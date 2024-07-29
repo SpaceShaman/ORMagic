@@ -79,9 +79,7 @@ class DBModel(BaseModel):
 
     def delete(self) -> None:
         """Delete the object from the database."""
-        cursor = execute_sql(
-            f"DELETE FROM {self.__class__.__name__.lower()} WHERE id={self.id}"
-        )
+        cursor = execute_sql(f"DELETE FROM {self.table_name} WHERE id={self.id}")
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
@@ -92,11 +90,11 @@ class DBModel(BaseModel):
         values = ", ".join(
             f"'{value}'" if value else "NULL" for value in prepared_data.values()
         )
-        sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
+        sql = f"INSERT INTO {self.table_name} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
         self.id = cursor.lastrowid
-        self._insert_many_to_many()
+        self._update_many_to_many_intermediate_table()
         return self
 
     def _update(self) -> Self:
@@ -106,26 +104,31 @@ class DBModel(BaseModel):
             for field, value in prepared_data.items()
         )
         cursor = execute_sql(
-            f"UPDATE {self.__class__.__name__.lower()} SET {fields} WHERE id={self.id}"
+            f"UPDATE {self.table_name} SET {fields} WHERE id={self.id}"
         )
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
+        self._update_many_to_many_intermediate_table()
         return self
 
-    def _insert_many_to_many(self) -> None:
+    def _update_many_to_many_intermediate_table(self) -> None:
         related_objects = []
         for field_name, field_info in self.model_fields.items():
             if self._is_many_to_many_field(field_info.annotation):
                 related_objects.extend(iter(getattr(self, field_name)))
+        if not related_objects:
+            return
+        related_table_name = related_objects[0].__class__.__name__.lower()
+        intermediate_table_name = self._get_intermediate_table_name(related_table_name)
+        cursor = execute_sql(
+            f"DELETE FROM {intermediate_table_name} WHERE {self.table_name}_id={self.id}"
+        )
         for related_object in related_objects:
-            intermediate_table_name = self._get_intermediate_table_name(
-                related_object.__class__.__name__.lower()
-            )
             if not related_object.id:
                 related_object = related_object.save()
             cursor = execute_sql(
-                f"INSERT INTO {intermediate_table_name} ({self.__class__.__name__.lower()}_id, {related_object.__class__.__name__.lower()}_id) VALUES ({self.id}, {related_object.id})"
+                f"INSERT INTO {intermediate_table_name} ({self.table_name}_id, {related_table_name}_id) VALUES ({self.id}, {related_object.id})"
             )
             cursor.connection.close()
 
@@ -153,8 +156,6 @@ class DBModel(BaseModel):
                     getattr(self, key).id = value.id
                 else:
                     prepared_data[key] = value["id"]
-            elif not value:
-                prepared_data[key] = None
             else:
                 prepared_data[key] = value
         return prepared_data
@@ -218,8 +219,8 @@ class DBModel(BaseModel):
             "id INTEGER PRIMARY KEY, "
             f"{table_name}_id INTEGER, "
             f"{related_table_name}_id INTEGER, "
-            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE ON UPDATE CASCADE, "
-            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE ON UPDATE CASCADE)"
+            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
+            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
         )
 
     @classmethod
@@ -236,3 +237,7 @@ class DBModel(BaseModel):
         if cursor.fetchone()[0] == 1:
             return f"{related_table_name}_{table_name}"
         return None
+
+    @property
+    def table_name(self) -> str:
+        return self.__class__.__name__.lower()
