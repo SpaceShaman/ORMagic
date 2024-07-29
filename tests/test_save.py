@@ -183,6 +183,27 @@ def test_save_object_with_optional_foreign_key_not_set(db_cursor):
     assert post.user is None
 
 
+def test_overide_object_with_optional_foreign_key_not_set(db_cursor):
+    class User(DBModel):
+        name: str
+
+    class Post(DBModel):
+        title: str
+        user: User | None = None
+
+    User.create_table()
+    Post.create_table()
+
+    user = User(name="John").save()
+    post = Post(title="First post", user=user).save()
+    post.user = None
+    post.save()
+
+    res = db_cursor.execute("SELECT * FROM post")
+    data = res.fetchall()
+    assert data == [(1, "First post", None)]
+
+
 def test_save_object_with_optional_foreign_key_set(db_cursor):
     class User(DBModel):
         name: str
