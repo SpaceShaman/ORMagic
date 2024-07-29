@@ -46,7 +46,9 @@ class DBModel(BaseModel):
                     f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
                     "id INTEGER PRIMARY KEY, "
                     f"{table_name}_id INTEGER, "
-                    f"{related_table_name}_id INTEGER)"
+                    f"{related_table_name}_id INTEGER, "
+                    f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
+                    f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
                 )
                 continue
             field_type = convert_to_sql_type(field_info.annotation)
