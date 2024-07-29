@@ -139,31 +139,6 @@ class DBModel(BaseModel):
                 data_dict[key] = foreign_model.get(id=value)
         return cls(**data_dict)
 
-    # def _prepare_values_to_insert(self, model_dict: dict) -> str:
-    #     values = ""
-    #     for key, value in model_dict.items():
-    #         if not value:
-    #             values += "NULL, "
-    #         elif foreign_model := self._get_foreign_key_model(key):
-    #             if not value["id"]:
-    #                 value = foreign_model(**value).save()
-    #                 values += f"'{value.id}', "
-    #                 getattr(self, key).id = value.id
-    #             else:
-    #                 values += f"'{value['id']}', "
-    #         else:
-    #             values += f"'{value}', "
-    #     return values[:-2]
-
-    # @classmethod
-    # def _prepare_fields_to_update(cls, model_dict: dict) -> str:
-    #     return ", ".join(
-    #         f"{field}='{value.get('id')}'"
-    #         if isinstance(value, dict)
-    #         else f"{field}='{value}'"
-    #         for field, value in model_dict.items()
-    #     )
-
     def _prepare_values_to_insert(self, model_dict: dict) -> dict[str, Any]:
         values = {}
         for key, value in model_dict.items():
