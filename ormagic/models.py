@@ -87,7 +87,7 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     def _insert(self) -> Self:
-        prepared_data = self._prepare_values_to_insert(self.model_dump(exclude={"id"}))
+        prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
         fields = ", ".join(prepared_data.keys())
         values = ", ".join(
             f"'{value}'" if value else "NULL" for value in prepared_data.values()
@@ -99,7 +99,7 @@ class DBModel(BaseModel):
         return self
 
     def _update(self) -> Self:
-        prepared_data = self._prepare_values_to_insert(self.model_dump(exclude={"id"}))
+        prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
         fields = ", ".join(
             f"{field}='{value}'" if value else f"{field}=NULL"
             for field, value in prepared_data.items()
@@ -122,23 +122,23 @@ class DBModel(BaseModel):
                 data_dict[key] = foreign_model.get(id=value)
         return cls(**data_dict)
 
-    def _prepare_values_to_insert(self, model_dict: dict) -> dict[str, Any]:
-        values = {}
+    def _prepare_data_to_insert(self, model_dict: dict) -> dict[str, Any]:
+        prepared_data = {}
         for key, value in model_dict.items():
             if foreign_model := self._get_foreign_key_model(key):
                 if not value:
-                    values[key] = None
+                    prepared_data[key] = None
                 elif not value["id"]:
                     value = foreign_model(**value).save()
-                    values[key] = value.id
+                    prepared_data[key] = value.id
                     getattr(self, key).id = value.id
                 else:
-                    values[key] = value["id"]
+                    prepared_data[key] = value["id"]
             elif not value:
-                values[key] = None
+                prepared_data[key] = None
             else:
-                values[key] = value
-        return values
+                prepared_data[key] = value
+        return prepared_data
 
     @classmethod
     def _get_foreign_key_model(cls, field_name: str) -> Type["DBModel"] | None:

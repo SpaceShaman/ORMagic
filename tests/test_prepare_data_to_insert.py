@@ -8,7 +8,7 @@ def test_prepare_values_to_insert():
 
     user = User(name="John", age=25)
 
-    values = user._prepare_values_to_insert({"name": "John", "age": 25})
+    values = user._prepare_data_to_insert({"name": "John", "age": 25})
 
     assert values == {"age": 25, "name": "John"}
 
@@ -28,6 +28,6 @@ def test_prepare_values_to_insert_with_foreign_key():
 
     post = Post(title="First post", user=User.get(id=1))
 
-    values = post._prepare_values_to_insert({"title": "First post", "user": {"id": 1}})
+    values = post._prepare_data_to_insert({"title": "First post", "user": {"id": 1}})
 
     assert values == {"title": "First post", "user": 1}
