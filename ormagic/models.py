@@ -21,6 +21,34 @@ class DBModel(BaseModel):
         for field_name, field_info in cls.model_fields.items():
             if field_name == "id":
                 continue
+            table_name = cls.__name__.lower()
+            if (
+                hasattr(field_info.annotation, "__origin__")
+                and getattr(field_info.annotation, "__origin__") is list
+                and issubclass(getattr(field_info.annotation, "__args__")[0], DBModel)
+            ):
+                related_table_name = getattr(field_info.annotation, "__args__")[
+                    0
+                ].__name__.lower()
+                # Check if the middleware table exist and create it if not
+                cursor = execute_sql(
+                    f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
+                )
+                if cursor.fetchone()[0] == 1:
+                    continue
+                cursor = execute_sql(
+                    f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
+                )
+                if cursor.fetchone()[0] == 1:
+                    continue
+                # Create middleware table for many-to-many relationship
+                execute_sql(
+                    f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
+                    "id INTEGER PRIMARY KEY, "
+                    f"{table_name}_id INTEGER, "
+                    f"{related_table_name}_id INTEGER)"
+                )
+                continue
             field_type = convert_to_sql_type(field_info.annotation)
             column_def = f"{field_name} {field_type}"
             if field_info.default not in (PydanticUndefined, None):
@@ -36,9 +64,7 @@ class DBModel(BaseModel):
                 column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
             columns.append(column_def)
 
-        sql = (
-            f"CREATE TABLE IF NOT EXISTS {cls.__name__.lower()} ({', '.join(columns)})"
-        )
+        sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})"
         cursor = execute_sql(sql)
         cursor.connection.close()
 

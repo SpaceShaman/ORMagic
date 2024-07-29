@@ -78,3 +78,39 @@ def test_create_db_tables_with_one_to_many_relationship(db_cursor):
         (1, "title", "TEXT", 1, None, 0),
         (2, "user", "INTEGER", 1, None, 0),
     ]
+
+
+def test_create_db_tables_with_many_to_many_relationship(db_cursor):
+    class User(DBModel):
+        name: str
+        groups: list["Grade"]
+
+    class Grade(DBModel):
+        name: str
+        users: list[User]
+
+    User.create_table()
+    Grade.create_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]
+    res = db_cursor.execute("PRAGMA table_info(grade)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]
+    res = db_cursor.execute("PRAGMA table_info(user_grade)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "user_id", "INTEGER", 0, None, 0),
+        (2, "grade_id", "INTEGER", 0, None, 0),
+    ]
+    res = db_cursor.execute("PRAGMA table_info(grade_user)")
+    data = res.fetchall()
+    assert data == []
