@@ -87,18 +87,40 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     def _insert(self) -> Self:
-        model_dict = self.model_dump(exclude={"id"})
-        fields = ", ".join(model_dict.keys())
-        values = self._prepare_values_to_insert(model_dict)
+        intermidiate_fields = [
+            field_name
+            for field_name, field_info in self.model_fields.items()
+            if self._is_many_to_many_field(field_info.annotation)
+        ]
+        model_dict = self.model_dump(exclude={"id", *intermidiate_fields})
+
+        prepared_data = self._prepare_values_to_insert(model_dict)
+        fields = ", ".join(prepared_data.keys())
+        values = ", ".join(f"'{value}'" for value in prepared_data.values())
         sql = f"INSERT INTO {self.__class__.__name__.lower()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
         self.id = cursor.lastrowid
+        for field_name in intermidiate_fields:
+            related_table_name = getattr(
+                self.__class__.model_fields[field_name].annotation, "__args__"
+            )[0].__name__.lower()
+            intermediate_table_name = self._get_intermediate_table_name(
+                related_table_name
+            )
+            related_objects = getattr(self, field_name)
+            for related_object in related_objects:
+                execute_sql(
+                    f"INSERT INTO {intermediate_table_name} ({self.__class__.__name__.lower()}_id, {related_table_name}_id) VALUES ({self.id}, {related_object.id})"
+                )
         return self
 
     def _update(self) -> Self:
         model_dict = self.model_dump(exclude={"id"})
-        fields = self._prepare_fields_to_update(model_dict)
+        prepared_data = self._prepare_values_to_insert(model_dict)
+        fields = ", ".join(
+            f"{field}='{value}'" for field, value in prepared_data.items()
+        )
         cursor = execute_sql(
             f"UPDATE {self.__class__.__name__.lower()} SET {fields} WHERE id={self.id}"
         )
@@ -117,30 +139,48 @@ class DBModel(BaseModel):
                 data_dict[key] = foreign_model.get(id=value)
         return cls(**data_dict)
 
-    def _prepare_values_to_insert(self, model_dict: dict) -> str:
-        values = ""
+    # def _prepare_values_to_insert(self, model_dict: dict) -> str:
+    #     values = ""
+    #     for key, value in model_dict.items():
+    #         if not value:
+    #             values += "NULL, "
+    #         elif foreign_model := self._get_foreign_key_model(key):
+    #             if not value["id"]:
+    #                 value = foreign_model(**value).save()
+    #                 values += f"'{value.id}', "
+    #                 getattr(self, key).id = value.id
+    #             else:
+    #                 values += f"'{value['id']}', "
+    #         else:
+    #             values += f"'{value}', "
+    #     return values[:-2]
+
+    # @classmethod
+    # def _prepare_fields_to_update(cls, model_dict: dict) -> str:
+    #     return ", ".join(
+    #         f"{field}='{value.get('id')}'"
+    #         if isinstance(value, dict)
+    #         else f"{field}='{value}'"
+    #         for field, value in model_dict.items()
+    #     )
+
+    def _prepare_values_to_insert(self, model_dict: dict) -> dict[str, Any]:
+        values = {}
         for key, value in model_dict.items():
-            if not value:
-                values += "NULL, "
-            elif foreign_model := self._get_foreign_key_model(key):
+            if foreign_model := self._get_foreign_key_model(key):
+                if not value:
+                    continue
                 if not value["id"]:
                     value = foreign_model(**value).save()
-                    values += f"'{value.id}', "
+                    values[key] = value.id
                     getattr(self, key).id = value.id
                 else:
-                    values += f"'{value['id']}', "
+                    values[key] = value["id"]
+            elif not value:
+                values[key] = None
             else:
-                values += f"'{value}', "
-        return values[:-2]
-
-    @classmethod
-    def _prepare_fields_to_update(cls, model_dict: dict) -> str:
-        return ", ".join(
-            f"{field}='{value.get('id')}'"
-            if isinstance(value, dict)
-            else f"{field}='{value}'"
-            for field, value in model_dict.items()
-        )
+                values[key] = value
+        return values
 
     @classmethod
     def _get_foreign_key_model(cls, field_name: str) -> Type["DBModel"] | None:
@@ -195,15 +235,7 @@ class DBModel(BaseModel):
             0
         ].__name__.lower()
         # Check if the intermediate table already exists
-        cursor = execute_sql(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
-        )
-        if cursor.fetchone()[0] == 1:
-            return
-        cursor = execute_sql(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
-        )
-        if cursor.fetchone()[0] == 1:
+        if cls._get_intermediate_table_name(related_table_name):
             return
         # Create the intermediate table if it doesn't exist for many-to-many relationships
         execute_sql(
@@ -214,3 +246,18 @@ class DBModel(BaseModel):
             f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
             f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
         )
+
+    @classmethod
+    def _get_intermediate_table_name(cls, related_table_name: str) -> str | None:
+        table_name = cls.__name__.lower()
+        cursor = execute_sql(
+            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
+        )
+        if cursor.fetchone()[0] == 1:
+            return f"{table_name}_{related_table_name}"
+        cursor = execute_sql(
+            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
+        )
+        if cursor.fetchone()[0] == 1:
+            return f"{related_table_name}_{table_name}"
+        return None

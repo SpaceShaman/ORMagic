@@ -10,7 +10,7 @@ def test_prepare_values_to_insert():
 
     values = user._prepare_values_to_insert({"name": "John", "age": 25})
 
-    assert values == "'John', '25'"
+    assert values == {"age": 25, "name": "John"}
 
 
 def test_prepare_values_to_insert_with_foreign_key():
@@ -30,4 +30,4 @@ def test_prepare_values_to_insert_with_foreign_key():
 
     values = post._prepare_values_to_insert({"title": "First post", "user": {"id": 1}})
 
-    assert values == "'First post', '1'"
+    assert values == {"title": "First post", "user": 1}
