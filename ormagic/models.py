@@ -1,3 +1,4 @@
+from sqlite3 import Cursor
 from typing import Any, Literal, Self, Type, get_args
 
 from pydantic import BaseModel
@@ -168,18 +169,17 @@ class DBModel(BaseModel):
         return "CASCADE"
 
     @classmethod
-    def _fetchone_raw_data(cls, **kwargs) -> dict[str, Any]:
+    def _fetch_raw_data(cls, **kwargs) -> Cursor:
         conditions = " AND ".join(
             f"{field}='{value}'" for field, value in kwargs.items()
         )
         sql = f"SELECT * FROM {cls.__name__.lower()}"
         if conditions:
             sql += f" WHERE {conditions}"
-        cursor = execute_sql(sql)
-        data = cursor.fetchone()
-        cursor.connection.close()
-        if not data:
-            raise ObjectNotFound
+        return execute_sql(sql)
+
+    @classmethod
+    def _process_raw_data(cls, data: tuple) -> dict[str, Any]:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, value in data_dict.items():
             if not value:
@@ -189,24 +189,20 @@ class DBModel(BaseModel):
         return data_dict
 
     @classmethod
-    def _fetchall_raw_data(cls, **kwargs) -> list[dict[str, Any]]:
-        conditions = " AND ".join(
-            f"{field}='{value}'" for field, value in kwargs.items()
-        )
-        sql = f"SELECT * FROM {cls.__name__.lower()}"
-        if conditions:
-            sql += f" WHERE {conditions}"
-        cursor = execute_sql(sql)
-        data = cursor.fetchall()
+    def _fetchone_raw_data(cls, **kwargs) -> dict[str, Any]:
+        cursor = cls._fetch_raw_data(**kwargs)
+        data = cursor.fetchone()
         cursor.connection.close()
-        data_dicts = [dict(zip(cls.model_fields.keys(), row)) for row in data]
-        for data_dict in data_dicts:
-            for key, value in data_dict.items():
-                if not value:
-                    continue
-                elif foreign_model := cls._get_foreign_key_model(key):
-                    data_dict[key] = foreign_model._fetchone_raw_data(id=value)
-        return data_dicts
+        if not data:
+            raise ObjectNotFound
+        return cls._process_raw_data(data)
+
+    @classmethod
+    def _fetchall_raw_data(cls, **kwargs) -> list[dict[str, Any]]:
+        cursor = cls._fetch_raw_data(**kwargs)
+        data_list = cursor.fetchall()
+        cursor.connection.close()
+        return [cls._process_raw_data(data) for data in data_list]
 
     @classmethod
     def _is_many_to_many_field(cls, annotation: Any) -> bool:
