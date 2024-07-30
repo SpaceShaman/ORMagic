@@ -237,6 +237,8 @@ class DBModel(BaseModel):
         related_table_name = getattr(field_info.annotation, "__args__")[
             0
         ].__name__.lower()
+        if cls._get_intermediate_table_name(related_table_name):
+            return
         execute_sql(
             f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
             "id INTEGER PRIMARY KEY, "

@@ -164,7 +164,6 @@ To define a many-to-many relationship, use list of other model as a field in the
 ```python
 from ormagic import DBModel
 
-
 class Player(DBModel):
     name: str
 

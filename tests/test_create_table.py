@@ -81,12 +81,13 @@ def test_create_db_tables_with_one_to_many_relationship(db_cursor):
 
 
 def test_create_db_tables_with_many_to_many_relationship(db_cursor):
-    class Grade(DBModel):
-        name: str
-
     class User(DBModel):
         name: str
-        groups: list[Grade] = []
+        groups: list["Grade"] = []
+
+    class Grade(DBModel):
+        name: str
+        users: list["User"] = []
 
     User.create_table()
     Grade.create_table()
