@@ -1,9 +1,9 @@
 from sqlite3 import IntegrityError
 
 import pytest
-from pydantic import Field
 
-from ormagic.models import DBModel, ObjectNotFound
+from ormagic import DBField, DBModel
+from ormagic.models import ObjectNotFound
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def test_delete_object_with_foreign_key_cascade(prepare_db, db_cursor):
 
     class Post(DBModel):
         title: str
-        user: User = Field(on_delete="CASCADE")  # type: ignore
+        user: User = DBField(on_delete="CASCADE")
 
     Post.create_table()
     user = User(name="John", age=30).save()
@@ -82,7 +82,7 @@ def test_delete_object_with_foreign_key_cascade_by_default(prepare_db, db_cursor
 def test_delete_object_with_foreign_key_set_null(prepare_db, db_cursor):
     class Post(DBModel):
         title: str
-        user: User = Field(default=None, on_delete="SET NULL")  # type: ignore
+        user: User = DBField(default=None, on_delete="SET NULL")
 
     Post.create_table()
     user = User(name="John", age=30).save()
@@ -102,7 +102,7 @@ def test_delete_object_with_foreign_key_set_null(prepare_db, db_cursor):
 def test_delete_object_with_foreign_key_restrict(prepare_db, db_cursor):
     class Post(DBModel):
         title: str
-        user: User = Field(on_delete="RESTRICT")  # type: ignore
+        user: User = DBField(on_delete="RESTRICT")
 
     Post.create_table()
     user = User(name="John", age=30).save()
@@ -123,7 +123,7 @@ def test_delete_object_with_foreign_key_restrict(prepare_db, db_cursor):
 def test_delete_object_with_foreign_key_set_default(prepare_db, db_cursor):
     class Post(DBModel):
         title: str
-        user: User = Field(default=1, on_delete="SET DEFAULT")  # type: ignore
+        user: User = DBField(default=1, on_delete="SET DEFAULT")
 
     Post.create_table()
     User(name="Jane", age=25).save()
@@ -144,7 +144,7 @@ def test_delete_object_with_foreign_key_set_default(prepare_db, db_cursor):
 def test_delete_object_with_foreign_key_no_action(prepare_db, db_cursor):
     class Post(DBModel):
         title: str
-        user: User = Field(on_delete="NO ACTION")  # type: ignore
+        user: User = DBField(on_delete="NO ACTION")
 
     Post.create_table()
     user = User(name="John", age=30).save()

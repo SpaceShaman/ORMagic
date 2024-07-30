@@ -1,14 +1,13 @@
 from sqlite3 import IntegrityError, OperationalError
 
 import pytest
-from pydantic import Field
 
-from ormagic import DBModel
+from ormagic import DBField, DBModel
 
 
 def test_save_object_after_save_integrity_error(db_cursor):
     class User(DBModel):
-        name: str = Field(unique=True)  # type: ignore
+        name: str = DBField(unique=True)
         age: int
 
     User.create_table()
@@ -30,7 +29,7 @@ def test_save_object_after_save_integrity_error(db_cursor):
 
 def test_save_object_after_delete_operational_error(db_cursor):
     class User(DBModel):
-        name: str = Field(unique=True)  # type: ignore
+        name: str = DBField(unique=True)
         age: int
 
     User.create_table()

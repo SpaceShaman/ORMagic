@@ -97,8 +97,7 @@ Post(title="Hello", content="World", user=User(name="Alice")).save()
 #### Define foreign key with custom on_delete
 
 ```python
-from ormagic import DBModel
-from pydantic import Field
+from ormagic import DBModel, DBField
 
 class User(DBModel):
     name: str
@@ -106,11 +105,11 @@ class User(DBModel):
 class Post(DBModel):
     title: str
     content: str
-    user: User = Field(on_delete="CASCADE")
-    user: User = Field(on_delete="RESTRICT")
-    user: User = Field(on_delete="NO ACTION")
-    user: User = Field(on_delete="SET DEFAULT", default=1)
-    user: User = Field(on_delete="SET NULL", default=None)
+    user: User = DBField(on_delete="CASCADE")
+    user: User = DBField(on_delete="RESTRICT")
+    user: User = DBField(on_delete="NO ACTION")
+    user: User = DBField(on_delete="SET DEFAULT", default=1)
+    user: User = DBField(on_delete="SET NULL", default=None)
 
 User.create_table()
 Post.create_table()
@@ -121,25 +120,23 @@ Post.create_table()
 To define a unique constraint, use the `unique` parameter set to `True` in the Pydantic field.
 
 ```python
-from ormagic import DBModel
-from pydantic import Field
+from ormagic import DBModel, DBField
 
 class User(DBModel):
     name: str
-    email: str = Field(unique=True)
+    email: str = DBField(unique=True)
 ```
 
 You can also use the `unique` parameter to define one to one relationships between tables.
 
 ```python
-from ormagic import DBModel
-from pydantic import Field
+from ormagic import DBModel, DBField
 
 class User(DBModel):
     name: str
 
 class UserProfile(DBModel):
-    user: User = Field(unique=True)
+    user: User = DBField(unique=True)
     bio: str
 ```
 

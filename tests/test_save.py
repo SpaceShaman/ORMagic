@@ -3,9 +3,9 @@ from sqlite3 import IntegrityError
 from typing import Optional
 
 import pytest
-from pydantic import Field
 
-from ormagic.models import DBModel, ObjectNotFound
+from ormagic import DBField, DBModel
+from ormagic.models import ObjectNotFound
 
 
 @pytest.fixture
@@ -231,7 +231,7 @@ def test_save_object_with_optional_foreign_key_set(db_cursor):
 
 def test_try_save_two_objects_with_same_values_for_unique_field(db_cursor):
     class User(DBModel):
-        name: str = Field(unique=True)  # type: ignore
+        name: str = DBField(unique=True)
         age: int
 
     User.create_table()
