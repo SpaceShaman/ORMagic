@@ -108,3 +108,26 @@ def test_featchall_raw_data_with_foreign_key(db_cursor):
         in [{"id": 1, "name": "Barcelona"}, {"id": 2, "name": "Real Madrid"}]
         for row in rows_data
     )
+
+
+def test_featchall_raw_data_with_optional_foreign_key_not_set(db_cursor):
+    class Team(DBModel):
+        name: str
+
+    class Player(DBModel):
+        name: str
+        team: Team | None = None
+
+    Team.create_table()
+    Player.create_table()
+
+    Player(name="Messi").save()
+
+    rows_data = Player._fetchall_raw_data()
+
+    assert isinstance(rows_data, list)
+    assert len(rows_data) == 1
+    assert all(isinstance(row, dict) for row in rows_data)
+    assert all(row["id"] == 1 for row in rows_data)
+    assert all(row["name"] == "Messi" for row in rows_data)
+    assert all(row["team"] is None for row in rows_data)

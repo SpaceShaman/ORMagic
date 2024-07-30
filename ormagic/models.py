@@ -57,9 +57,7 @@ class DBModel(BaseModel):
     @classmethod
     def get(cls, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
-        if data := cls._fetchone_raw_data(**kwargs):
-            return cls(**data)
-        raise ObjectNotFound
+        return cls(**cls._fetchone_raw_data(**kwargs))
 
     @classmethod
     def filter(cls, **kwargs) -> list[Self]:
