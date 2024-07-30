@@ -164,22 +164,24 @@ To define a many-to-many relationship, use list of other model as a field in the
 ```python
 from ormagic import DBModel
 
-class Team(DBModel):
-    name: str
 
 class Player(DBModel):
     name: str
-    teams: list[Team] = []
 
-Team.create_table()
+class Team(DBModel):
+    name: str
+    players: list[Player] = []
+
 Player.create_table()
+Team.create_table()
 
-team1 = Team(name="Barcelona").save()
-team2 = Team(name="Real Madrid").save()
-Player(name="Messi", teams=[team1, team2]).save()
+player0 = Player(name="Messi").save()
+player1 = Player(name="Ronaldo").save()
 
-player = Player.get(id=1)
->>> Player(id=1, name='Messi', teams=[Team(id=1, name='Barcelona'), Team(id=2, name='Real Madrid')])
+Team(name="Barcelona", players=[player0, player1]).save()
+
+Team.get(id=1)
+>>> Team(id=1, name='Barcelona', players=[Player(id=1, name='Messi'), Player(id=2, name='Ronaldo')])
 ```
 
 ### Integration with [FastAPI](https://fastapi.tiangolo.com/)
