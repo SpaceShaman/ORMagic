@@ -154,3 +154,22 @@ def test_get_object_with_many_to_many_relationship(db_cursor):
     assert player_from_db.teams[0].name == "Barcelona"
     assert player_from_db.teams[1].id == 2
     assert player_from_db.teams[1].name == "Real Madrid"
+
+
+def test_get_object_with_many_to_many_relationship_without_related_objects(db_cursor):
+    class Team(DBModel):
+        name: str
+
+    class Player(DBModel):
+        name: str
+        teams: list[Team] = []
+
+    Team.create_table()
+    Player.create_table()
+
+    Player(name="Messi").save()
+
+    player_from_db = Player.get(id=1)
+    assert player_from_db.id == 1
+    assert player_from_db.name == "Messi"
+    assert len(player_from_db.teams) == 0

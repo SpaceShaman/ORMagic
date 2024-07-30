@@ -301,6 +301,32 @@ def test_save_object_with_many_to_many_relationship_for_non_existing_objects(db_
     assert data == [(1, 1, 1), (2, 1, 2)]
 
 
+def test_save_object_with_many_to_many_relationship_without_related_objects(db_cursor):
+    class Course(DBModel):
+        name: str
+
+    class User(DBModel):
+        name: str
+        courses: list[Course] = []
+
+    User.create_table()
+    Course.create_table()
+
+    User(name="John").save()
+
+    res = db_cursor.execute("SELECT * FROM user")
+    data = res.fetchall()
+    assert data == [(1, "John")]
+
+    res = db_cursor.execute("SELECT * FROM course")
+    data = res.fetchall()
+    assert data == []
+
+    res = db_cursor.execute("SELECT * FROM user_course")
+    data = res.fetchall()
+    assert data == []
+
+
 def test_override_object_with_many_to_many_relationship(db_cursor):
     class Course(DBModel):
         name: str
