@@ -190,14 +190,19 @@ class DBModel(BaseModel):
             f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
         )
         return [
-            related_model._fetchone_raw_data(id=row[0]) for row in cursor.fetchall()
+            related_model._fetchone_raw_data(id=row[0], is_recursive_call=True)
+            for row in cursor.fetchall()
         ]
 
     @classmethod
-    def _process_raw_data(cls, data: tuple) -> dict[str, Any]:
+    def _process_raw_data(
+        cls, data: tuple, is_recursive_call: bool = False
+    ) -> dict[str, Any]:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, field_info in cls.model_fields.items():
             if cls._is_many_to_many_field(field_info.annotation):
+                if is_recursive_call:
+                    continue
                 data_dict[key] = cls._process_many_to_many_data(
                     field_info.annotation, data_dict["id"]
                 )
@@ -208,13 +213,15 @@ class DBModel(BaseModel):
         return data_dict
 
     @classmethod
-    def _fetchone_raw_data(cls, **kwargs) -> dict[str, Any]:
+    def _fetchone_raw_data(
+        cls, is_recursive_call: bool = False, **kwargs
+    ) -> dict[str, Any]:
         cursor = cls._fetch_raw_data(**kwargs)
         data = cursor.fetchone()
         cursor.connection.close()
         if not data:
             raise ObjectNotFound
-        return cls._process_raw_data(data)
+        return cls._process_raw_data(data, is_recursive_call)
 
     @classmethod
     def _fetchall_raw_data(cls, **kwargs) -> list[dict[str, Any]]:

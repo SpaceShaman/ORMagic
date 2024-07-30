@@ -134,6 +134,7 @@ def test_get_object_from_db_with_optional_foreign_key_set(db_cursor):
 def test_get_object_with_many_to_many_relationship(db_cursor):
     class Team(DBModel):
         name: str
+        players: list["Player"] = []
 
     class Player(DBModel):
         name: str
@@ -145,8 +146,10 @@ def test_get_object_with_many_to_many_relationship(db_cursor):
     team1 = Team(name="Barcelona").save()
     team2 = Team(name="Real Madrid").save()
     Player(name="Messi", teams=[team1, team2]).save()
+    Player(name="Ronaldo", teams=[team2]).save()
 
     player_from_db = Player.get(id=1)
+
     assert player_from_db.id == 1
     assert player_from_db.name == "Messi"
     assert len(player_from_db.teams) == 2
@@ -154,6 +157,22 @@ def test_get_object_with_many_to_many_relationship(db_cursor):
     assert player_from_db.teams[0].name == "Barcelona"
     assert player_from_db.teams[1].id == 2
     assert player_from_db.teams[1].name == "Real Madrid"
+
+    team1_from_db = Team.get(id=1)
+    assert team1_from_db.id == 1
+    assert team1_from_db.name == "Barcelona"
+    assert len(team1_from_db.players) == 1
+    assert team1_from_db.players[0].id == 1
+    assert team1_from_db.players[0].name == "Messi"
+
+    team2_from_db = Team.get(id=2)
+    assert team2_from_db.id == 2
+    assert team2_from_db.name == "Real Madrid"
+    assert len(team2_from_db.players) == 2
+    assert team2_from_db.players[0].id == 1
+    assert team2_from_db.players[0].name == "Messi"
+    assert team2_from_db.players[1].id == 2
+    assert team2_from_db.players[1].name == "Ronaldo"
 
 
 def test_get_object_with_many_to_many_relationship_without_related_objects(db_cursor):

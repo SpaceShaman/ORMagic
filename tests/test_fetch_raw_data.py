@@ -134,8 +134,10 @@ def test_featchall_raw_data_with_optional_foreign_key_not_set(db_cursor):
 
 
 def test_featchone_raw_data_with_many_to_many(db_cursor):
+    # sourcery skip: extract-duplicate-method
     class Team(DBModel):
         name: str
+        players: list["Player"] = []
 
     class Player(DBModel):
         name: str
@@ -148,12 +150,19 @@ def test_featchone_raw_data_with_many_to_many(db_cursor):
     team_1 = Team(name="Real Madrid").save()
     Player(name="Messi", teams=[team_0, team_1]).save()
 
-    row_data = Player._fetchone_raw_data(id=1)
+    row_player_data = Player._fetchone_raw_data(id=1)
 
-    assert isinstance(row_data, dict)
-    assert row_data["id"] == 1
-    assert row_data["name"] == "Messi"
-    assert row_data["teams"] == [
+    assert isinstance(row_player_data, dict)
+    assert row_player_data["id"] == 1
+    assert row_player_data["name"] == "Messi"
+    assert row_player_data["teams"] == [
         {"id": 1, "name": "Barcelona"},
         {"id": 2, "name": "Real Madrid"},
     ]
+
+    row_team_data = Team._fetchone_raw_data(id=1)
+
+    assert isinstance(row_team_data, dict)
+    assert row_team_data["id"] == 1
+    assert row_team_data["name"] == "Barcelona"
+    assert row_team_data["players"] == [{"id": 1, "name": "Messi"}]
