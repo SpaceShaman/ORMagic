@@ -166,6 +166,7 @@ from ormagic import DBModel
 
 class Player(DBModel):
     name: str
+    teams: list["Team"] = []
 
 class Team(DBModel):
     name: str
