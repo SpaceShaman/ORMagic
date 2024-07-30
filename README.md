@@ -157,6 +157,31 @@ To update a table, use the `update_table` method. (Not implemented yet)
 User.update_table()
 ```
 
+### Many-to-many relationships
+
+To define a many-to-many relationship, use list of other model as a field in the model.
+
+```python
+from ormagic import DBModel
+
+class Team(DBModel):
+    name: str
+
+class Player(DBModel):
+    name: str
+    teams: list[Team] = []
+
+Team.create_table()
+Player.create_table()
+
+team1 = Team(name="Barcelona").save()
+team2 = Team(name="Real Madrid").save()
+Player(name="Messi", teams=[team1, team2]).save()
+
+player = Player.get(id=1)
+>>> Player(id=1, name='Messi', teams=[Team(id=1, name='Barcelona'), Team(id=2, name='Real Madrid')])
+```
+
 ### Integration with [FastAPI](https://fastapi.tiangolo.com/)
 
 Because ORMagic is based on [Pydantic](https://docs.pydantic.dev), it can be easily integrated with [FastAPI](https://fastapi.tiangolo.com/).
