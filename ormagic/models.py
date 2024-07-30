@@ -181,11 +181,32 @@ class DBModel(BaseModel):
     @classmethod
     def _process_raw_data(cls, data: tuple) -> dict[str, Any]:
         data_dict = dict(zip(cls.model_fields.keys(), data))
-        for key, value in data_dict.items():
-            if not value:
+        # for key, value in data_dict.items():
+        #     if not value:
+        #         continue
+        #     elif foreign_model := cls._get_foreign_key_model(key):
+        #         data_dict[key] = foreign_model._fetchone_raw_data(id=value)
+        for key, field_info in cls.model_fields.items():
+            if cls._is_many_to_many_field(field_info.annotation):
+                table_name = cls.__name__.lower()
+                related_table_name = getattr(field_info.annotation, "__args__")[
+                    0
+                ].__name__.lower()
+                intermediate_table_name = cls._get_intermediate_table_name(
+                    related_table_name
+                )
+                cursor = execute_sql(
+                    f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={data_dict['id']}"
+                )
+                objects_list = []
+                for row in cursor.fetchall():
+                    if related_model := cls._get_foreign_key_model(key):
+                        objects_list.append(related_model._fetchone_raw_data(id=row[0]))
+                data_dict[key] = objects_list
+            elif not data_dict[key]:
                 continue
             elif foreign_model := cls._get_foreign_key_model(key):
-                data_dict[key] = foreign_model._fetchone_raw_data(id=value)
+                data_dict[key] = foreign_model._fetchone_raw_data(id=data_dict[key])
         return data_dict
 
     @classmethod
