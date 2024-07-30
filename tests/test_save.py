@@ -243,13 +243,12 @@ def test_try_save_two_objects_with_same_values_for_unique_field(db_cursor):
 
 
 def test_save_object_with_many_to_many_relationship(db_cursor):
-    class User(DBModel):
-        name: str
-        courses: list["Course"] = []
-
     class Course(DBModel):
         name: str
-        users: list[User] = []
+
+    class User(DBModel):
+        name: str
+        courses: list[Course] = []
 
     User.create_table()
     Course.create_table()
@@ -274,13 +273,12 @@ def test_save_object_with_many_to_many_relationship(db_cursor):
 
 
 def test_save_object_with_many_to_many_relationship_for_non_existing_objects(db_cursor):
-    class User(DBModel):
-        name: str
-        courses: list["Course"] = []
-
     class Course(DBModel):
         name: str
-        users: list[User] = []
+
+    class User(DBModel):
+        name: str
+        courses: list[Course] = []
 
     User.create_table()
     Course.create_table()
@@ -304,13 +302,12 @@ def test_save_object_with_many_to_many_relationship_for_non_existing_objects(db_
 
 
 def test_override_object_with_many_to_many_relationship(db_cursor):
-    class User(DBModel):
-        name: str
-        courses: list["Course"] = []
-
     class Course(DBModel):
         name: str
-        users: list[User] = []
+
+    class User(DBModel):
+        name: str
+        courses: list[Course] = []
 
     User.create_table()
     Course.create_table()
