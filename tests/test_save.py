@@ -328,12 +328,13 @@ def test_save_object_with_many_to_many_relationship_without_related_objects(db_c
 
 
 def test_override_object_with_many_to_many_relationship(db_cursor):
-    class Course(DBModel):
-        name: str
-
     class User(DBModel):
         name: str
-        courses: list[Course] = []
+        courses: list["Course"] = []
+
+    class Course(DBModel):
+        name: str
+        users: list[User] = []
 
     User.create_table()
     Course.create_table()
