@@ -230,7 +230,7 @@ def delete_user(id: int):
   - [x] Read data from the database
   - [x] Update data in the database
   - [x] Delete data from the database
-- [ ] Relationships between tables
+- [x] Relationships between tables
   - [x] One-to-many
     - [x] Create a tables with a foreign key
     - [x] Save data with a foreign key
@@ -243,7 +243,7 @@ def delete_user(id: int):
       - [x] Set default
       - [x] No action
   - [x] One-to-one
-  - [ ] Many-to-many
+  - [x] Many-to-many
 - [x] Unique constraints
 - [x] Remove table
 - [ ] Filter data and retrieve multiple records
