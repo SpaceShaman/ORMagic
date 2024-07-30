@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Literal, Self, Type, get_args
+from typing import Any, Literal, Self, Type, get_args
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -57,25 +57,19 @@ class DBModel(BaseModel):
     @classmethod
     def get(cls, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
-        if data := cls._fetch_raw_data(fetchall=False, **kwargs):
-            return cls._create_instance_from_data(data)
+        if data := cls._fetchone_raw_data(**kwargs):
+            return cls(**data)
         raise ObjectNotFound
 
     @classmethod
     def filter(cls, **kwargs) -> list[Self]:
         """Get objects from the database based on the given keyword arguments."""
-        return [
-            cls._create_instance_from_data(row)
-            for row in cls._fetch_raw_data(fetchall=True, **kwargs)
-        ]
+        return [cls(**data) for data in cls._fetchall_raw_data(**kwargs)]
 
     @classmethod
     def all(cls) -> list[Self]:
         """Get all objects from the database."""
-        return [
-            cls._create_instance_from_data(row)
-            for row in cls._fetch_raw_data(fetchall=True)
-        ]
+        return [cls(**data) for data in cls._fetchall_raw_data()]
 
     def delete(self) -> None:
         """Delete the object from the database."""
@@ -132,16 +126,6 @@ class DBModel(BaseModel):
             )
             cursor.connection.close()
 
-    @classmethod
-    def _create_instance_from_data(cls, data: Iterable) -> Self:
-        data_dict = dict(zip(cls.model_fields.keys(), data))
-        for key, value in data_dict.items():
-            if not value:
-                data_dict[key] = None
-            elif foreign_model := cls._get_foreign_key_model(key):
-                data_dict[key] = foreign_model.get(id=value)
-        return cls(**data_dict)
-
     def _prepare_data_to_insert(self, model_dict: dict) -> dict[str, Any]:
         prepared_data = {}
         for key, value in model_dict.items():
@@ -186,7 +170,7 @@ class DBModel(BaseModel):
         return "CASCADE"
 
     @classmethod
-    def _fetch_raw_data(cls, fetchall: bool, **kwargs) -> list[tuple[Any]] | tuple[Any]:
+    def _fetchone_raw_data(cls, **kwargs) -> dict[str, Any]:
         conditions = " AND ".join(
             f"{field}='{value}'" for field, value in kwargs.items()
         )
@@ -194,9 +178,37 @@ class DBModel(BaseModel):
         if conditions:
             sql += f" WHERE {conditions}"
         cursor = execute_sql(sql)
-        data: tuple | list[tuple] = cursor.fetchall() if fetchall else cursor.fetchone()
+        data = cursor.fetchone()
         cursor.connection.close()
-        return data
+        if not data:
+            raise ObjectNotFound
+        data_dict = dict(zip(cls.model_fields.keys(), data))
+        for key, value in data_dict.items():
+            if not value:
+                continue
+            elif foreign_model := cls._get_foreign_key_model(key):
+                data_dict[key] = foreign_model._fetchone_raw_data(id=value)
+        return data_dict
+
+    @classmethod
+    def _fetchall_raw_data(cls, **kwargs) -> list[dict[str, Any]]:
+        conditions = " AND ".join(
+            f"{field}='{value}'" for field, value in kwargs.items()
+        )
+        sql = f"SELECT * FROM {cls.__name__.lower()}"
+        if conditions:
+            sql += f" WHERE {conditions}"
+        cursor = execute_sql(sql)
+        data = cursor.fetchall()
+        cursor.connection.close()
+        data_dicts = [dict(zip(cls.model_fields.keys(), row)) for row in data]
+        for data_dict in data_dicts:
+            for key, value in data_dict.items():
+                if not value:
+                    continue
+                elif foreign_model := cls._get_foreign_key_model(key):
+                    data_dict[key] = foreign_model._fetchone_raw_data(id=value)
+        return data_dicts
 
     @classmethod
     def _is_many_to_many_field(cls, annotation: Any) -> bool:
