@@ -187,6 +187,8 @@ class DBModel(BaseModel):
             operator = " LIKE "
         elif operator == "in":
             operator = " IN "
+        elif operator == "nin":
+            operator = " NOT IN "
         else:
             raise ValueError(f"Invalid operator: {operator}")
         return field, operator
@@ -198,7 +200,7 @@ class DBModel(BaseModel):
             field, operator = cls._extract_field_operator(field)
             if not cls.model_fields.get(field):
                 raise ValueError(f"Invalid field: {field}")
-            if operator == " IN ":
+            if "IN" in operator:
                 value = tuple(value)
             else:
                 value = f"'{value}'"

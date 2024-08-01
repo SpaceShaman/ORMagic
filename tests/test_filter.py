@@ -19,7 +19,7 @@ class User(DBModel):
     age: int
 
 
-def test_filter_objects_with_equal_value(prepare_db, db_cursor):
+def test_filter_objects_with_equal(prepare_db, db_cursor):
     users = User.filter(name="John")
 
     assert len(users) == 2
@@ -53,7 +53,7 @@ def test_try_to_filter_objects_with_invalid_field(prepare_db, db_cursor):
         User.filter(invalid_field="Jane")
 
 
-def test_filter_objects_with_not_equal_value(prepare_db, db_cursor):
+def test_filter_objects_with_not_equal(prepare_db, db_cursor):
     users = User.filter(age__ne=25)
 
     assert len(users) == 3
@@ -66,7 +66,7 @@ def test_filter_objects_with_not_equal_value(prepare_db, db_cursor):
     assert users[2].name == "John"
 
 
-def test_filter_objects_with_greater_than_value(prepare_db, db_cursor):
+def test_filter_objects_with_greater_than(prepare_db, db_cursor):
     users = User.filter(age__gt=30)
 
     assert len(users) == 2
@@ -77,7 +77,7 @@ def test_filter_objects_with_greater_than_value(prepare_db, db_cursor):
     assert users[1].name == "John"
 
 
-def test_filter_objects_with_greater_than_or_equal_value(prepare_db, db_cursor):
+def test_filter_objects_with_greater_than_or_equal(prepare_db, db_cursor):
     users = User.filter(age__gte=30)
 
     assert len(users) == 3
@@ -90,7 +90,7 @@ def test_filter_objects_with_greater_than_or_equal_value(prepare_db, db_cursor):
     assert users[2].name == "John"
 
 
-def test_filter_objects_with_less_than_value(prepare_db, db_cursor):
+def test_filter_objects_with_less_than(prepare_db, db_cursor):
     users = User.filter(age__lt=35)
 
     assert len(users) == 2
@@ -101,7 +101,7 @@ def test_filter_objects_with_less_than_value(prepare_db, db_cursor):
     assert users[1].name == "Jane"
 
 
-def test_filter_objects_with_less_than_or_equal_value(prepare_db, db_cursor):
+def test_filter_objects_with_less_than_or_equal(prepare_db, db_cursor):
     users = User.filter(age__lte=35)
 
     assert len(users) == 3
@@ -119,7 +119,7 @@ def test_try_to_filter_objects_with_invalid_operator(prepare_db, db_cursor):
         User.filter(age__invalid_operator=30)
 
 
-def test_filter_objects_with_like_value(prepare_db, db_cursor):
+def test_filter_objects_with_like(prepare_db, db_cursor):
     users = User.filter(name__like="%o%")
 
     assert len(users) == 3
@@ -132,7 +132,7 @@ def test_filter_objects_with_like_value(prepare_db, db_cursor):
     assert users[2].name == "John"
 
 
-def test_filter_objects_with_in_value(prepare_db, db_cursor):
+def test_filter_objects_with_in(prepare_db, db_cursor):
     users = User.filter(age__in=[25, 30])
 
     assert len(users) == 2
@@ -141,3 +141,14 @@ def test_filter_objects_with_in_value(prepare_db, db_cursor):
     assert users[0].name == "John"
     assert users[1].id == 2
     assert users[1].name == "Jane"
+
+
+def test_filter_objects_with_not_in(prepare_db, db_cursor):
+    users = User.filter(age__nin=[25, 30])
+
+    assert len(users) == 2
+    assert all(isinstance(user, User) for user in users)
+    assert users[0].id == 3
+    assert users[0].name == "Doe"
+    assert users[1].id == 4
+    assert users[1].name == "John"
