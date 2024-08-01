@@ -91,3 +91,19 @@ def test_filter_objects_with_greater_than_value(prepare_db, db_cursor):
     assert users[0].name == "Doe"
     assert users[1].id == 4
     assert users[1].name == "John"
+
+
+def test_filter_objects_with_greater_than_or_equal_value(prepare_db, db_cursor):
+    data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
+    db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    db_cursor.connection.commit()
+    users = User.filter(age__gte=30)
+
+    assert len(users) == 3
+    assert all(isinstance(user, User) for user in users)
+    assert users[0].id == 1
+    assert users[0].name == "John"
+    assert users[1].id == 3
+    assert users[1].name == "Doe"
+    assert users[2].id == 4
+    assert users[2].name == "John"

@@ -250,7 +250,7 @@ def delete_user(id: int):
   - [x] Equal
   - [x] Not equal
   - [x] Greater than
-  - [ ] Greater than or equal
+  - [x] Greater than or equal
   - [ ] Less than
   - [ ] Less than or equal
   - [ ] Contains

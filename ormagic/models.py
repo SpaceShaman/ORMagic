@@ -177,6 +177,8 @@ class DBModel(BaseModel):
             operator = "<>"
         elif operator == "gt":
             operator = ">"
+        elif operator == "gte":
+            operator = ">="
         else:
             operator = "="
         return field, operator
