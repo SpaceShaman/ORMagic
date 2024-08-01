@@ -175,6 +175,8 @@ class DBModel(BaseModel):
         field, operator = field.split("__")
         if operator == "ne":
             operator = "<>"
+        elif operator == "gt":
+            operator = ">"
         else:
             operator = "="
         return field, operator

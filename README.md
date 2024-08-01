@@ -248,8 +248,8 @@ def delete_user(id: int):
 - [x] Read all data from the database
 - [ ] Filter data and retrieve multiple records
   - [x] Equal
-  - [ ] Not equal
-  - [ ] Greater than
+  - [x] Not equal
+  - [x] Greater than
   - [ ] Greater than or equal
   - [ ] Less than
   - [ ] Less than or equal
