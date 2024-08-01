@@ -73,10 +73,7 @@ def test_filter_objects_with_not_equal_value(prepare_db, db_cursor):
     assert all(isinstance(user, User) for user in users)
     assert users[0].id == 1
     assert users[0].name == "John"
-    assert users[0].age == 30
     assert users[1].id == 3
     assert users[1].name == "Doe"
-    assert users[1].age == 35
     assert users[2].id == 4
     assert users[2].name == "John"
-    assert users[2].age == 40

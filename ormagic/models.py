@@ -170,16 +170,16 @@ class DBModel(BaseModel):
 
     @classmethod
     def _prepare_where_conditions(cls, **kwargs) -> str:
-        conditions = ""
+        conditions = []
         for field, value in kwargs.items():
             if field.endswith("__ne"):
                 field = field[:-4]
-                conditions += f"{field}<>'{value}' AND "
+                conditions.append(f"{field}<>'{value}'")
             else:
-                conditions += f"{field}='{value}' AND "
+                conditions.append(f"{field}='{value}'")
             if not cls.model_fields.get(field):
                 raise ValueError(f"Invalid field: {field}")
-        return conditions.rstrip(" AND ")
+        return " AND ".join(conditions)
 
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
