@@ -132,6 +132,15 @@ def test_filter_objects_with_like(prepare_db, db_cursor):
     assert users[2].name == "John"
 
 
+def test_filter_objects_with_not_like(prepare_db, db_cursor):
+    users = User.filter(name__nlike="%o%")
+
+    assert len(users) == 1
+    assert isinstance(users[0], User)
+    assert users[0].id == 2
+    assert users[0].name == "Jane"
+
+
 def test_filter_objects_with_in(prepare_db, db_cursor):
     users = User.filter(age__in=[25, 30])
 

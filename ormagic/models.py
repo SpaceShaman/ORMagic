@@ -185,6 +185,8 @@ class DBModel(BaseModel):
             operator = "<="
         elif operator == "like":
             operator = " LIKE "
+        elif operator == "nlike":
+            operator = " NOT LIKE "
         elif operator == "in":
             operator = " IN "
         elif operator == "nin":
