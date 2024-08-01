@@ -181,6 +181,83 @@ Team.get(id=1)
 >>> Team(id=1, name='Barcelona', players=[Player(id=1, name='Messi'), Player(id=2, name='Ronaldo')])
 ```
 
+### Filtering data
+
+To filter data and retrieve multiple records, use the `filter` method. 
+There are several filter options available:
+
+#### Equal
+
+```python
+User.filter(name="John")
+```
+
+#### Not equal
+
+```python
+User.filter(name__ne="John")
+```
+
+#### Greater than
+
+```python
+User.filter(age__gt=30)
+```
+
+#### Greater than or equal
+
+```python
+User.filter(age__gte=30)
+```
+
+#### Less than
+
+```python
+User.filter(age__lt=30)
+```
+
+#### Less than or equal
+
+```python
+User.filter(age__lte=30)
+```
+
+#### Like (Pattern matching with % and _)
+
+```python
+User.filter(name__like="%Cat%")
+```
+
+#### Not like (Pattern matching with % and _)
+
+```python
+User.filter(name__nlike="%Cat%")
+```
+
+#### In (List of values)
+
+```python
+User.filter(name__in=["John", "Alice"])
+```
+
+#### Not in (List of values)
+
+```python
+User.filter(name__nin=["John", "Alice"])
+```
+
+#### Between (Two values)
+
+```python
+User.filter(age__between=[30, 40])
+```
+
+#### Not between (Two values)
+
+```python
+User.filter(age__nbetween=[30, 40])
+```
+
 ### Integration with [FastAPI](https://fastapi.tiangolo.com/)
 
 Because ORMagic is based on [Pydantic](https://docs.pydantic.dev), it can be easily integrated with [FastAPI](https://fastapi.tiangolo.com/).
