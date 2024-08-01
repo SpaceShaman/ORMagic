@@ -169,7 +169,7 @@ class DBModel(BaseModel):
         return "CASCADE"
 
     @classmethod
-    def _fetch_raw_data(cls, **kwargs) -> Cursor:
+    def _prepare_where_conditions(cls, **kwargs) -> str:
         conditions = ""
         for field, value in kwargs.items():
             if field.endswith("__ne"):
@@ -179,12 +179,12 @@ class DBModel(BaseModel):
                 conditions += f"{field}='{value}' AND "
             if not cls.model_fields.get(field):
                 raise ValueError(f"Invalid field: {field}")
-        conditions = conditions.rstrip(" AND ")
-        # conditions = " AND ".join(
-        #     f"{field}='{value}'" for field, value in kwargs.items()
-        # )
+        return conditions.rstrip(" AND ")
+
+    @classmethod
+    def _fetch_raw_data(cls, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls.__name__.lower()}"
-        if conditions:
+        if conditions := cls._prepare_where_conditions(**kwargs):
             sql += f" WHERE {conditions}"
         return execute_sql(sql)
 
