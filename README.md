@@ -253,9 +253,9 @@ def delete_user(id: int):
   - [x] Greater than or equal
   - [x] Less than
   - [x] Less than or equal
-  - [ ] Like (Pattern matching with % and _)
-  - [ ] Between
-  - [ ] In
+  - [x] Like (Pattern matching with % and _)
+  - [x] In (List of values)
+  - [ ] Between (Two values)
 - [ ] Pagination
 - [ ] Update table schema
 - [ ] Custom primary key

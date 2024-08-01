@@ -130,3 +130,14 @@ def test_filter_objects_with_like_value(prepare_db, db_cursor):
     assert users[1].name == "Doe"
     assert users[2].id == 4
     assert users[2].name == "John"
+
+
+def test_filter_objects_with_in_value(prepare_db, db_cursor):
+    users = User.filter(age__in=[25, 30])
+
+    assert len(users) == 2
+    assert all(isinstance(user, User) for user in users)
+    assert users[0].id == 1
+    assert users[0].name == "John"
+    assert users[1].id == 2
+    assert users[1].name == "Jane"
