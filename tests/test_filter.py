@@ -161,3 +161,14 @@ def test_filter_objects_with_not_in(prepare_db, db_cursor):
     assert users[0].name == "Doe"
     assert users[1].id == 4
     assert users[1].name == "John"
+
+
+def test_filter_objects_with_between(prepare_db, db_cursor):
+    users = User.filter(age__between=[30, 35])
+
+    assert len(users) == 2
+    assert all(isinstance(user, User) for user in users)
+    assert users[0].id == 1
+    assert users[0].name == "John"
+    assert users[1].id == 3
+    assert users[1].name == "Doe"

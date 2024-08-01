@@ -191,6 +191,8 @@ class DBModel(BaseModel):
             operator = " IN "
         elif operator == "nin":
             operator = " NOT IN "
+        elif operator == "between":
+            operator = " BETWEEN "
         else:
             raise ValueError(f"Invalid operator: {operator}")
         return field, operator
@@ -204,6 +206,8 @@ class DBModel(BaseModel):
                 raise ValueError(f"Invalid field: {field}")
             if "IN" in operator:
                 value = tuple(value)
+            elif "BETWEEN" in operator:
+                value = f"{value[0]} AND {value[1]}"
             else:
                 value = f"'{value}'"
             conditions.append(f"{field}{operator}{value}")

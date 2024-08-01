@@ -257,7 +257,8 @@ def delete_user(id: int):
   - [x] Not like (Pattern matching with % and _)
   - [x] In (List of values)
   - [x] Not in (List of values)
-  - [ ] Between (Two values)
+  - [x] Between (Two values)
+  - [ ] Not between (Two values)
 - [ ] Pagination
 - [ ] Update table schema
 - [ ] Custom primary key
