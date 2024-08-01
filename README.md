@@ -183,7 +183,7 @@ Team.get(id=1)
 
 ### Filtering data
 
-To filter data and retrieve multiple records, use the `filter` method. 
+To filter data and retrieve multiple records, use the `filter` method.
 There are several filter options available:
 
 #### Equal
