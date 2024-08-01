@@ -170,9 +170,19 @@ class DBModel(BaseModel):
 
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
-        conditions = " AND ".join(
-            f"{field}='{value}'" for field, value in kwargs.items()
-        )
+        conditions = ""
+        for field, value in kwargs.items():
+            if field.endswith("__ne"):
+                field = field[:-4]
+                conditions += f"{field}<>'{value}' AND "
+            else:
+                conditions += f"{field}='{value}' AND "
+            if not cls.model_fields.get(field):
+                raise ValueError(f"Invalid field: {field}")
+        conditions = conditions.rstrip(" AND ")
+        # conditions = " AND ".join(
+        #     f"{field}='{value}'" for field, value in kwargs.items()
+        # )
         sql = f"SELECT * FROM {cls.__name__.lower()}"
         if conditions:
             sql += f" WHERE {conditions}"

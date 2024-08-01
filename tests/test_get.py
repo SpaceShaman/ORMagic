@@ -1,5 +1,4 @@
 from datetime import datetime
-from sqlite3 import OperationalError
 
 import pytest
 
@@ -52,7 +51,7 @@ def test_try_to_get_non_existing_object_from_db(prepare_db):
 
 
 def test_try_to_get_object_from_db_with_wrong_condition(prepare_db):
-    with pytest.raises(OperationalError):
+    with pytest.raises(ValueError):
         User.get(wrong_field="John")
 
 

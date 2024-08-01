@@ -1,5 +1,3 @@
-from sqlite3 import OperationalError
-
 import pytest
 
 from ormagic.models import DBModel
@@ -18,7 +16,7 @@ class User(DBModel):
     age: int
 
 
-def test_filter_objects_with_the_same_value(prepare_db, db_cursor):
+def test_filter_objects_with_equal_value(prepare_db, db_cursor):
     data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
     db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
     db_cursor.connection.commit()
@@ -34,7 +32,7 @@ def test_filter_objects_with_the_same_value(prepare_db, db_cursor):
     assert users[1].age == 40
 
 
-def test_filter_objects_with_multiple_values(prepare_db, db_cursor):
+def test_filter_objects_with_multiple_equal_values(prepare_db, db_cursor):
     data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
     db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
     db_cursor.connection.commit()
@@ -61,5 +59,24 @@ def test_try_to_filter_objects_with_invalid_field(prepare_db, db_cursor):
     db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
     db_cursor.connection.commit()
 
-    with pytest.raises(OperationalError):
+    with pytest.raises(ValueError):
         User.filter(invalid_field="Jane")
+
+
+def test_filter_objects_with_not_equal_value(prepare_db, db_cursor):
+    data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
+    db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    db_cursor.connection.commit()
+    users = User.filter(age__ne=25)
+
+    assert len(users) == 3
+    assert all(isinstance(user, User) for user in users)
+    assert users[0].id == 1
+    assert users[0].name == "John"
+    assert users[0].age == 30
+    assert users[1].id == 3
+    assert users[1].name == "Doe"
+    assert users[1].age == 35
+    assert users[2].id == 4
+    assert users[2].name == "John"
+    assert users[2].age == 40
