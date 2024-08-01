@@ -246,7 +246,7 @@ def delete_user(id: int):
 - [x] Unique constraints
 - [x] Remove table
 - [x] Read all data from the database
-- [ ] Filter data and retrieve multiple records
+- [x] Filter data and retrieve multiple records
   - [x] Equal
   - [x] Not equal
   - [x] Greater than
@@ -258,8 +258,9 @@ def delete_user(id: int):
   - [x] In (List of values)
   - [x] Not in (List of values)
   - [x] Between (Two values)
-  - [ ] Not between (Two values)
+  - [x] Not between (Two values)
 - [ ] Pagination
+- [ ] Order by
 - [ ] Update table schema
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)

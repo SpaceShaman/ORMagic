@@ -193,6 +193,8 @@ class DBModel(BaseModel):
             operator = " NOT IN "
         elif operator == "between":
             operator = " BETWEEN "
+        elif operator == "nbetween":
+            operator = " NOT BETWEEN "
         else:
             raise ValueError(f"Invalid operator: {operator}")
         return field, operator
