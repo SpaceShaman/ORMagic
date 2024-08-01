@@ -254,7 +254,7 @@ def delete_user(id: int):
   - [ ] Less than
   - [ ] Less than or equal
   - [ ] Contains
-  - [ ] Pagination
+- [ ] Pagination
 - [ ] Update table schema
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)

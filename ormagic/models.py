@@ -179,8 +179,12 @@ class DBModel(BaseModel):
             operator = ">"
         elif operator == "gte":
             operator = ">="
+        elif operator == "lt":
+            operator = "<"
+        elif operator == "lte":
+            operator = "<="
         else:
-            operator = "="
+            raise ValueError(f"Invalid operator: {operator}")
         return field, operator
 
     @classmethod
