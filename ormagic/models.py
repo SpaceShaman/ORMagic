@@ -183,6 +183,8 @@ class DBModel(BaseModel):
             operator = "<"
         elif operator == "lte":
             operator = "<="
+        elif operator == "like":
+            operator = " LIKE "
         else:
             raise ValueError(f"Invalid operator: {operator}")
         return field, operator

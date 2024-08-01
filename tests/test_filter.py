@@ -117,3 +117,16 @@ def test_filter_objects_with_less_than_or_equal_value(prepare_db, db_cursor):
 def test_try_to_filter_objects_with_invalid_operator(prepare_db, db_cursor):
     with pytest.raises(ValueError):
         User.filter(age__invalid_operator=30)
+
+
+def test_filter_objects_with_like_value(prepare_db, db_cursor):
+    users = User.filter(name__like="%o%")
+
+    assert len(users) == 3
+    assert all(isinstance(user, User) for user in users)
+    assert users[0].id == 1
+    assert users[0].name == "John"
+    assert users[1].id == 3
+    assert users[1].name == "Doe"
+    assert users[2].id == 4
+    assert users[2].name == "John"
