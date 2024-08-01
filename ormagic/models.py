@@ -169,16 +169,24 @@ class DBModel(BaseModel):
         return "CASCADE"
 
     @classmethod
+    def _extract_field_operator(cls, field: str) -> tuple[str, str]:
+        if "__" not in field:
+            return field, "="
+        field, operator = field.split("__")
+        if operator == "ne":
+            operator = "<>"
+        else:
+            operator = "="
+        return field, operator
+
+    @classmethod
     def _prepare_where_conditions(cls, **kwargs) -> str:
         conditions = []
         for field, value in kwargs.items():
-            if field.endswith("__ne"):
-                field = field[:-4]
-                conditions.append(f"{field}<>'{value}'")
-            else:
-                conditions.append(f"{field}='{value}'")
+            field, operator = cls._extract_field_operator(field)
             if not cls.model_fields.get(field):
                 raise ValueError(f"Invalid field: {field}")
+            conditions.append(f"{field}{operator}'{value}'")
         return " AND ".join(conditions)
 
     @classmethod
