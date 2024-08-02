@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ORMagic"
-version = "0.8.0"
+version = "0.8.1"
 description = "Simple ORM based on Pydantic and SQLite with minimalistic API"
 license = "MIT"
 authors = ["SpaceShaman <spaceshaman@tuta.io>"]
