@@ -344,6 +344,10 @@ def delete_user(id: int):
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations
 
+## Changelog
+
+Changes for each release are thoroughly documented in [release notes](https://github.com/SpaceShaman/ORMagic/releases)
+
 ## License
 
 This project is licensed under the terms of the [MIT license](https://github.com/SpaceShaman/ORMagic?tab=MIT-1-ov-file)
