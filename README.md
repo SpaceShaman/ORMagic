@@ -336,6 +336,7 @@ def delete_user(id: int):
   - [x] Not in (List of values)
   - [x] Between (Two values)
   - [x] Not between (Two values)
+- [x] Protect against SQL injection
 - [ ] Pagination
 - [ ] Order by
 - [ ] Update table schema
