@@ -200,27 +200,32 @@ class DBModel(BaseModel):
         return field, operator
 
     @classmethod
-    def _prepare_where_conditions(cls, **kwargs) -> str:
+    def _prepare_where_conditions(cls, **kwargs) -> tuple[str, list]:
         conditions = []
+        params = []
         for field, value in kwargs.items():
             field, operator = cls._extract_field_operator(field)
             if not cls.model_fields.get(field):
                 raise ValueError(f"Invalid field: {field}")
             if "IN" in operator:
-                value = tuple(value)
+                placeholders = ", ".join(["?"] * len(value))
+                conditions.append(f"{field} {operator} ({placeholders})")
+                params.extend(value)
             elif "BETWEEN" in operator:
-                value = f"{value[0]} AND {value[1]}"
+                conditions.append(f"{field} {operator} ? AND ?")
+                params.extend(value)
             else:
-                value = f"'{value}'"
-            conditions.append(f"{field}{operator}{value}")
-        return " AND ".join(conditions)
+                conditions.append(f"{field} {operator} ?")
+                params.append(value)
+        return " AND ".join(conditions), params
 
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls.__name__.lower()}"
-        if conditions := cls._prepare_where_conditions(**kwargs):
+        conditions, params = cls._prepare_where_conditions(**kwargs)
+        if conditions:
             sql += f" WHERE {conditions}"
-        return execute_sql(sql)
+        return execute_sql(sql, params)
 
     @classmethod
     def _process_many_to_many_data(

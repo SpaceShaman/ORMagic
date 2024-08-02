@@ -11,10 +11,10 @@ def get_cursor() -> Cursor:
     return cursor
 
 
-def execute_sql(sql: str) -> Cursor:
+def execute_sql(sql: str, parms: list | None = None) -> Cursor:
     try:
         cursor = get_cursor()
-        cursor = cursor.execute(sql)
+        cursor = cursor.execute(sql) if parms is None else cursor.execute(sql, parms)
         cursor.connection.commit()
         return cursor
     except Exception as e:
