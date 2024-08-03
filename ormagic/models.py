@@ -204,6 +204,8 @@ class DBModel(BaseModel):
         conditions = []
         params = []
         for field, value in kwargs.items():
+            if field == "order_by":
+                continue
             field, operator = cls._extract_field_operator(field)
             if not cls.model_fields.get(field):
                 raise ValueError(f"Invalid field: {field}")
@@ -232,13 +234,12 @@ class DBModel(BaseModel):
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls.__name__.lower()}"
-        if order_by := kwargs.get("order_by"):
-            order_by = cls._prepare_order_by(order_by)
-            sql += f" ORDER BY {order_by}"
-            kwargs.pop("order_by")
         conditions, params = cls._prepare_where_conditions(**kwargs)
         if conditions:
             sql += f" WHERE {conditions}"
+        if order_by := kwargs.get("order_by"):
+            order_by = cls._prepare_order_by(order_by)
+            sql += f" ORDER BY {order_by}"
         return execute_sql(sql, params)
 
     @classmethod

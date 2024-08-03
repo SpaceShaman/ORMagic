@@ -107,3 +107,15 @@ def test_order_by_multiple_mixed(prepare_db, db_cursor):
 def test_order_by_invalid_field(prepare_db, db_cursor):
     with pytest.raises(OperationalError):
         User.filter(order_by="invalid_field")
+
+
+def test_order_by_with_filter(prepare_db, db_cursor):
+    users = User.filter(age=35, order_by="height")
+
+    assert len(users) == 2
+    assert users[0].id == 4
+    assert users[0].age == 35
+    assert users[0].height == 160
+    assert users[1].id == 3
+    assert users[1].age == 35
+    assert users[1].height == 170
