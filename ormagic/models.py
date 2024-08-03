@@ -220,8 +220,18 @@ class DBModel(BaseModel):
         return " AND ".join(conditions), params
 
     @classmethod
+    def _prepare_order_by(cls, order_by: str) -> str:
+        if order_by.startswith("-"):
+            return f"{order_by[1:]} DESC"
+        return order_by
+
+    @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls.__name__.lower()}"
+        if order_by := kwargs.get("order_by"):
+            order_by = cls._prepare_order_by(order_by)
+            sql += f" ORDER BY {order_by}"
+            kwargs.pop("order_by")
         conditions, params = cls._prepare_where_conditions(**kwargs)
         if conditions:
             sql += f" WHERE {conditions}"
