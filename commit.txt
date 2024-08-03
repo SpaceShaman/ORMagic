@@ -1,8 +1,0 @@
-⬆️ (pyproject.toml): bump version from 0.8.1 to 0.9.0
-📝 (README.md): add documentation for order by functionality
-♻️ (models.py): refactor order_by handling to use a single return statement
-🐛 (models.py): fix order_by handling to ensure it is not included in where conditions ✅ (test_order_by.py): add test to verify order_by works with filter conditions
-✨ (models.py): support multiple fields in _prepare_order_by method ✅ (test_order_by.py): add tests for multiple field order_by functionality
-✨ (models.py): add support for order_by clause in _fetch_raw_data method ✅ (test_order_by.py): add tests for order_by functionality in DBModel
-📝 (README.md): add Changelog section with link to release notes
-📝 (README.md): add item to checklist for protecting against SQL injection
