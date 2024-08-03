@@ -220,7 +220,11 @@ class DBModel(BaseModel):
         return " AND ".join(conditions), params
 
     @classmethod
-    def _prepare_order_by(cls, order_by: str) -> str:
+    def _prepare_order_by(
+        cls, order_by: str | list[str] | tuple[str] | set[str]
+    ) -> str:
+        if isinstance(order_by, (list, tuple, set)):
+            return ", ".join(cls._prepare_order_by(field) for field in order_by)
         if order_by.startswith("-"):
             return f"{order_by[1:]} DESC"
         return order_by
