@@ -119,3 +119,17 @@ def test_order_by_with_filter(prepare_db, db_cursor):
     assert users[1].id == 3
     assert users[1].age == 35
     assert users[1].height == 170
+
+
+def test_order_by_all(prepare_db, db_cursor):
+    users = User.all(order_by="age")
+
+    assert len(users) == 4
+    assert users[0].id == 2
+    assert users[0].age == 25
+    assert users[1].id == 1
+    assert users[1].age == 30
+    assert users[2].id == 3
+    assert users[2].age == 35
+    assert users[3].id == 4
+    assert users[3].age == 35

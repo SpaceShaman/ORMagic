@@ -66,9 +66,9 @@ class DBModel(BaseModel):
         return [cls(**data) for data in cls._fetchall_raw_data(**kwargs)]
 
     @classmethod
-    def all(cls) -> list[Self]:
+    def all(cls, **kwargs) -> list[Self]:
         """Get all objects from the database."""
-        return [cls(**data) for data in cls._fetchall_raw_data()]
+        return [cls(**data) for data in cls._fetchall_raw_data(**kwargs)]
 
     def delete(self) -> None:
         """Delete the object from the database."""

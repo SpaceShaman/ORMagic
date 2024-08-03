@@ -258,6 +258,26 @@ User.filter(age__between=[30, 40])
 User.filter(age__nbetween=[30, 40])
 ```
 
+### Order by
+
+To order the results, use the `filter` or `all` method with the `order_by` parameter.
+
+```python
+User.filter(order_by="age")
+```
+
+To order the results in descending order, use the `-` sign before the field name.
+
+```python
+User.all(order_by="-age")
+```
+
+You can also order by multiple fields and mix them with filters.
+
+```python
+User.filter(name="John", order_by=["age", "-name"])
+```
+
 ### Integration with [FastAPI](https://fastapi.tiangolo.com/)
 
 Because ORMagic is based on [Pydantic](https://docs.pydantic.dev), it can be easily integrated with [FastAPI](https://fastapi.tiangolo.com/).
@@ -337,8 +357,8 @@ def delete_user(id: int):
   - [x] Between (Two values)
   - [x] Not between (Two values)
 - [x] Protect against SQL injection
+- [x] Order by
 - [ ] Pagination
-- [ ] Order by
 - [ ] Update table schema
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
