@@ -227,9 +227,7 @@ class DBModel(BaseModel):
     ) -> str:
         if isinstance(order_by, (list, tuple, set)):
             return ", ".join(cls._prepare_order_by(field) for field in order_by)
-        if order_by.startswith("-"):
-            return f"{order_by[1:]} DESC"
-        return order_by
+        return f"{order_by[1:]} DESC" if order_by.startswith("-") else order_by
 
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
