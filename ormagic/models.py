@@ -202,7 +202,7 @@ class DBModel(BaseModel):
         conditions = []
         params = []
         for field, value in kwargs.items():
-            if field == "order_by":
+            if field in ("order_by", "limit", "offset"):
                 continue
             field, operator = cls._extract_field_operator(field)
             if not cls.model_fields.get(field):
@@ -236,6 +236,10 @@ class DBModel(BaseModel):
         if order_by := kwargs.get("order_by"):
             order_by = cls._prepare_order_by(order_by)
             sql += f" ORDER BY {order_by}"
+        if limit := kwargs.get("limit"):
+            sql += f" LIMIT {limit}"
+        if offset := kwargs.get("offset"):
+            sql += f" OFFSET {offset}"
         return execute_sql(sql, params)
 
     @classmethod
