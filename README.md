@@ -292,6 +292,12 @@ You can also use the `offset` parameter to skip a certain number of results to i
 User.all(limit=10, offset=10)
 ```
 
+You can also use the `limit` and `offset` parameters with filters and order by.
+
+```python
+User.filter(age__between=[30, 40], order_by="age", limit=10, offset=10)
+```
+
 ### Integration with [FastAPI](https://fastapi.tiangolo.com/)
 
 Because ORMagic is based on [Pydantic](https://docs.pydantic.dev), it can be easily integrated with [FastAPI](https://fastapi.tiangolo.com/).
