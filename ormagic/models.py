@@ -32,9 +32,7 @@ class DBModel(BaseModel):
                 column_def += f" DEFAULT '{field_info.default}'"
             if field_info.is_required():
                 column_def += " NOT NULL"
-            if field_info.json_schema_extra and field_info.json_schema_extra.get(
-                "unique"
-            ):
+            if cls._is_unique_field(field_info):
                 column_def += " UNIQUE"
             if foreign_model := cls._get_foreign_key_model(field_name):
                 action = cls._get_on_delete_action(field_info)
@@ -298,6 +296,12 @@ class DBModel(BaseModel):
             hasattr(annotation, "__origin__")
             and getattr(annotation, "__origin__") is list
             and issubclass(getattr(annotation, "__args__")[0], DBModel)
+        )
+
+    @classmethod
+    def _is_unique_field(cls, field_info: FieldInfo) -> bool:
+        return bool(
+            field_info.json_schema_extra and field_info.json_schema_extra.get("unique")
         )
 
     @classmethod
