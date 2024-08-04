@@ -278,6 +278,20 @@ You can also order by multiple fields and mix them with filters.
 User.filter(name="John", order_by=["age", "-name"])
 ```
 
+### Limit and offset
+
+To limit the number of results, use the `limit` parameter.
+
+```python
+User.all(limit=10)
+```
+
+You can also use the `offset` parameter to skip a certain number of results to implement pagination.
+
+```python
+User.all(limit=10, offset=10)
+```
+
 ### Integration with [FastAPI](https://fastapi.tiangolo.com/)
 
 Because ORMagic is based on [Pydantic](https://docs.pydantic.dev), it can be easily integrated with [FastAPI](https://fastapi.tiangolo.com/).
@@ -358,7 +372,7 @@ def delete_user(id: int):
   - [x] Not between (Two values)
 - [x] Protect against SQL injection
 - [x] Order by
-- [ ] Pagination
+- [x] Limit and offset
 - [ ] Update table schema
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
