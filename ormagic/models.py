@@ -230,9 +230,9 @@ class DBModel(BaseModel):
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls.__name__.lower()}"
-        conditions, params = cls._prepare_where_conditions(**kwargs)
-        if conditions:
-            sql += f" WHERE {conditions}"
+        where_conditions, where_params = cls._prepare_where_conditions(**kwargs)
+        if where_conditions:
+            sql += f" WHERE {where_conditions}"
         if order_by := kwargs.get("order_by"):
             order_by = cls._prepare_order_by(order_by)
             sql += f" ORDER BY {order_by}"
@@ -240,7 +240,7 @@ class DBModel(BaseModel):
             sql += f" LIMIT {limit}"
         if offset := kwargs.get("offset"):
             sql += f" OFFSET {offset}"
-        return execute_sql(sql, params)
+        return execute_sql(sql, where_params)
 
     @classmethod
     def _process_many_to_many_data(
