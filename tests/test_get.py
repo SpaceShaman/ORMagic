@@ -61,12 +61,12 @@ def test_get_object_from_db_with_datetime_field(prepare_db, db_cursor):
         created_at: datetime
 
     UserWithDatetime.create_table()
-    UserWithDatetime(name="John", created_at=datetime(2022, 3, 1, 12, 0, 0)).save()
+    UserWithDatetime(name="John", created_at=datetime(2022, 3, 1, 12, 20, 31)).save()
 
     user_from_db = UserWithDatetime.get(id=1)
     assert user_from_db.id == 1
     assert user_from_db.name == "John"
-    assert user_from_db.created_at == datetime(2022, 3, 1, 12, 0, 0)
+    assert user_from_db.created_at == datetime(2022, 3, 1, 12, 20, 31)
 
 
 def test_get_object_from_db_with_foreign_key(db_cursor):
