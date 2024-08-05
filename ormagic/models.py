@@ -36,9 +36,9 @@ class DBModel(BaseModel):
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        table_name = cls._get_table_name()
         if not cls._is_table_exists():
             return cls.create_table()
+        table_name = cls._get_table_name()
         existing_columns = cls._get_existing_columns()
         for field_name, field_info in cls.model_fields.items():
             if field_name in existing_columns:
@@ -52,7 +52,7 @@ class DBModel(BaseModel):
     @classmethod
     def drop_table(cls) -> None:
         """Remove the table from the database."""
-        cursor = execute_sql(f"DROP TABLE IF EXISTS {cls.__name__.lower()}")
+        cursor = execute_sql(f"DROP TABLE IF EXISTS {cls._get_table_name()}")
         cursor.connection.close()
 
     def save(self) -> Self:
@@ -258,7 +258,7 @@ class DBModel(BaseModel):
 
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
-        sql = f"SELECT * FROM {cls.__name__.lower()}"
+        sql = f"SELECT * FROM {cls._get_table_name()}"
         where_conditions, where_params = cls._prepare_where_conditions(**kwargs)
         if where_conditions:
             sql += f" WHERE {where_conditions}"
@@ -339,7 +339,7 @@ class DBModel(BaseModel):
     @classmethod
     def _is_table_exists(cls) -> bool:
         cursor = execute_sql(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{cls.__name__.lower()}'"
+            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{cls._get_table_name()}'"
         )
         exist = cursor.fetchone()[0] == 1
         cursor.connection.close()
