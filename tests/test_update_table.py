@@ -91,3 +91,14 @@ def test_add_multiple_columns_to_existing_table(db_cursor):
         (3, "weight", "INTEGER", 0, "'10'", 0),
         (4, "height", "INTEGER", 0, "'170'", 0),
     ]
+
+
+def test_update_non_existing_table_will_create_a_new_one(db_cursor):
+    class NonExistingTable(DBModel):
+        name: str
+
+    NonExistingTable.update_table()
+
+    res = db_cursor.execute("PRAGMA table_info(nonexistingtable)")
+    data = res.fetchall()
+    assert data == [(0, "id", "INTEGER", 0, None, 1), (1, "name", "TEXT", 1, None, 0)]

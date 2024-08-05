@@ -37,6 +37,8 @@ class DBModel(BaseModel):
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
         table_name = cls._get_table_name()
+        if not cls._is_table_exists():
+            return cls.create_table()
         cursor = execute_sql(f"PRAGMA table_info({table_name})")
         existing_columns = [column[1] for column in cursor.fetchall()]
         for field_name, field_info in cls.model_fields.items():
@@ -46,6 +48,7 @@ class DBModel(BaseModel):
             cursor = execute_sql(
                 f"ALTER TABLE {table_name} ADD COLUMN {column_definition}"
             )
+            cursor.connection.close()
 
     @classmethod
     def drop_table(cls) -> None:
@@ -78,6 +81,15 @@ class DBModel(BaseModel):
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
+
+    @classmethod
+    def _is_table_exists(cls) -> bool:
+        cursor = execute_sql(
+            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{cls.__name__.lower()}'"
+        )
+        exist = cursor.fetchone()[0] == 1
+        cursor.connection.close()
+        return exist
 
     @classmethod
     def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
