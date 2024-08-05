@@ -380,6 +380,7 @@ def delete_user(id: int):
 - [x] Order by
 - [x] Limit and offset
 - [ ] Update table schema
+  - [ ] Add new column
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations

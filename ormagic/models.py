@@ -44,6 +44,19 @@ class DBModel(BaseModel):
         cursor.connection.close()
 
     @classmethod
+    def update_table(cls) -> None:
+        """Update the table in the database based on the model definition."""
+        table_name = cls.__name__.lower()
+        cursor = execute_sql(f"PRAGMA table_info({table_name})")
+        existing_columns = [column[1] for column in cursor.fetchall()]
+        for field_name, field_info in cls.model_fields.items():
+            if field_name in existing_columns:
+                continue
+            cursor = execute_sql(
+                f"ALTER TABLE {table_name} ADD COLUMN {field_name} {convert_to_sql_type(field_info.annotation)}"
+            )
+
+    @classmethod
     def drop_table(cls) -> None:
         """Remove the table from the database."""
         cursor = execute_sql(f"DROP TABLE IF EXISTS {cls.__name__.lower()}")
