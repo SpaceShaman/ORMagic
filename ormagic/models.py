@@ -22,7 +22,6 @@ class DBModel(BaseModel):
         for field_name, field_info in cls.model_fields.items():
             if field_name == "id":
                 continue
-            table_name = cls.__name__.lower()
             if cls._is_many_to_many_field(field_info.annotation):
                 cls._create_intermediate_table(field_info)
                 continue
@@ -39,14 +38,16 @@ class DBModel(BaseModel):
                 column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
             columns.append(column_def)
 
-        sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})"
+        sql = (
+            f"CREATE TABLE IF NOT EXISTS {cls._get_table_name()} ({', '.join(columns)})"
+        )
         cursor = execute_sql(sql)
         cursor.connection.close()
 
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        table_name = cls.__name__.lower()
+        table_name = cls._get_table_name()
         cursor = execute_sql(f"PRAGMA table_info({table_name})")
         existing_columns = [column[1] for column in cursor.fetchall()]
         for field_name, field_info in cls.model_fields.items():
@@ -83,7 +84,7 @@ class DBModel(BaseModel):
 
     def delete(self) -> None:
         """Delete the object from the database."""
-        cursor = execute_sql(f"DELETE FROM {self.table_name} WHERE id={self.id}")
+        cursor = execute_sql(f"DELETE FROM {self._get_table_name()} WHERE id={self.id}")
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
@@ -94,7 +95,7 @@ class DBModel(BaseModel):
         values = ", ".join(
             f"'{value}'" if value else "NULL" for value in prepared_data.values()
         )
-        sql = f"INSERT INTO {self.table_name} ({fields}) VALUES ({values})"
+        sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
         self.id = cursor.lastrowid
@@ -108,7 +109,7 @@ class DBModel(BaseModel):
             for field, value in prepared_data.items()
         )
         cursor = execute_sql(
-            f"UPDATE {self.table_name} SET {fields} WHERE id={self.id}"
+            f"UPDATE {self._get_table_name()} SET {fields} WHERE id={self.id}"
         )
         cursor.connection.close()
         if cursor.rowcount == 0:
@@ -123,16 +124,17 @@ class DBModel(BaseModel):
                 related_objects.extend(iter(getattr(self, field_name)))
         if not related_objects:
             return
+        table_name = self._get_table_name()
         related_table_name = related_objects[0].__class__.__name__.lower()
         intermediate_table_name = self._get_intermediate_table_name(related_table_name)
         cursor = execute_sql(
-            f"DELETE FROM {intermediate_table_name} WHERE {self.table_name}_id={self.id}"
+            f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.id}"
         )
         for related_object in related_objects:
             if not related_object.id:
                 related_object = related_object.save()
             cursor = execute_sql(
-                f"INSERT INTO {intermediate_table_name} ({self.table_name}_id, {related_table_name}_id) VALUES ({self.id}, {related_object.id})"
+                f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.id}, {related_object.id})"
             )
             cursor.connection.close()
 
@@ -259,12 +261,11 @@ class DBModel(BaseModel):
     def _process_many_to_many_data(
         cls, annotation: Any, object_id: int
     ) -> list[dict[str, Any]]:
-        table_name = cls.__name__.lower()
         related_model = getattr(annotation, "__args__")[0]
         related_table_name = related_model.__name__.lower()
         intermediate_table_name = cls._get_intermediate_table_name(related_table_name)
         cursor = execute_sql(
-            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
+            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {cls._get_table_name()}_id={object_id}"
         )
         return [
             related_model._fetchone_raw_data(id=row[0], is_recursive_call=True)
@@ -323,7 +324,7 @@ class DBModel(BaseModel):
 
     @classmethod
     def _create_intermediate_table(cls, field_info: FieldInfo) -> None:
-        table_name = cls.__name__.lower()
+        table_name = cls._get_table_name()
         related_table_name = getattr(field_info.annotation, "__args__")[
             0
         ].__name__.lower()
@@ -340,7 +341,7 @@ class DBModel(BaseModel):
 
     @classmethod
     def _get_intermediate_table_name(cls, related_table_name: str) -> str | None:
-        table_name = cls.__name__.lower()
+        table_name = cls._get_table_name()
         cursor = execute_sql(
             f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
         )
@@ -353,6 +354,6 @@ class DBModel(BaseModel):
             return f"{related_table_name}_{table_name}"
         return None
 
-    @property
-    def table_name(self) -> str:
-        return self.__class__.__name__.lower()
+    @classmethod
+    def _get_table_name(cls) -> str:
+        return cls.__name__.lower()
