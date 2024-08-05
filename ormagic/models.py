@@ -39,8 +39,7 @@ class DBModel(BaseModel):
         table_name = cls._get_table_name()
         if not cls._is_table_exists():
             return cls.create_table()
-        cursor = execute_sql(f"PRAGMA table_info({table_name})")
-        existing_columns = [column[1] for column in cursor.fetchall()]
+        existing_columns = cls._get_existing_columns()
         for field_name, field_info in cls.model_fields.items():
             if field_name in existing_columns:
                 continue
@@ -83,13 +82,11 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     @classmethod
-    def _is_table_exists(cls) -> bool:
-        cursor = execute_sql(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{cls.__name__.lower()}'"
-        )
-        exist = cursor.fetchone()[0] == 1
+    def _get_existing_columns(cls) -> list[str]:
+        cursor = execute_sql(f"PRAGMA table_info({cls._get_table_name()})")
+        existed_fields = [column[1] for column in cursor.fetchall()]
         cursor.connection.close()
-        return exist
+        return existed_fields
 
     @classmethod
     def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
@@ -338,6 +335,15 @@ class DBModel(BaseModel):
         return bool(
             field_info.json_schema_extra and field_info.json_schema_extra.get("unique")
         )
+
+    @classmethod
+    def _is_table_exists(cls) -> bool:
+        cursor = execute_sql(
+            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{cls.__name__.lower()}'"
+        )
+        exist = cursor.fetchone()[0] == 1
+        cursor.connection.close()
+        return exist
 
     @classmethod
     def _create_intermediate_table(cls, field_info: FieldInfo) -> None:
