@@ -1,5 +1,5 @@
 import sqlite3
-from sqlite3.dbapi2 import Cursor
+from sqlite3 import Cursor
 from types import NoneType
 from typing import Any, Literal, Union, get_args
 
@@ -7,7 +7,7 @@ from typing import Any, Literal, Union, get_args
 def get_cursor() -> Cursor:
     connection = sqlite3.connect("db.sqlite3")
     cursor = connection.cursor()
-    cursor.execute("PRAGMA foreign_keys = ON;")
+    cursor.executescript("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;")
     return cursor
 
 
