@@ -71,3 +71,23 @@ def test_add_column_to_existing_table_with_default_value(db_cursor):
         (2, "age", "INTEGER", 1, None, 0),
         (3, "weight", "INTEGER", 0, "'10'", 0),
     ]
+
+
+def test_add_multiple_columns_to_existing_table(db_cursor):
+    class User(DBModel):
+        name: str
+        age: int
+        weight: int = 10
+        height: int = 170
+
+    User.update_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+        (2, "age", "INTEGER", 1, None, 0),
+        (3, "weight", "INTEGER", 0, "'10'", 0),
+        (4, "height", "INTEGER", 0, "'170'", 0),
+    ]
