@@ -1,7 +1,7 @@
 from ormagic.models import DBModel
 
 
-def test_remove_table(db_cursor):
+def test_drop_table(db_cursor):
     db_cursor.execute(
         "CREATE TABLE user (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)"
     )
