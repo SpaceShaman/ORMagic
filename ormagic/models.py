@@ -25,18 +25,7 @@ class DBModel(BaseModel):
             if cls._is_many_to_many_field(field_info.annotation):
                 cls._create_intermediate_table(field_info)
                 continue
-            field_type = convert_to_sql_type(field_info.annotation)
-            column_def = f"{field_name} {field_type}"
-            if field_info.default not in (PydanticUndefined, None):
-                column_def += f" DEFAULT '{field_info.default}'"
-            if field_info.is_required():
-                column_def += " NOT NULL"
-            if cls._is_unique_field(field_info):
-                column_def += " UNIQUE"
-            if foreign_model := cls._get_foreign_key_model(field_name):
-                action = cls._get_on_delete_action(field_info)
-                column_def += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
-            columns.append(column_def)
+            columns.append(cls._prepare_column_definition(field_name, field_info))
 
         sql = (
             f"CREATE TABLE IF NOT EXISTS {cls._get_table_name()} ({', '.join(columns)})"
@@ -53,8 +42,9 @@ class DBModel(BaseModel):
         for field_name, field_info in cls.model_fields.items():
             if field_name in existing_columns:
                 continue
+            column_definition = cls._prepare_column_definition(field_name, field_info)
             cursor = execute_sql(
-                f"ALTER TABLE {table_name} ADD COLUMN {field_name} {convert_to_sql_type(field_info.annotation)}"
+                f"ALTER TABLE {table_name} ADD COLUMN {column_definition}"
             )
 
     @classmethod
@@ -88,6 +78,21 @@ class DBModel(BaseModel):
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
+
+    @classmethod
+    def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
+        field_type = convert_to_sql_type(field_info.annotation)
+        column_definition = f"{field_name} {field_type}"
+        if field_info.default not in (PydanticUndefined, None):
+            column_definition += f" DEFAULT '{field_info.default}'"
+        if field_info.is_required():
+            column_definition += " NOT NULL"
+        if cls._is_unique_field(field_info):
+            column_definition += " UNIQUE"
+        if foreign_model := cls._get_foreign_key_model(field_name):
+            action = cls._get_on_delete_action(field_info)
+            column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
+        return column_definition
 
     def _insert(self) -> Self:
         prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
