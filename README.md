@@ -154,6 +154,11 @@ To update a table, use the `update_table` method. (Not implemented yet)
 User.update_table()
 ```
 
+There are some restrictions on updating tables:
+
+- The new column cannot have `unique` or `primary_key` set to `True`.
+- The new column needs to have a default value or set as optional.
+
 ### Many-to-many relationships
 
 To define a many-to-many relationship, use list of other model as a field in the model.
@@ -380,7 +385,9 @@ def delete_user(id: int):
 - [x] Order by
 - [x] Limit and offset
 - [ ] Update table schema
-  - [ ] Add new column
+  - [x] Add new column
+  - [ ] Rename column
+  - [ ] Drop column
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations
