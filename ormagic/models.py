@@ -363,6 +363,10 @@ class DBModel(BaseModel):
         )
 
     @classmethod
+    def _get_table_name(cls) -> str:
+        return cls.__name__.lower()
+
+    @classmethod
     def _get_intermediate_table_name(cls, related_table_name: str) -> str | None:
         table_name = cls._get_table_name()
         cursor = execute_sql(
@@ -376,7 +380,3 @@ class DBModel(BaseModel):
         if cursor.fetchone()[0] == 1:
             return f"{related_table_name}_{table_name}"
         return None
-
-    @classmethod
-    def _get_table_name(cls) -> str:
-        return cls.__name__.lower()
