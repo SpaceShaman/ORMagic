@@ -155,7 +155,9 @@ class DBModel(BaseModel):
             return
         table_name = self._get_table_name()
         related_table_name = related_objects[0].__class__.__name__.lower()
-        intermediate_table_name = self._get_intermediate_table_name(related_table_name)
+        intermediate_table_name = table_manager._get_intermediate_table_name(
+            table_name, related_table_name
+        )
         cursor = execute_sql(
             f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.id}"
         )
@@ -303,11 +305,14 @@ class DBModel(BaseModel):
     def _process_many_to_many_data(
         cls, annotation: Any, object_id: int
     ) -> list[dict[str, Any]]:
+        table_name = cls._get_table_name()
         related_model = getattr(annotation, "__args__")[0]
         related_table_name = related_model.__name__.lower()
-        intermediate_table_name = cls._get_intermediate_table_name(related_table_name)
+        intermediate_table_name = table_manager._get_intermediate_table_name(
+            table_name, related_table_name
+        )
         cursor = execute_sql(
-            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {cls._get_table_name()}_id={object_id}"
+            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
         )
         return [
             related_model._fetchone_raw_data(id=row[0], is_recursive_call=True)
@@ -376,18 +381,3 @@ class DBModel(BaseModel):
     @classmethod
     def _get_table_name(cls) -> str:
         return cls.__name__.lower()
-
-    @classmethod
-    def _get_intermediate_table_name(cls, related_table_name: str) -> str | None:
-        table_name = cls._get_table_name()
-        cursor = execute_sql(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
-        )
-        if cursor.fetchone()[0] == 1:
-            return f"{table_name}_{related_table_name}"
-        cursor = execute_sql(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
-        )
-        if cursor.fetchone()[0] == 1:
-            return f"{related_table_name}_{table_name}"
-        return None
