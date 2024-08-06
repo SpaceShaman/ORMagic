@@ -27,6 +27,18 @@ def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
     cursor.connection.close()
 
 
+def update_table(cls) -> None:
+    if not cls._is_table_exists():
+        return cls.create_table()
+    existing_columns = cls._fetch_existing_column_names_from_db()
+    model_fields = cls._fetch_field_names_from_model()
+    if existing_columns == model_fields:
+        return
+    elif len(existing_columns) == len(model_fields):
+        return cls._rename_columns_in_existing_table(existing_columns, model_fields)
+    cls._add_new_columns_to_existing_table(existing_columns)
+
+
 def _create_intermediate_table(table_name: str, field_info: FieldInfo) -> None:
     related_table_name = getattr(field_info.annotation, "__args__")[0].__name__.lower()
     if _get_intermediate_table_name(table_name, related_table_name):

@@ -22,15 +22,7 @@ class DBModel(BaseModel):
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        if not cls._is_table_exists():
-            return cls.create_table()
-        existing_columns = cls._fetch_existing_column_names_from_db()
-        model_fields = cls._fetch_field_names_from_model()
-        if existing_columns == model_fields:
-            return
-        elif len(existing_columns) == len(model_fields):
-            return cls._rename_columns_in_existing_table(existing_columns, model_fields)
-        cls._add_new_columns_to_existing_table(existing_columns)
+        table_manager.update_table(cls)
 
     @classmethod
     def drop_table(cls) -> None:
