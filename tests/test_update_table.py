@@ -134,3 +134,19 @@ def test_rename_multiple_columns_in_existing_table(db_cursor):
         (1, "first_name", "TEXT", 1, None, 0),
         (2, "years", "INTEGER", 1, None, 0),
     ]
+
+
+def test_try_update_table_without_changes(db_cursor):
+    class User(DBModel):
+        name: str
+        age: int
+
+    User.update_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+        (2, "age", "INTEGER", 1, None, 0),
+    ]

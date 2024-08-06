@@ -40,8 +40,8 @@ class DBModel(BaseModel):
         if not cls._is_table_exists():
             return cls.create_table()
         table_name = cls._get_table_name()
-        existing_columns = cls._get_existing_columns_names_list_from_db()
-        model_fields = cls._get_fields_names_list_from_model()
+        existing_columns = cls._fetch_existing_column_names_from_db()
+        model_fields = cls._fetch_field_names_from_model()
         if existing_columns == model_fields:
             return
         elif len(existing_columns) == len(model_fields):
@@ -96,14 +96,14 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     @classmethod
-    def _get_existing_columns_names_list_from_db(cls) -> list[str]:
+    def _fetch_existing_column_names_from_db(cls) -> list[str]:
         cursor = execute_sql(f"PRAGMA table_info({cls._get_table_name()})")
         existed_fields = [column[1] for column in cursor.fetchall()]
         cursor.connection.close()
         return existed_fields
 
     @classmethod
-    def _get_fields_names_list_from_model(cls) -> list[str]:
+    def _fetch_field_names_from_model(cls) -> list[str]:
         return list(cls.model_fields.keys())
 
     @classmethod
