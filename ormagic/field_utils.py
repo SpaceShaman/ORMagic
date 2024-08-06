@@ -49,3 +49,34 @@ def get_on_delete_action(
     if field_info.json_schema_extra.get("on_delete") == "NO ACTION":
         return "NO ACTION"
     return "CASCADE"
+
+
+def extract_field_operator(field: str) -> tuple[str, str]:
+    if "__" not in field:
+        return field, "="
+    field, operator = field.split("__")
+    if operator == "ne":
+        operator = "<>"
+    elif operator == "gt":
+        operator = ">"
+    elif operator == "gte":
+        operator = ">="
+    elif operator == "lt":
+        operator = "<"
+    elif operator == "lte":
+        operator = "<="
+    elif operator == "like":
+        operator = " LIKE "
+    elif operator == "nlike":
+        operator = " NOT LIKE "
+    elif operator == "in":
+        operator = " IN "
+    elif operator == "nin":
+        operator = " NOT IN "
+    elif operator == "between":
+        operator = " BETWEEN "
+    elif operator == "nbetween":
+        operator = " NOT BETWEEN "
+    else:
+        raise ValueError(f"Invalid operator: {operator}")
+    return field, operator

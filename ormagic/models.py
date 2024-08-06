@@ -4,6 +4,7 @@ from typing import Any, Self
 from pydantic import BaseModel
 
 from . import table_manager
+from .field_utils import extract_field_operator
 from .sql_utils import execute_sql
 
 
@@ -126,44 +127,13 @@ class DBModel(BaseModel):
         return prepared_data
 
     @classmethod
-    def _extract_field_operator(cls, field: str) -> tuple[str, str]:
-        if "__" not in field:
-            return field, "="
-        field, operator = field.split("__")
-        if operator == "ne":
-            operator = "<>"
-        elif operator == "gt":
-            operator = ">"
-        elif operator == "gte":
-            operator = ">="
-        elif operator == "lt":
-            operator = "<"
-        elif operator == "lte":
-            operator = "<="
-        elif operator == "like":
-            operator = " LIKE "
-        elif operator == "nlike":
-            operator = " NOT LIKE "
-        elif operator == "in":
-            operator = " IN "
-        elif operator == "nin":
-            operator = " NOT IN "
-        elif operator == "between":
-            operator = " BETWEEN "
-        elif operator == "nbetween":
-            operator = " NOT BETWEEN "
-        else:
-            raise ValueError(f"Invalid operator: {operator}")
-        return field, operator
-
-    @classmethod
     def _prepare_where_conditions(cls, **kwargs) -> tuple[str, list]:
         conditions = []
         params = []
         for field, value in kwargs.items():
             if field in ("order_by", "limit", "offset"):
                 continue
-            field, operator = cls._extract_field_operator(field)
+            field, operator = extract_field_operator(field)
             if not cls.model_fields.get(field):
                 raise ValueError(f"Invalid field: {field}")
             if "IN" in operator:
