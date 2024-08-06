@@ -38,7 +38,7 @@ def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> No
         return _rename_columns_in_existing_table(
             table_name, existing_columns, new_columns
         )
-    _add_new_columns_to_existing_table(cls, existing_columns)
+    _add_new_columns_to_existing_table(table_name, model_fields, existing_columns)
 
 
 def _create_intermediate_table(table_name: str, field_info: FieldInfo) -> None:
@@ -126,12 +126,14 @@ def _rename_columns_in_existing_table(
         cursor.connection.close()
 
 
-def _add_new_columns_to_existing_table(cls, existing_columns: list[str]) -> None:
-    for field_name, field_info in cls.model_fields.items():
+def _add_new_columns_to_existing_table(
+    table_name: str,
+    model_fields: dict[str, FieldInfo],
+    existing_columns: list[str],
+) -> None:
+    for field_name, field_info in model_fields.items():
         if field_name in existing_columns:
             continue
         column_definition = _prepare_column_definition(field_name, field_info)
-        cursor = execute_sql(
-            f"ALTER TABLE {cls._get_table_name()} ADD COLUMN {column_definition}"
-        )
+        cursor = execute_sql(f"ALTER TABLE {table_name} ADD COLUMN {column_definition}")
         cursor.connection.close()
