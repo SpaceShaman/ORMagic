@@ -31,7 +31,7 @@ class DBModel(BaseModel):
 
     def save(self) -> Self:
         """Save object to the database."""
-        return data_saver.save(self)
+        return data_saver.save(self, self._get_table_name())
 
     @classmethod
     def get(cls, **kwargs) -> Self:
