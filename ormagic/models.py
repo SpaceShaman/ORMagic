@@ -56,31 +56,6 @@ class DBModel(BaseModel):
         if cursor.rowcount == 0:
             raise ObjectNotFound
 
-    @classmethod
-    def _rename_columns_in_existing_table(
-        cls, old_columns: list[str], new_columns: list[str]
-    ) -> None:
-        for old_column_name, new_column_name in dict(
-            zip(old_columns, new_columns)
-        ).items():
-            cursor = execute_sql(
-                f"ALTER TABLE {cls._get_table_name()} RENAME COLUMN {old_column_name} TO {new_column_name}"
-            )
-            cursor.connection.close()
-
-    @classmethod
-    def _add_new_columns_to_existing_table(cls, existing_columns: list[str]) -> None:
-        for field_name, field_info in cls.model_fields.items():
-            if field_name in existing_columns:
-                continue
-            column_definition = table_manager._prepare_column_definition(
-                field_name, field_info
-            )
-            cursor = execute_sql(
-                f"ALTER TABLE {cls._get_table_name()} ADD COLUMN {column_definition}"
-            )
-            cursor.connection.close()
-
     def _insert(self) -> Self:
         prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
         fields = ", ".join(prepared_data.keys())

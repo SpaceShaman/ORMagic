@@ -35,8 +35,8 @@ def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> No
     if existing_columns == new_columns:
         return
     elif len(existing_columns) == len(new_columns):
-        return cls._rename_columns_in_existing_table(existing_columns, new_columns)
-    cls._add_new_columns_to_existing_table(existing_columns)
+        return _rename_columns_in_existing_table(cls, existing_columns, new_columns)
+    _add_new_columns_to_existing_table(cls, existing_columns)
 
 
 def _create_intermediate_table(table_name: str, field_info: FieldInfo) -> None:
@@ -112,3 +112,24 @@ def _fetch_existing_column_names_from_db(table_name: str) -> list[str]:
 
 def _fetch_field_names_from_model(model_fields: dict[str, FieldInfo]) -> list[str]:
     return list(model_fields.keys())
+
+
+def _rename_columns_in_existing_table(
+    cls, old_columns: list[str], new_columns: list[str]
+) -> None:
+    for old_column_name, new_column_name in dict(zip(old_columns, new_columns)).items():
+        cursor = execute_sql(
+            f"ALTER TABLE {cls._get_table_name()} RENAME COLUMN {old_column_name} TO {new_column_name}"
+        )
+        cursor.connection.close()
+
+
+def _add_new_columns_to_existing_table(cls, existing_columns: list[str]) -> None:
+    for field_name, field_info in cls.model_fields.items():
+        if field_name in existing_columns:
+            continue
+        column_definition = _prepare_column_definition(field_name, field_info)
+        cursor = execute_sql(
+            f"ALTER TABLE {cls._get_table_name()} ADD COLUMN {column_definition}"
+        )
+        cursor.connection.close()
