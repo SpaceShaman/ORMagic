@@ -40,7 +40,20 @@ class DBModel(BaseModel):
         if not cls._is_table_exists():
             return cls.create_table()
         table_name = cls._get_table_name()
-        existing_columns = cls._get_existing_columns()
+        existing_columns = cls._get_existing_columns_names_list_from_db()
+        model_fields = cls._get_fields_names_list_from_model()
+        if existing_columns == model_fields:
+            return
+        elif len(existing_columns) == len(model_fields):
+            difference_columns = set(existing_columns) - set(model_fields)
+            difference_fields = set(model_fields) - set(existing_columns)
+            old_new_columns = zip(difference_columns, difference_fields)
+            for old_column_name, new_column_name in old_new_columns:
+                cursor = execute_sql(
+                    f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
+                )
+                cursor.connection.close()
+                return
         for field_name, field_info in cls.model_fields.items():
             if field_name in existing_columns:
                 continue
@@ -83,11 +96,15 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     @classmethod
-    def _get_existing_columns(cls) -> list[str]:
+    def _get_existing_columns_names_list_from_db(cls) -> list[str]:
         cursor = execute_sql(f"PRAGMA table_info({cls._get_table_name()})")
         existed_fields = [column[1] for column in cursor.fetchall()]
         cursor.connection.close()
         return existed_fields
+
+    @classmethod
+    def _get_fields_names_list_from_model(cls) -> list[str]:
+        return list(cls.model_fields.keys())
 
     @classmethod
     def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
