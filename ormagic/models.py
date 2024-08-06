@@ -374,23 +374,6 @@ class DBModel(BaseModel):
         return exist
 
     @classmethod
-    def _create_intermediate_table(cls, field_info: FieldInfo) -> None:
-        table_name = cls._get_table_name()
-        related_table_name = getattr(field_info.annotation, "__args__")[
-            0
-        ].__name__.lower()
-        if cls._get_intermediate_table_name(related_table_name):
-            return
-        execute_sql(
-            f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
-            "id INTEGER PRIMARY KEY, "
-            f"{table_name}_id INTEGER, "
-            f"{related_table_name}_id INTEGER, "
-            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
-            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
-        )
-
-    @classmethod
     def _get_table_name(cls) -> str:
         return cls.__name__.lower()
 
