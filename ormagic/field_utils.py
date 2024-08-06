@@ -33,3 +33,19 @@ def transform_field_annotation_to_sql_type(
     if types_tuple and issubclass(types_tuple[0], DBModel):
         return "INTEGER"
     return "TEXT"
+
+
+def get_on_delete_action(
+    field_info: FieldInfo,
+) -> Literal["CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT", "NO ACTION"]:
+    if not field_info.json_schema_extra:
+        return "CASCADE"
+    if field_info.json_schema_extra.get("on_delete") == "SET NULL":
+        return "SET NULL"
+    if field_info.json_schema_extra.get("on_delete") == "RESTRICT":
+        return "RESTRICT"
+    if field_info.json_schema_extra.get("on_delete") == "SET DEFAULT":
+        return "SET DEFAULT"
+    if field_info.json_schema_extra.get("on_delete") == "NO ACTION":
+        return "NO ACTION"
+    return "CASCADE"

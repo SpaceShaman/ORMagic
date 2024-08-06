@@ -1,8 +1,7 @@
 from sqlite3 import Cursor
-from typing import Any, Literal, Self
+from typing import Any, Self
 
 from pydantic import BaseModel
-from pydantic.fields import FieldInfo
 
 from . import table_manager
 from .sql_utils import execute_sql
@@ -18,9 +17,7 @@ class DBModel(BaseModel):
     @classmethod
     def create_table(cls) -> None:
         """Create a table in the database for the model."""
-        table_manager.create_table(
-            cls=cls, table_name=cls._get_table_name(), model_fields=cls.model_fields
-        )
+        table_manager.create_table(cls._get_table_name(), cls.model_fields)
 
     @classmethod
     def update_table(cls) -> None:
@@ -96,7 +93,7 @@ class DBModel(BaseModel):
             if field_name in existing_columns:
                 continue
             column_definition = table_manager._prepare_column_definition(
-                cls, field_name, field_info
+                field_name, field_info
             )
             cursor = execute_sql(
                 f"ALTER TABLE {cls._get_table_name()} ADD COLUMN {column_definition}"
@@ -172,22 +169,6 @@ class DBModel(BaseModel):
             else:
                 prepared_data[field_name] = value
         return prepared_data
-
-    @classmethod
-    def _get_on_delete_action(
-        cls, field_info: FieldInfo
-    ) -> Literal["CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT", "NO ACTION"]:
-        if not field_info.json_schema_extra:
-            return "CASCADE"
-        if field_info.json_schema_extra.get("on_delete") == "SET NULL":
-            return "SET NULL"
-        if field_info.json_schema_extra.get("on_delete") == "RESTRICT":
-            return "RESTRICT"
-        if field_info.json_schema_extra.get("on_delete") == "SET DEFAULT":
-            return "SET DEFAULT"
-        if field_info.json_schema_extra.get("on_delete") == "NO ACTION":
-            return "NO ACTION"
-        return "CASCADE"
 
     @classmethod
     def _extract_field_operator(cls, field: str) -> tuple[str, str]:

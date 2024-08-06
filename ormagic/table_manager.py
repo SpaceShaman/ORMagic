@@ -4,6 +4,7 @@ from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
 from .field_utils import (
+    get_on_delete_action,
     is_many_to_many_field,
     is_unique_field,
     transform_field_annotation_to_sql_type,
@@ -11,7 +12,7 @@ from .field_utils import (
 from .sql_utils import execute_sql
 
 
-def create_table(cls, table_name: str, model_fields: dict[str, FieldInfo]):
+def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
     columns = ["id INTEGER PRIMARY KEY"]
     for field_name, field_info in model_fields.items():
         if field_name == "id":
@@ -19,7 +20,7 @@ def create_table(cls, table_name: str, model_fields: dict[str, FieldInfo]):
         if is_many_to_many_field(field_info.annotation):
             _create_intermediate_table(table_name, field_info)
             continue
-        columns.append(_prepare_column_definition(cls, field_name, field_info))
+        columns.append(_prepare_column_definition(field_name, field_info))
 
     sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})"
     cursor = execute_sql(sql)
@@ -56,7 +57,7 @@ def _get_intermediate_table_name(
     return None
 
 
-def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
+def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
     field_type = transform_field_annotation_to_sql_type(field_info.annotation)
     column_definition = f"{field_name} {field_type}"
     if field_info.default not in (PydanticUndefined, None):
@@ -66,7 +67,7 @@ def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> s
     if is_unique_field(field_info):
         column_definition += " UNIQUE"
     if foreign_model := get_foreign_key_model(field_info.annotation):
-        action = cls._get_on_delete_action(field_info)
+        action = get_on_delete_action(field_info)
         column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
     return column_definition
 
