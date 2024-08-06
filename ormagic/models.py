@@ -156,20 +156,21 @@ class DBModel(BaseModel):
 
     def _prepare_data_to_insert(self, model_dict: dict) -> dict[str, Any]:
         prepared_data = {}
-        for key, value in model_dict.items():
-            if foreign_model := table_manager.get_foreign_key_model(self, key):
+        for field_name, value in model_dict.items():
+            field_annotation = self.model_fields[field_name].annotation
+            if foreign_model := table_manager.get_foreign_key_model(field_annotation):
                 if isinstance(value, list):
                     continue
                 elif not value:
-                    prepared_data[key] = None
+                    prepared_data[field_name] = None
                 elif not value["id"]:
                     value = foreign_model(**value).save()
-                    prepared_data[key] = value.id
-                    getattr(self, key).id = value.id
+                    prepared_data[field_name] = value.id
+                    getattr(self, field_name).id = value.id
                 else:
-                    prepared_data[key] = value["id"]
+                    prepared_data[field_name] = value["id"]
             else:
-                prepared_data[key] = value
+                prepared_data[field_name] = value
         return prepared_data
 
     @classmethod
@@ -296,7 +297,9 @@ class DBModel(BaseModel):
                 )
             elif not data_dict[key]:
                 continue
-            elif foreign_model := table_manager.get_foreign_key_model(cls, key):
+            elif foreign_model := table_manager.get_foreign_key_model(
+                field_info.annotation
+            ):
                 data_dict[key] = foreign_model._fetchone_raw_data(id=data_dict[key])
         return data_dict
 

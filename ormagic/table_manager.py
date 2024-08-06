@@ -1,4 +1,4 @@
-from typing import Type, get_args
+from typing import Any, Type, get_args
 
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
@@ -65,18 +65,17 @@ def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> s
         column_definition += " NOT NULL"
     if is_unique_field(field_info):
         column_definition += " UNIQUE"
-    if foreign_model := get_foreign_key_model(cls, field_name):
+    if foreign_model := get_foreign_key_model(field_info.annotation):
         action = cls._get_on_delete_action(field_info)
         column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
     return column_definition
 
 
-def get_foreign_key_model(cls, field_name: str) -> Type | None:
+def get_foreign_key_model(field_annotation: Any) -> Type | None:
     from .models import DBModel
 
-    annotation = cls.model_fields[field_name].annotation
-    types_tuple = get_args(annotation)
-    if not types_tuple and annotation and issubclass(annotation, DBModel):
-        return annotation
+    types_tuple = get_args(field_annotation)
+    if not types_tuple and field_annotation and issubclass(field_annotation, DBModel):
+        return field_annotation
     if types_tuple and issubclass(types_tuple[0], DBModel):
         return types_tuple[0]
