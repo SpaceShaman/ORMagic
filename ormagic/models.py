@@ -3,7 +3,7 @@ from typing import Any, Self
 
 from pydantic import BaseModel
 
-from . import table_manager
+from . import data_saver, table_manager
 from .sql_utils import execute_sql
 
 
@@ -31,7 +31,7 @@ class DBModel(BaseModel):
 
     def save(self) -> Self:
         """Save object to the database."""
-        return self._update() if self.id else self._insert()
+        return data_saver.save(self)
 
     @classmethod
     def get(cls, **kwargs) -> Self:
