@@ -20,7 +20,9 @@ class DBModel(BaseModel):
     @classmethod
     def create_table(cls) -> None:
         """Create a table in the database for the model."""
-        table_manager.create_table(cls)
+        table_manager.create_table(
+            cls=cls, table_name=cls._get_table_name(), model_fields=cls.model_fields
+        )
 
     @classmethod
     def update_table(cls) -> None:
