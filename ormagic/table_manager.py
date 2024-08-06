@@ -1,7 +1,11 @@
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
-from .field_utils import is_many_to_many_field, transform_field_annotation_to_sql_type
+from .field_utils import (
+    is_many_to_many_field,
+    is_unique_field,
+    transform_field_annotation_to_sql_type,
+)
 from .sql_utils import execute_sql
 
 
@@ -57,7 +61,7 @@ def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> s
         column_definition += f" DEFAULT '{field_info.default}'"
     if field_info.is_required():
         column_definition += " NOT NULL"
-    if cls._is_unique_field(field_info):
+    if is_unique_field(field_info):
         column_definition += " UNIQUE"
     if foreign_model := cls._get_foreign_key_model(field_name):
         action = cls._get_on_delete_action(field_info)

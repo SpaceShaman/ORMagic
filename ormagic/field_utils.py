@@ -1,6 +1,8 @@
 from types import NoneType
 from typing import Any, Literal, Union, get_args
 
+from pydantic.fields import FieldInfo
+
 
 def is_many_to_many_field(field_annotation: Any) -> bool:
     from .models import DBModel
@@ -9,6 +11,12 @@ def is_many_to_many_field(field_annotation: Any) -> bool:
         hasattr(field_annotation, "__origin__")
         and getattr(field_annotation, "__origin__") is list
         and issubclass(getattr(field_annotation, "__args__")[0], DBModel)
+    )
+
+
+def is_unique_field(field_info: FieldInfo) -> bool:
+    return bool(
+        field_info.json_schema_extra and field_info.json_schema_extra.get("unique")
     )
 
 

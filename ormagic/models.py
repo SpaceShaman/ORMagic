@@ -336,12 +336,6 @@ class DBModel(BaseModel):
         )
 
     @classmethod
-    def _is_unique_field(cls, field_info: FieldInfo) -> bool:
-        return bool(
-            field_info.json_schema_extra and field_info.json_schema_extra.get("unique")
-        )
-
-    @classmethod
     def _is_table_exists(cls) -> bool:
         cursor = execute_sql(
             f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{cls._get_table_name()}'"
