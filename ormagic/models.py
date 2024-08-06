@@ -3,7 +3,7 @@ from typing import Any, Self
 
 from pydantic import BaseModel
 
-from . import data_saver, table_manager
+from . import table_manager
 from .sql_utils import execute_sql
 
 
@@ -31,7 +31,7 @@ class DBModel(BaseModel):
 
     def save(self) -> Self:
         """Save object to the database."""
-        return data_saver.save(self, self._get_table_name())
+        return self._update() if self.id else self._insert()
 
     @classmethod
     def get(cls, **kwargs) -> Self:
@@ -54,6 +54,19 @@ class DBModel(BaseModel):
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
+
+    def _insert(self) -> Self:
+        prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
+        fields = ", ".join(prepared_data.keys())
+        values = ", ".join(
+            f"'{value}'" if value else "NULL" for value in prepared_data.values()
+        )
+        sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
+        cursor = execute_sql(sql)
+        cursor.connection.close()
+        self.id = cursor.lastrowid
+        self._update_many_to_many_intermediate_table()
+        return self
 
     def _update(self) -> Self:
         prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
