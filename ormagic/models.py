@@ -39,21 +39,13 @@ class DBModel(BaseModel):
         """Update the table in the database based on the model definition."""
         if not cls._is_table_exists():
             return cls.create_table()
-        table_name = cls._get_table_name()
         existing_columns = cls._fetch_existing_column_names_from_db()
         model_fields = cls._fetch_field_names_from_model()
         if existing_columns == model_fields:
             return
         elif len(existing_columns) == len(model_fields):
             return cls._rename_columns(existing_columns, model_fields)
-        for field_name, field_info in cls.model_fields.items():
-            if field_name in existing_columns:
-                continue
-            column_definition = cls._prepare_column_definition(field_name, field_info)
-            cursor = execute_sql(
-                f"ALTER TABLE {table_name} ADD COLUMN {column_definition}"
-            )
-            cursor.connection.close()
+        cls._add_new_columns_to_existing_table(existing_columns)
 
     @classmethod
     def drop_table(cls) -> None:
@@ -105,6 +97,17 @@ class DBModel(BaseModel):
         ).items():
             cursor = execute_sql(
                 f"ALTER TABLE {cls._get_table_name()} RENAME COLUMN {old_column_name} TO {new_column_name}"
+            )
+            cursor.connection.close()
+
+    @classmethod
+    def _add_new_columns_to_existing_table(cls, existing_columns: list[str]) -> None:
+        for field_name, field_info in cls.model_fields.items():
+            if field_name in existing_columns:
+                continue
+            column_definition = cls._prepare_column_definition(field_name, field_info)
+            cursor = execute_sql(
+                f"ALTER TABLE {cls._get_table_name()} ADD COLUMN {column_definition}"
             )
             cursor.connection.close()
 
