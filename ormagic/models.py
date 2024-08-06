@@ -44,7 +44,7 @@ class DBModel(BaseModel):
         if existing_columns == model_fields:
             return
         elif len(existing_columns) == len(model_fields):
-            return cls._rename_columns(existing_columns, model_fields)
+            return cls._rename_columns_in_existing_table(existing_columns, model_fields)
         cls._add_new_columns_to_existing_table(existing_columns)
 
     @classmethod
@@ -91,7 +91,9 @@ class DBModel(BaseModel):
         return list(cls.model_fields.keys())
 
     @classmethod
-    def _rename_columns(cls, old_columns: list[str], new_columns: list[str]) -> None:
+    def _rename_columns_in_existing_table(
+        cls, old_columns: list[str], new_columns: list[str]
+    ) -> None:
         for old_column_name, new_column_name in dict(
             zip(old_columns, new_columns)
         ).items():
