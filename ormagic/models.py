@@ -1,5 +1,5 @@
 from sqlite3 import Cursor
-from typing import Any, Literal, Self, Type, get_args
+from typing import Any, Literal, Self
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -157,7 +157,7 @@ class DBModel(BaseModel):
     def _prepare_data_to_insert(self, model_dict: dict) -> dict[str, Any]:
         prepared_data = {}
         for key, value in model_dict.items():
-            if foreign_model := self._get_foreign_key_model(key):
+            if foreign_model := table_manager.get_foreign_key_model(self, key):
                 if isinstance(value, list):
                     continue
                 elif not value:
@@ -171,15 +171,6 @@ class DBModel(BaseModel):
             else:
                 prepared_data[key] = value
         return prepared_data
-
-    @classmethod
-    def _get_foreign_key_model(cls, field_name: str) -> Type["DBModel"] | None:
-        annotation = cls.model_fields[field_name].annotation
-        types_tuple = get_args(annotation)
-        if not types_tuple and annotation and issubclass(annotation, DBModel):
-            return annotation
-        if types_tuple and issubclass(types_tuple[0], DBModel):
-            return types_tuple[0]
 
     @classmethod
     def _get_on_delete_action(
@@ -305,7 +296,7 @@ class DBModel(BaseModel):
                 )
             elif not data_dict[key]:
                 continue
-            elif foreign_model := cls._get_foreign_key_model(key):
+            elif foreign_model := table_manager.get_foreign_key_model(cls, key):
                 data_dict[key] = foreign_model._fetchone_raw_data(id=data_dict[key])
         return data_dict
 
