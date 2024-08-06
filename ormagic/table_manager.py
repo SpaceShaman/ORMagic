@@ -41,6 +41,21 @@ def update_table(table_name: str, model_fields: dict[str, FieldInfo]) -> None:
     _add_new_columns_to_existing_table(table_name, model_fields, existing_columns)
 
 
+def drop_table(table_name: str) -> None:
+    cursor = execute_sql(f"DROP TABLE IF EXISTS {table_name}")
+    cursor.connection.close()
+
+
+def get_foreign_key_model(field_annotation: Any) -> Type | None:
+    from .models import DBModel
+
+    types_tuple = get_args(field_annotation)
+    if not types_tuple and field_annotation and issubclass(field_annotation, DBModel):
+        return field_annotation
+    if types_tuple and issubclass(types_tuple[0], DBModel):
+        return types_tuple[0]
+
+
 def _create_intermediate_table(table_name: str, field_info: FieldInfo) -> None:
     related_table_name = getattr(field_info.annotation, "__args__")[0].__name__.lower()
     if _get_intermediate_table_name(table_name, related_table_name):
@@ -84,16 +99,6 @@ def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
         action = get_on_delete_action(field_info)
         column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
     return column_definition
-
-
-def get_foreign_key_model(field_annotation: Any) -> Type | None:
-    from .models import DBModel
-
-    types_tuple = get_args(field_annotation)
-    if not types_tuple and field_annotation and issubclass(field_annotation, DBModel):
-        return field_annotation
-    if types_tuple and issubclass(types_tuple[0], DBModel):
-        return types_tuple[0]
 
 
 def _is_table_exists(table_name: str) -> bool:
