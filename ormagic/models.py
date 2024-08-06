@@ -57,10 +57,6 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     @classmethod
-    def _fetch_field_names_from_model(cls) -> list[str]:
-        return list(cls.model_fields.keys())
-
-    @classmethod
     def _rename_columns_in_existing_table(
         cls, old_columns: list[str], new_columns: list[str]
     ) -> None:

@@ -31,11 +31,11 @@ def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> No
     if not _is_table_exists(table_name):
         return create_table(table_name, model_fields)
     existing_columns = _fetch_existing_column_names_from_db(table_name)
-    model_fields = cls._fetch_field_names_from_model()
-    if existing_columns == model_fields:
+    new_columns = _fetch_field_names_from_model(model_fields)
+    if existing_columns == new_columns:
         return
-    elif len(existing_columns) == len(model_fields):
-        return cls._rename_columns_in_existing_table(existing_columns, model_fields)
+    elif len(existing_columns) == len(new_columns):
+        return cls._rename_columns_in_existing_table(existing_columns, new_columns)
     cls._add_new_columns_to_existing_table(existing_columns)
 
 
@@ -108,3 +108,7 @@ def _fetch_existing_column_names_from_db(table_name: str) -> list[str]:
     existed_fields = [column[1] for column in cursor.fetchall()]
     cursor.connection.close()
     return existed_fields
+
+
+def _fetch_field_names_from_model(model_fields: dict[str, FieldInfo]) -> list[str]:
+    return list(model_fields.keys())
