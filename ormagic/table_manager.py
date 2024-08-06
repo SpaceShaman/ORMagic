@@ -35,7 +35,9 @@ def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> No
     if existing_columns == new_columns:
         return
     elif len(existing_columns) == len(new_columns):
-        return _rename_columns_in_existing_table(cls, existing_columns, new_columns)
+        return _rename_columns_in_existing_table(
+            table_name, existing_columns, new_columns
+        )
     _add_new_columns_to_existing_table(cls, existing_columns)
 
 
@@ -115,11 +117,11 @@ def _fetch_field_names_from_model(model_fields: dict[str, FieldInfo]) -> list[st
 
 
 def _rename_columns_in_existing_table(
-    cls, old_columns: list[str], new_columns: list[str]
+    table_name: str, old_columns: list[str], new_columns: list[str]
 ) -> None:
     for old_column_name, new_column_name in dict(zip(old_columns, new_columns)).items():
         cursor = execute_sql(
-            f"ALTER TABLE {cls._get_table_name()} RENAME COLUMN {old_column_name} TO {new_column_name}"
+            f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
         )
         cursor.connection.close()
 
