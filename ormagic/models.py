@@ -45,10 +45,8 @@ class DBModel(BaseModel):
         if existing_columns == model_fields:
             return
         elif len(existing_columns) == len(model_fields):
-            difference_columns = set(existing_columns) - set(model_fields)
-            difference_fields = set(model_fields) - set(existing_columns)
-            old_new_columns = zip(difference_columns, difference_fields)
-            for old_column_name, new_column_name in old_new_columns:
+            old_new_column_names = dict(zip(existing_columns, model_fields))
+            for old_column_name, new_column_name in old_new_column_names.items():
                 cursor = execute_sql(
                     f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
                 )
