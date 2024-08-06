@@ -1,7 +1,7 @@
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
-from .field_utils import is_many_to_many_field
+from .field_utils import is_many_to_many_field, transform_field_annotation_to_sql_type
 from .sql_utils import execute_sql
 
 
@@ -51,7 +51,7 @@ def _get_intermediate_table_name(
 
 
 def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
-    field_type = cls._transform_field_annotation_to_sql_type(field_info.annotation)
+    field_type = transform_field_annotation_to_sql_type(field_info.annotation)
     column_definition = f"{field_name} {field_type}"
     if field_info.default not in (PydanticUndefined, None):
         column_definition += f" DEFAULT '{field_info.default}'"

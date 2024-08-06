@@ -1,6 +1,5 @@
 from sqlite3 import Cursor
-from types import NoneType
-from typing import Any, Literal, Self, Type, Union, get_args
+from typing import Any, Literal, Self, Type, get_args
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -181,19 +180,6 @@ class DBModel(BaseModel):
             return annotation
         if types_tuple and issubclass(types_tuple[0], DBModel):
             return types_tuple[0]
-
-    @classmethod
-    def _transform_field_annotation_to_sql_type(
-        cls, annotation: Any
-    ) -> Literal["INTEGER", "TEXT"]:
-        if annotation in [int, Union[int, NoneType]]:
-            return "INTEGER"
-        types_tuple = get_args(annotation)
-        if not types_tuple and issubclass(annotation, DBModel):
-            return "INTEGER"
-        if types_tuple and issubclass(types_tuple[0], DBModel):
-            return "INTEGER"
-        return "TEXT"
 
     @classmethod
     def _get_on_delete_action(
