@@ -158,6 +158,7 @@ There are some restrictions on updating tables:
 
 - The new column cannot have `unique` or `primary_key` set to `True`.
 - The new column needs to have a default value or set as optional.
+- You can rename multiple columns at once and add multiple columns at once but you cannot mix this two operations in one call.
 
 ### Many-to-many relationships
 
@@ -386,7 +387,7 @@ def delete_user(id: int):
 - [x] Limit and offset
 - [ ] Update table schema
   - [x] Add new column
-  - [ ] Rename column
+  - [x] Rename column
   - [ ] Drop column
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
