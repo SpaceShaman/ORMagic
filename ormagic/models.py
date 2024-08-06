@@ -53,7 +53,7 @@ class DBModel(BaseModel):
                     f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
                 )
                 cursor.connection.close()
-                return
+            return
         for field_name, field_info in cls.model_fields.items():
             if field_name in existing_columns:
                 continue
