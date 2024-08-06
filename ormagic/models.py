@@ -45,13 +45,7 @@ class DBModel(BaseModel):
         if existing_columns == model_fields:
             return
         elif len(existing_columns) == len(model_fields):
-            old_new_column_names = dict(zip(existing_columns, model_fields))
-            for old_column_name, new_column_name in old_new_column_names.items():
-                cursor = execute_sql(
-                    f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
-                )
-                cursor.connection.close()
-            return
+            return cls._rename_columns(existing_columns, model_fields)
         for field_name, field_info in cls.model_fields.items():
             if field_name in existing_columns:
                 continue
@@ -103,6 +97,16 @@ class DBModel(BaseModel):
     @classmethod
     def _fetch_field_names_from_model(cls) -> list[str]:
         return list(cls.model_fields.keys())
+
+    @classmethod
+    def _rename_columns(cls, old_columns: list[str], new_columns: list[str]) -> None:
+        for old_column_name, new_column_name in dict(
+            zip(old_columns, new_columns)
+        ).items():
+            cursor = execute_sql(
+                f"ALTER TABLE {cls._get_table_name()} RENAME COLUMN {old_column_name} TO {new_column_name}"
+            )
+            cursor.connection.close()
 
     @classmethod
     def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
