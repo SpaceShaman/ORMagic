@@ -57,13 +57,6 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     @classmethod
-    def _fetch_existing_column_names_from_db(cls) -> list[str]:
-        cursor = execute_sql(f"PRAGMA table_info({cls._get_table_name()})")
-        existed_fields = [column[1] for column in cursor.fetchall()]
-        cursor.connection.close()
-        return existed_fields
-
-    @classmethod
     def _fetch_field_names_from_model(cls) -> list[str]:
         return list(cls.model_fields.keys())
 

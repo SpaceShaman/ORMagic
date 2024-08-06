@@ -30,7 +30,7 @@ def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
 def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> None:
     if not _is_table_exists(table_name):
         return create_table(table_name, model_fields)
-    existing_columns = cls._fetch_existing_column_names_from_db()
+    existing_columns = _fetch_existing_column_names_from_db(table_name)
     model_fields = cls._fetch_field_names_from_model()
     if existing_columns == model_fields:
         return
@@ -101,3 +101,10 @@ def _is_table_exists(table_name: str) -> bool:
     exist = cursor.fetchone()[0] == 1
     cursor.connection.close()
     return exist
+
+
+def _fetch_existing_column_names_from_db(table_name: str) -> list[str]:
+    cursor = execute_sql(f"PRAGMA table_info({table_name})")
+    existed_fields = [column[1] for column in cursor.fetchall()]
+    cursor.connection.close()
+    return existed_fields
