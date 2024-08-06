@@ -4,7 +4,7 @@ from typing import Any, Self
 from pydantic import BaseModel
 
 from . import table_manager
-from .field_utils import extract_field_operator
+from .field_utils import extract_field_operator, is_many_to_many_field
 from .sql_utils import execute_sql
 
 
@@ -87,7 +87,7 @@ class DBModel(BaseModel):
     def _update_many_to_many_intermediate_table(self) -> None:
         related_objects = []
         for field_name, field_info in self.model_fields.items():
-            if self._is_many_to_many_field(field_info.annotation):
+            if is_many_to_many_field(field_info.annotation):
                 related_objects.extend(iter(getattr(self, field_name)))
         if not related_objects:
             return
@@ -195,7 +195,7 @@ class DBModel(BaseModel):
     ) -> dict[str, Any]:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, field_info in cls.model_fields.items():
-            if cls._is_many_to_many_field(field_info.annotation):
+            if is_many_to_many_field(field_info.annotation):
                 if is_recursive_call:
                     continue
                 data_dict[key] = cls._process_many_to_many_data(
@@ -226,14 +226,6 @@ class DBModel(BaseModel):
         data_list = cursor.fetchall()
         cursor.connection.close()
         return [cls._process_raw_data(data) for data in data_list]
-
-    @classmethod
-    def _is_many_to_many_field(cls, annotation: Any) -> bool:
-        return bool(
-            hasattr(annotation, "__origin__")
-            and getattr(annotation, "__origin__") is list
-            and issubclass(getattr(annotation, "__args__")[0], DBModel)
-        )
 
     @classmethod
     def _get_table_name(cls) -> str:
