@@ -4,7 +4,6 @@ from typing import Any, Literal, Self, Type, Union, get_args
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined
 
 from . import table_manager
 from .sql_utils import execute_sql
@@ -97,26 +96,13 @@ class DBModel(BaseModel):
         for field_name, field_info in cls.model_fields.items():
             if field_name in existing_columns:
                 continue
-            column_definition = cls._prepare_column_definition(field_name, field_info)
+            column_definition = table_manager._prepare_column_definition(
+                cls, field_name, field_info
+            )
             cursor = execute_sql(
                 f"ALTER TABLE {cls._get_table_name()} ADD COLUMN {column_definition}"
             )
             cursor.connection.close()
-
-    @classmethod
-    def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
-        field_type = cls._transform_field_annotation_to_sql_type(field_info.annotation)
-        column_definition = f"{field_name} {field_type}"
-        if field_info.default not in (PydanticUndefined, None):
-            column_definition += f" DEFAULT '{field_info.default}'"
-        if field_info.is_required():
-            column_definition += " NOT NULL"
-        if cls._is_unique_field(field_info):
-            column_definition += " UNIQUE"
-        if foreign_model := cls._get_foreign_key_model(field_name):
-            action = cls._get_on_delete_action(field_info)
-            column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
-        return column_definition
 
     def _insert(self) -> Self:
         prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))

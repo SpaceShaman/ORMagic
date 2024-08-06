@@ -1,4 +1,5 @@
 from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 
 from .field_utils import is_many_to_many_field
 from .sql_utils import execute_sql
@@ -12,7 +13,7 @@ def create_table(cls, table_name: str, model_fields: dict[str, FieldInfo]):
         if is_many_to_many_field(field_info.annotation):
             _create_intermediate_table(table_name, field_info)
             continue
-        columns.append(cls._prepare_column_definition(field_name, field_info))
+        columns.append(_prepare_column_definition(cls, field_name, field_info))
 
     sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})"
     cursor = execute_sql(sql)
@@ -47,3 +48,18 @@ def _get_intermediate_table_name(
     if cursor.fetchone()[0] == 1:
         return f"{related_table_name}_{table_name}"
     return None
+
+
+def _prepare_column_definition(cls, field_name: str, field_info: FieldInfo) -> str:
+    field_type = cls._transform_field_annotation_to_sql_type(field_info.annotation)
+    column_definition = f"{field_name} {field_type}"
+    if field_info.default not in (PydanticUndefined, None):
+        column_definition += f" DEFAULT '{field_info.default}'"
+    if field_info.is_required():
+        column_definition += " NOT NULL"
+    if cls._is_unique_field(field_info):
+        column_definition += " UNIQUE"
+    if foreign_model := cls._get_foreign_key_model(field_name):
+        action = cls._get_on_delete_action(field_info)
+        column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
+    return column_definition
