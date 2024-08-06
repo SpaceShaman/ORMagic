@@ -303,14 +303,5 @@ class DBModel(BaseModel):
         )
 
     @classmethod
-    def _is_table_exists(cls) -> bool:
-        cursor = execute_sql(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{cls._get_table_name()}'"
-        )
-        exist = cursor.fetchone()[0] == 1
-        cursor.connection.close()
-        return exist
-
-    @classmethod
     def _get_table_name(cls) -> str:
         return cls.__name__.lower()

@@ -28,7 +28,7 @@ def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
 
 
 def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> None:
-    if not cls._is_table_exists():
+    if not _is_table_exists(table_name):
         return create_table(table_name, model_fields)
     existing_columns = cls._fetch_existing_column_names_from_db()
     model_fields = cls._fetch_field_names_from_model()
@@ -92,3 +92,12 @@ def get_foreign_key_model(field_annotation: Any) -> Type | None:
         return field_annotation
     if types_tuple and issubclass(types_tuple[0], DBModel):
         return types_tuple[0]
+
+
+def _is_table_exists(table_name: str) -> bool:
+    cursor = execute_sql(
+        f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}'"
+    )
+    exist = cursor.fetchone()[0] == 1
+    cursor.connection.close()
+    return exist
