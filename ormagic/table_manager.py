@@ -27,7 +27,7 @@ def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
     cursor.connection.close()
 
 
-def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> None:
+def update_table(table_name: str, model_fields: dict[str, FieldInfo]) -> None:
     if not _is_table_exists(table_name):
         return create_table(table_name, model_fields)
     existing_columns = _fetch_existing_column_names_from_db(table_name)

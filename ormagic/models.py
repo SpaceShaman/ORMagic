@@ -22,7 +22,7 @@ class DBModel(BaseModel):
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        table_manager.update_table(cls, cls._get_table_name(), cls.model_fields)
+        table_manager.update_table(cls._get_table_name(), cls.model_fields)
 
     @classmethod
     def drop_table(cls) -> None:
