@@ -27,9 +27,9 @@ def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
     cursor.connection.close()
 
 
-def update_table(cls) -> None:
+def update_table(cls, table_name: str, model_fields: dict[str, FieldInfo]) -> None:
     if not cls._is_table_exists():
-        return cls.create_table()
+        return create_table(table_name, model_fields)
     existing_columns = cls._fetch_existing_column_names_from_db()
     model_fields = cls._fetch_field_names_from_model()
     if existing_columns == model_fields:
