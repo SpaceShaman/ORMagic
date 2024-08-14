@@ -148,7 +148,7 @@ To delete a table, use the `drop_table` method.
 User.drop_table()
 ```
 
-To update a table, use the `update_table` method. (Not implemented yet)
+To update a table, use the `update_table` method.
 
 ```python
 User.update_table()
@@ -158,7 +158,7 @@ There are some restrictions on updating tables:
 
 - The new column cannot have `unique` or `primary_key` set to `True`.
 - The new column needs to have a default value or set as optional.
-- You can rename multiple columns at once and add multiple columns at once but you cannot mix this two operations in one call.
+- You can rename, drop and add multiple columns at once but you cannot mix this tree operations in one call.
 
 ### Many-to-many relationships
 
