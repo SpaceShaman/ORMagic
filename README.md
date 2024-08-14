@@ -385,10 +385,10 @@ def delete_user(id: int):
 - [x] Protect against SQL injection
 - [x] Order by
 - [x] Limit and offset
-- [ ] Update table schema
+- [x] Update table schema
   - [x] Add new column
   - [x] Rename column
-  - [ ] Drop column
+  - [x] Drop column
 - [ ] Custom primary key
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations
