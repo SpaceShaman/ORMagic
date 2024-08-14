@@ -150,3 +150,27 @@ def test_try_update_table_without_changes(db_cursor):
         (1, "name", "TEXT", 1, None, 0),
         (2, "age", "INTEGER", 1, None, 0),
     ]
+
+
+def test_drop_column_from_existing_table(db_cursor):
+    class User(DBModel):
+        name: str
+
+    User.update_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert len(data) == 2
+    assert data == [(0, "id", "INTEGER", 0, None, 1), (1, "name", "TEXT", 1, None, 0)]
+
+
+def test_drop_multiple_columns_from_existing_table(db_cursor):
+    class User(DBModel):
+        pass
+
+    User.update_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert len(data) == 1
+    assert data == [(0, "id", "INTEGER", 0, None, 1)]

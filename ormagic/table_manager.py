@@ -34,6 +34,8 @@ def update_table(table_name: str, model_fields: dict[str, FieldInfo]) -> None:
     new_columns = _fetch_field_names_from_model(model_fields)
     if existing_columns == new_columns:
         return
+    elif len(existing_columns) > len(new_columns):
+        _drop_columns_from_existing_table(table_name, existing_columns, new_columns)
     elif len(existing_columns) == len(new_columns):
         return _rename_columns_in_existing_table(
             table_name, existing_columns, new_columns
@@ -141,4 +143,13 @@ def _add_new_columns_to_existing_table(
             continue
         column_definition = _prepare_column_definition(field_name, field_info)
         cursor = execute_sql(f"ALTER TABLE {table_name} ADD COLUMN {column_definition}")
+        cursor.connection.close()
+
+
+def _drop_columns_from_existing_table(
+    table_name: str, existing_columns: list[str], new_columns: list[str]
+) -> None:
+    columns_to_drop = set(existing_columns) - set(new_columns)
+    for column_name in columns_to_drop:
+        cursor = execute_sql(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
         cursor.connection.close()
