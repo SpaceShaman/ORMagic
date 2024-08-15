@@ -293,6 +293,17 @@ This is equivalent to the following SQL WHERE clause:
 ```sql
 WHERE age < 30 AND name != 'Alice'
 
+You can also combine multiple conditions in one Q object:
+
+```python
+User.filter(Q(age__lt=30, name="John") | Q(age__gt=30, name="Alice"))
+```
+
+This is equivalent to the following SQL WHERE clause:
+
+```sql
+WHERE (age < 30 AND name = 'John') OR (age > 30 AND name = 'Alice')
+```
 
 ### Order by
 
