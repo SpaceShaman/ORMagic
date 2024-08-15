@@ -1,3 +1,5 @@
+from sqlite3 import OperationalError
+
 import pytest
 
 from ormagic.models import DBModel
@@ -49,7 +51,7 @@ def test_filter_objects_with_no_results(prepare_db, db_cursor):
 
 
 def test_try_to_filter_objects_with_invalid_field(prepare_db, db_cursor):
-    with pytest.raises(ValueError):
+    with pytest.raises(OperationalError):
         User.filter(invalid_field="Jane")
 
 

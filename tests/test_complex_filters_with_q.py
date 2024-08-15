@@ -30,5 +30,12 @@ def prepare_db(db_cursor):
 def test_create_q_object_with_equal_operator():
     q = Q(name="Alice")
 
-    assert isinstance(q, Q)
-    assert q.condition == "name = 'Alice'"
+    assert q.conditions == "name = ?"
+    assert q.params == ["Alice"]
+
+
+def test_create_q_object_with_two_operators():
+    q = Q(name="Alice", age__gt=25)
+
+    assert q.conditions == "name = ? AND age > ?"
+    assert q.params == ["Alice", 25]

@@ -1,7 +1,6 @@
-from .field_utils import extract_field_operator
+from .field_utils import prepare_where_conditions
 
 
 class Q:
     def __init__(self, **kwargs):
-        field, operator = extract_field_operator(list(kwargs.keys())[0])
-        self.condition = f"{field} {operator} '{list(kwargs.values())[0]}'"
+        self.conditions, self.params = prepare_where_conditions(**kwargs)

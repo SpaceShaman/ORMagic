@@ -51,7 +51,7 @@ def get_on_delete_action(
     return "CASCADE"
 
 
-def extract_field_operator(field: str) -> tuple[str, str]:
+def _extract_field_operator(field: str) -> tuple[str, str]:
     if "__" not in field:
         return field, "="
     field, operator = field.split("__")
@@ -80,3 +80,23 @@ def extract_field_operator(field: str) -> tuple[str, str]:
     else:
         raise ValueError(f"Invalid operator: {operator}")
     return field, operator
+
+
+def prepare_where_conditions(**kwargs) -> tuple[str, list]:
+    conditions = []
+    params = []
+    for field, value in kwargs.items():
+        if field in ("order_by", "limit", "offset"):
+            continue
+        field, operator = _extract_field_operator(field)
+        if "IN" in operator:
+            placeholders = ", ".join(["?"] * len(value))
+            conditions.append(f"{field} {operator} ({placeholders})")
+            params.extend(value)
+        elif "BETWEEN" in operator:
+            conditions.append(f"{field} {operator} ? AND ?")
+            params.extend(value)
+        else:
+            conditions.append(f"{field} {operator} ?")
+            params.append(value)
+    return " AND ".join(conditions), params

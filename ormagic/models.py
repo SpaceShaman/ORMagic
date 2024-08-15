@@ -4,7 +4,7 @@ from typing import Any, Self
 from pydantic import BaseModel
 
 from . import table_manager
-from .field_utils import extract_field_operator, is_many_to_many_field
+from .field_utils import is_many_to_many_field, prepare_where_conditions
 from .sql_utils import execute_sql
 
 
@@ -127,28 +127,6 @@ class DBModel(BaseModel):
         return prepared_data
 
     @classmethod
-    def _prepare_where_conditions(cls, **kwargs) -> tuple[str, list]:
-        conditions = []
-        params = []
-        for field, value in kwargs.items():
-            if field in ("order_by", "limit", "offset"):
-                continue
-            field, operator = extract_field_operator(field)
-            if not cls.model_fields.get(field):
-                raise ValueError(f"Invalid field: {field}")
-            if "IN" in operator:
-                placeholders = ", ".join(["?"] * len(value))
-                conditions.append(f"{field} {operator} ({placeholders})")
-                params.extend(value)
-            elif "BETWEEN" in operator:
-                conditions.append(f"{field} {operator} ? AND ?")
-                params.extend(value)
-            else:
-                conditions.append(f"{field} {operator} ?")
-                params.append(value)
-        return " AND ".join(conditions), params
-
-    @classmethod
     def _prepare_order_by(
         cls, order_by: str | list[str] | tuple[str] | set[str]
     ) -> str:
@@ -159,7 +137,7 @@ class DBModel(BaseModel):
     @classmethod
     def _fetch_raw_data(cls, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls._get_table_name()}"
-        where_conditions, where_params = cls._prepare_where_conditions(**kwargs)
+        where_conditions, where_params = prepare_where_conditions(**kwargs)
         if where_conditions:
             sql += f" WHERE {where_conditions}"
         if order_by := kwargs.get("order_by"):
