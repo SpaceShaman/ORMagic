@@ -429,7 +429,7 @@ def delete_user(id: int):
 - [x] Unique constraints
 - [x] Remove table
 - [x] Read all data from the database
-- [ ] Filter data and retrieve multiple records
+- [x] Filter data and retrieve multiple records
   - [x] Equal
   - [x] Not equal
   - [x] Greater than
@@ -442,7 +442,7 @@ def delete_user(id: int):
   - [x] Not in (List of values)
   - [x] Between (Two values)
   - [x] Not between (Two values)
-  - [ ] Q objects to combine filters (AND, OR, NOT)
+  - [x] Q objects to combine filters (AND, OR, NOT)
 - [x] Protect against SQL injection
 - [x] Order by
 - [x] Limit and offset
