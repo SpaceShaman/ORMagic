@@ -421,6 +421,12 @@ def delete_user(id: int):
   - [x] Rename column
   - [x] Drop column
 - [ ] Custom primary key
+- [ ] Functions
+  - [ ] Aggregate functions
+  - [ ] String functions
+  - [ ] Date and time functions
+  - [ ] Mathematical functions
+  - [ ] Control flow functions
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations
 
