@@ -79,8 +79,16 @@ def test_create_q_object_with_not_equal_operator():
 def test_create_q_object_with_two_operators():
     q = Q(name="Alice", age__gt=25)
 
-    assert q.conditions == "name = ? AND age > ?"
+    assert q.conditions == "(name = ? AND age > ?)"
     assert q.params == ["Alice", 25]
+
+
+def test_create_q_object_with_two_q_objects_inside():
+    q1 = Q(name="Alice")
+    q2 = Q(age__lt=25)
+    q = Q(q1 | q2)
+
+    assert q.conditions == "(name = ? OR age < ?)"
 
 
 def test_combine_two_q_objects_with_or_operator():
@@ -97,7 +105,7 @@ def test_combine_two_q_objects_with_and_operator():
     q2 = Q(weight__gte=70)
     q = q1 & q2
 
-    assert q.conditions == "age BETWEEN ? AND ? AND weight >= ?"
+    assert q.conditions == "(age BETWEEN ? AND ?) AND weight >= ?"
     assert q.params == [25, 35, 70]
 
 
@@ -118,3 +126,19 @@ def test_combine_three_q_objects_with_and_or_operators():
 
     assert q.conditions == "name = ? AND age < ? OR weight >= ?"
     assert q.params == ["Alice", 25, 70]
+
+
+def test_combine_multiple_q_objects_inside_other_q_objects():
+    q1 = Q(name="Alice")
+    q2 = Q(age__lt=25)
+    q3 = Q(weight__gte=70)
+    q4 = Q(name="Bob")
+    q5 = Q(age__gt=30)
+    q6 = Q(weight__lte=80)
+    q = Q(q1 & q2 | q3) | Q(q4 & q5 | q6)
+
+    assert (
+        q.conditions
+        == "(name = ? AND age < ? OR weight >= ?) OR (name = ? AND age > ? OR weight <= ?)"
+    )
+    assert q.params == ["Alice", 25, 70, "Bob", 30, 80]
