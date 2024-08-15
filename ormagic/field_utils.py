@@ -82,7 +82,9 @@ def _extract_field_operator(field: str) -> tuple[str, str]:
     return field, operator
 
 
-def prepare_where_conditions(**kwargs) -> tuple[str, list]:
+def prepare_where_conditions(*args, **kwargs) -> tuple[str, list]:
+    from .query import Q
+
     conditions = []
     params = []
     for field, value in kwargs.items():
@@ -99,4 +101,8 @@ def prepare_where_conditions(**kwargs) -> tuple[str, list]:
         else:
             conditions.append(f"{field} {operator} ?")
             params.append(value)
+    for arg in args:
+        if isinstance(arg, Q):
+            conditions.append(arg.conditions)
+            params.extend(arg.params)
     return " AND ".join(conditions), params

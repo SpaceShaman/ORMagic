@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 from . import table_manager
 from .field_utils import is_many_to_many_field, prepare_where_conditions
-from .query import Q
 from .sql_utils import execute_sql
 
 
@@ -138,14 +137,7 @@ class DBModel(BaseModel):
     @classmethod
     def _fetch_raw_data(cls, *args, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls._get_table_name()}"
-        where_conditions, where_params = prepare_where_conditions(**kwargs)
-        for arg in args:
-            if isinstance(arg, Q):
-                if where_conditions:
-                    where_conditions += f" AND {arg.conditions}"
-                else:
-                    where_conditions = arg.conditions
-                where_params.extend(arg.params)
+        where_conditions, where_params = prepare_where_conditions(*args, **kwargs)
         if where_conditions:
             sql += f" WHERE {where_conditions}"
         if order_by := kwargs.get("order_by"):
