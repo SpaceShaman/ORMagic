@@ -264,6 +264,36 @@ User.filter(age__between=[30, 40])
 User.filter(age__nbetween=[30, 40])
 ```
 
+#### Complex filters with Q objects (AND, OR, NOT) (Not implemented yet)
+
+Keyword arguments are combined with AND by default, but you can use Q objects to combine filters with OR, NOT, and AND.
+
+For example, to filter users with age greater than 30 or name equal to "Alice":
+
+```python
+from ormagic import Q
+
+User.filter(Q(age__gt=30) | Q(name="Alice"))
+```
+
+This is equivalent to the following SQL WHERE clause:
+
+```sql
+WHERE age > 30 OR name = 'Alice'
+```
+
+To filter users with age less than 30 and name not equal to "Alice":
+
+```python
+User.filter(Q(age__lt=30) & ~Q(name="Alice"))
+```
+
+This is equivalent to the following SQL WHERE clause:
+
+```sql
+WHERE age < 30 AND name != 'Alice'
+
+
 ### Order by
 
 To order the results, use the `filter` or `all` method with the `order_by` parameter.
@@ -369,7 +399,7 @@ def delete_user(id: int):
 - [x] Unique constraints
 - [x] Remove table
 - [x] Read all data from the database
-- [x] Filter data and retrieve multiple records
+- [ ] Filter data and retrieve multiple records
   - [x] Equal
   - [x] Not equal
   - [x] Greater than
@@ -382,6 +412,7 @@ def delete_user(id: int):
   - [x] Not in (List of values)
   - [x] Between (Two values)
   - [x] Not between (Two values)
+  - [ ] Q objects to combine filters (AND, OR, NOT)
 - [x] Protect against SQL injection
 - [x] Order by
 - [x] Limit and offset
