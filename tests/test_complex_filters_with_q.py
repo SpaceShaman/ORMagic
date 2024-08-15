@@ -14,7 +14,7 @@ def prepare_db(db_cursor):
     db_cursor.connection.commit()
 
 
-def test_filter_two_fields_with_q_and_or_operator(prepare_db):
+def test_filter_two_fields_with_q_objects_or_operator(prepare_db):
     class User(DBModel):
         name: str
         age: int
@@ -29,6 +29,37 @@ def test_filter_two_fields_with_q_and_or_operator(prepare_db):
     assert users[1].id == 2
     assert users[1].name == "Bob"
     assert users[1].age == 25
+
+
+def test_filter_with_two_q_objects(prepare_db):
+    class User(DBModel):
+        name: str
+        age: int
+
+    users = User.filter(Q(age__gt=25), Q(age__lte=35))
+
+    assert len(users) == 2
+    assert all(isinstance(user, DBModel) for user in users)
+    assert users[0].id == 1
+    assert users[0].name == "Alice"
+    assert users[0].age == 30
+    assert users[1].id == 3
+    assert users[1].name == "Charlie"
+    assert users[1].age == 35
+
+
+def test_filter_with_q_object_and_keyword_arguments(prepare_db):
+    class User(DBModel):
+        name: str
+        age: int
+
+    users = User.filter(Q(age__gt=25), age__lt=35)
+
+    assert len(users) == 1
+    assert isinstance(users[0], DBModel)
+    assert users[0].id == 1
+    assert users[0].name == "Alice"
+    assert users[0].age == 30
 
 
 def test_create_q_object_with_equal_operator():

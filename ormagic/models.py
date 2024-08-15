@@ -141,8 +141,11 @@ class DBModel(BaseModel):
         where_conditions, where_params = prepare_where_conditions(**kwargs)
         for arg in args:
             if isinstance(arg, Q):
-                where_conditions = arg.conditions
-                where_params = arg.params
+                if where_conditions:
+                    where_conditions += f" AND {arg.conditions}"
+                else:
+                    where_conditions = arg.conditions
+                where_params.extend(arg.params)
         if where_conditions:
             sql += f" WHERE {where_conditions}"
         if order_by := kwargs.get("order_by"):
