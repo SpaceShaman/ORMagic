@@ -305,6 +305,25 @@ This is equivalent to the following SQL WHERE clause:
 WHERE (age < 30 AND name = 'John') OR (age > 30 AND name = 'Alice')
 ```
 
+You can even build very complex queries by nesting Q objects:
+
+```python
+    q1 = Q(name="Alice")
+    q2 = Q(age__lt=25)
+    q3 = Q(weight__gte=70)
+    q4 = Q(name="Bob")
+    q5 = Q(age__gt=30)
+    q6 = Q(weight__lte=80)
+    q = Q(q1 & q2 | q3) | Q(q4 & q5 | q6)
+    User.filter(q)
+```
+
+This is equivalent to the following SQL WHERE clause:
+
+```sql
+WHERE (name = 'Alice' AND age < 25 OR weight >= 70) OR (name = 'Bob' AND age > 30 OR weight <= 80)
+```
+
 ### Order by
 
 To order the results, use the `filter` or `all` method with the `order_by` parameter.
