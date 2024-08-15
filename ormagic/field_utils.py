@@ -66,17 +66,17 @@ def _extract_field_operator(field: str) -> tuple[str, str]:
     elif operator == "lte":
         operator = "<="
     elif operator == "like":
-        operator = " LIKE "
+        operator = "LIKE"
     elif operator == "nlike":
-        operator = " NOT LIKE "
+        operator = "NOT LIKE"
     elif operator == "in":
-        operator = " IN "
+        operator = "IN"
     elif operator == "nin":
-        operator = " NOT IN "
+        operator = "NOT IN"
     elif operator == "between":
-        operator = " BETWEEN "
+        operator = "BETWEEN"
     elif operator == "nbetween":
-        operator = " NOT BETWEEN "
+        operator = "NOT BETWEEN"
     else:
         raise ValueError(f"Invalid operator: {operator}")
     return field, operator

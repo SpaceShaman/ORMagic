@@ -39,3 +39,21 @@ def test_create_q_object_with_two_operators():
 
     assert q.conditions == "name = ? AND age > ?"
     assert q.params == ["Alice", 25]
+
+
+def test_combine_two_q_objects_with_or_operator():
+    q1 = Q(name="Alice")
+    q2 = Q(age__lt=25)
+    q = q1 | q2
+
+    assert q.conditions == "name = ? OR age < ?"
+    assert q.params == ["Alice", 25]
+
+
+def test_combine_two_q_objects_with_and_operator():
+    q1 = Q(age__between=(25, 35))
+    q2 = Q(weight__gte=70)
+    q = q1 & q2
+
+    assert q.conditions == "age BETWEEN ? AND ? AND weight >= ?"
+    assert q.params == [25, 35, 70]
