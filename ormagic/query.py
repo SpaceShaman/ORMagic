@@ -14,3 +14,7 @@ class Q:
         self.conditions = f"{self.conditions} AND {other.conditions}"
         self.params.extend(other.params)
         return self
+
+    def __invert__(self) -> "Q":
+        self.conditions = f"NOT ({self.conditions})"
+        return self
