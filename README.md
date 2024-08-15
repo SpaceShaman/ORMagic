@@ -264,7 +264,7 @@ User.filter(age__between=[30, 40])
 User.filter(age__nbetween=[30, 40])
 ```
 
-#### Complex filters with Q objects (AND, OR, NOT) (Not implemented yet)
+#### Complex filters with Q objects (AND, OR, NOT)
 
 Keyword arguments are combined with AND by default, but you can use Q objects to combine filters with OR, NOT, and AND.
 
