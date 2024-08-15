@@ -308,14 +308,14 @@ WHERE (age < 30 AND name = 'John') OR (age > 30 AND name = 'Alice')
 You can even build very complex queries by nesting Q objects:
 
 ```python
-    q1 = Q(name="Alice")
-    q2 = Q(age__lt=25)
-    q3 = Q(weight__gte=70)
-    q4 = Q(name="Bob")
-    q5 = Q(age__gt=30)
-    q6 = Q(weight__lte=80)
-    q = Q(q1 & q2 | q3) | Q(q4 & q5 | q6)
-    User.filter(q)
+q1 = Q(name="Alice")
+q2 = Q(age__lt=25)
+q3 = Q(weight__gte=70)
+q4 = Q(name="Bob")
+q5 = Q(age__gt=30)
+q6 = Q(weight__lte=80)
+q = Q(q1 & q2 | q3) | Q(q4 & q5 | q6)
+User.filter(q)
 ```
 
 This is equivalent to the following SQL WHERE clause:
