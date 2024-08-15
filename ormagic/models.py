@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from . import table_manager
 from .field_utils import is_many_to_many_field, prepare_where_conditions
+from .query import Q
 from .sql_utils import execute_sql
 
 
@@ -35,19 +36,19 @@ class DBModel(BaseModel):
         return self._update() if self.id else self._insert()
 
     @classmethod
-    def get(cls, **kwargs) -> Self:
+    def get(cls, *args, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
-        return cls(**cls._fetchone_raw_data(**kwargs))
+        return cls(**cls._fetchone_raw_data(*args, **kwargs))
 
     @classmethod
-    def filter(cls, **kwargs) -> list[Self]:
+    def filter(cls, *args, **kwargs) -> list[Self]:
         """Get objects from the database based on the given keyword arguments."""
-        return [cls(**data) for data in cls._fetchall_raw_data(**kwargs)]
+        return [cls(**data) for data in cls._fetchall_raw_data(*args, **kwargs)]
 
     @classmethod
-    def all(cls, **kwargs) -> list[Self]:
+    def all(cls, *args, **kwargs) -> list[Self]:
         """Get all objects from the database."""
-        return [cls(**data) for data in cls._fetchall_raw_data(**kwargs)]
+        return [cls(**data) for data in cls._fetchall_raw_data(*args, **kwargs)]
 
     def delete(self) -> None:
         """Delete the object from the database."""
@@ -135,9 +136,13 @@ class DBModel(BaseModel):
         return f"{order_by[1:]} DESC" if order_by.startswith("-") else order_by
 
     @classmethod
-    def _fetch_raw_data(cls, **kwargs) -> Cursor:
+    def _fetch_raw_data(cls, *args, **kwargs) -> Cursor:
         sql = f"SELECT * FROM {cls._get_table_name()}"
         where_conditions, where_params = prepare_where_conditions(**kwargs)
+        for arg in args:
+            if isinstance(arg, Q):
+                where_conditions = arg.conditions
+                where_params = arg.params
         if where_conditions:
             sql += f" WHERE {where_conditions}"
         if order_by := kwargs.get("order_by"):
@@ -189,9 +194,9 @@ class DBModel(BaseModel):
 
     @classmethod
     def _fetchone_raw_data(
-        cls, is_recursive_call: bool = False, **kwargs
+        cls, is_recursive_call: bool = False, *args, **kwargs
     ) -> dict[str, Any]:
-        cursor = cls._fetch_raw_data(**kwargs)
+        cursor = cls._fetch_raw_data(*args, **kwargs)
         data = cursor.fetchone()
         cursor.connection.close()
         if not data:
@@ -199,8 +204,8 @@ class DBModel(BaseModel):
         return cls._process_raw_data(data, is_recursive_call)
 
     @classmethod
-    def _fetchall_raw_data(cls, **kwargs) -> list[dict[str, Any]]:
-        cursor = cls._fetch_raw_data(**kwargs)
+    def _fetchall_raw_data(cls, *args, **kwargs) -> list[dict[str, Any]]:
+        cursor = cls._fetch_raw_data(*args, **kwargs)
         data_list = cursor.fetchall()
         cursor.connection.close()
         return [cls._process_raw_data(data) for data in data_list]
