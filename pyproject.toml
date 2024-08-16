@@ -5,8 +5,14 @@ description = "Simple ORM based on Pydantic and SQLite with minimalistic API"
 license = "MIT"
 authors = ["SpaceShaman <spaceshaman@tuta.io>"]
 readme = "README.md"
-homepage = "https://spaceshaman.github.io/ORMagic"
+homepage = "https://spaceshaman.github.io/ORMagic/"
+documentation = "https://spaceshaman.github.io/ORMagic/"
 repository = "https://github.com/SpaceShaman/ORMagic"
+keywords = ["sql", "orm", "database", "sqlite", "db", "sqlite3", "pydantic", "fastapi"]
+classifiers = [
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2"
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
