@@ -24,8 +24,8 @@ To update a table, use the `update_table` method.
     ALTER TABLE user ADD COLUMN email TEXT;
     ```
 
-There are some restrictions on updating tables:
+!!! warning "There are some restrictions on updating tables"
 
-- The new column cannot have `unique` or `primary_key` set to `True`.
-- The new column needs to have a default value or set as optional.
-- You can rename, drop and add multiple columns at once but you cannot mix this tree operations in one call.
+    - The new column cannot have `unique` or `primary_key` set to `True`.
+    - The new column needs to have a default value or set as optional.
+    - You can rename, drop and add multiple columns at once but you cannot mix this tree operations in one call.
