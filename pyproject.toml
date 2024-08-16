@@ -5,7 +5,7 @@ description = "Simple ORM based on Pydantic and SQLite with minimalistic API"
 license = "MIT"
 authors = ["SpaceShaman <spaceshaman@tuta.io>"]
 readme = "README.md"
-homepage = "https://github.com/SpaceShaman/ORMagic"
+homepage = "https://spaceshaman.github.io/ORMagic"
 repository = "https://github.com/SpaceShaman/ORMagic"
 
 [tool.poetry.dependencies]
