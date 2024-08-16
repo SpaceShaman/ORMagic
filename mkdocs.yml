@@ -48,6 +48,7 @@ plugins:
       branch: master
   - search
   - include-markdown
+  - awesome-pages
 
 markdown_extensions:
   - pymdownx.superfences
@@ -59,7 +60,8 @@ markdown_extensions:
   - markdown.extensions.abbr
   - markdown.extensions.md_in_html
   - pymdownx.tasklist
-
+  - pymdownx.tabbed:
+      alternate_style: true
 extra:
   social:
     - icon: fontawesome/brands/github

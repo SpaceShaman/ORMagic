@@ -1,0 +1,11 @@
+nav:
+    - create-table.md
+    - deleting-updating.md
+    - save-read-update-delete.md
+    - filtering.md
+    - limit-and-offset.md
+    - order-by.md
+    - unique.md
+    - foreign-keys.md
+    - many-to-many.md
+    - fastapi.md
