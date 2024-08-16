@@ -17,6 +17,12 @@ pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
 ruff = "^0.5.1"
 mypy = "^1.10.1"
+mkdocs-material = "^9.5.31"
+mkdocs-git-revision-date-localized-plugin = "^1.2.6"
+mkdocs-git-committers-plugin-2 = "^2.3.0"
+mkdocs-include-markdown-plugin = "^6.2.2"
+pymdown-extensions = "^10.9"
+pygments = "^2.18.0"
 
 [build-system]
 requires = ["poetry-core"]

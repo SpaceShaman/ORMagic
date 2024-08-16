@@ -1,0 +1,71 @@
+site_name: ORMagic
+site_url: https://spaceshaman.github.io/ORMagic/
+repo_url: https://github.com/SpaceShaman/ORMagic
+edit_uri: edit/master/docs/
+repo_name: SpaceShaman/ORMagic
+site_description: Simple ORM based on Pydantic and SQLite with minimalistic API
+site_author: SpaceShaman
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.action.edit
+    - content.action.view
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - navigation.footer
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: black
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+plugins:
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+  - git-committers:
+      repository: SpaceShaman/ORMagic
+      branch: master
+  - search
+  - include-markdown
+markdown_extensions:
+  - pymdownx.superfences
+  - pymdownx.betterem
+  - markdown.extensions.footnotes
+  - markdown.extensions.attr_list
+  - markdown.extensions.def_list
+  - markdown.extensions.tables
+  - markdown.extensions.abbr
+  - markdown.extensions.md_in_html
+  - pymdownx.tasklist
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/SpaceShaman/ORMagic
+      name: Repository
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/ormagic/
+      name: PyPI package
+    - icon: fontawesome/brands/readme
+      link: https://github.com/SpaceShaman/ORMagic?tab=MIT-1-ov-file
+      name: License
+copyright: The project is released under the MIT license.
