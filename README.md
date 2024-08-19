@@ -130,6 +130,44 @@ Changes for each release are thoroughly documented in [release notes](https://gi
 <!--contributing-start-->
 Contributions are welcome! Feel free to open an issue or submit a pull request.
 I would like to keep the library to be safe as possible, so i would appreciate if you cover any new feature with tests to maintain 100% coverage.
+
+### Install in a development environment
+
+1. First, clone the repository:
+
+    ```bash
+    git clone git@github.com:SpaceShaman/ORMagic.git
+    ```
+
+2. Install poetry if you don't have, here you can find the [instructions](https://python-poetry.org/docs/#installing-with-the-official-installer)
+
+3. Create a virtual environment and install the dependencies:
+
+    ```bash
+    cd ORMagic
+    poetry install --no-root
+    ```
+
+4. Activate the virtual environment:
+
+    ```bash
+    poetry shell
+    ```
+
+### Run tests
+
+If you in the virtual environment, you can run the tests with the following command:
+
+```bash
+pytest
+```
+
+You can also run the tests with coverage:
+
+```bash
+pytest --cov=ormagic
+```
+
 <!--contributing-end-->
 
 ## License
