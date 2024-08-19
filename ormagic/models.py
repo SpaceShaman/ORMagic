@@ -46,9 +46,7 @@ class DBModel(BaseModel):
 
     def save(self) -> Self:
         """Save object to the database."""
-        if self.is_object_exists():
-            return self._update()
-        return self._insert()
+        return self._update() if self.is_object_exists() else self._insert()
 
     @classmethod
     def get(cls, *args, **kwargs) -> Self:
