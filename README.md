@@ -108,7 +108,7 @@ The full documentation is available at [spaceshaman.github.io/ORMagic/](https://
     - [x] Add new column
     - [x] Rename column
     - [x] Drop column
-- [ ] Custom primary key
+- [x] Custom primary key
 - [ ] Functions
     - [ ] Aggregate functions
     - [ ] String functions
