@@ -8,7 +8,7 @@ However, you can specify a custom primary key by setting the `primary_key` attri
     from ormagic import DBModel, DBField
 
     class User(DBModel):
-        custom_id: int | None = DBField(primary_key=True)
+        custom_id: int = DBField(primary_key=True)
         name: str
 
     User.create_table()

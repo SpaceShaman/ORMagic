@@ -7,6 +7,7 @@ from ormagic import DBField
 
 from . import table_manager
 from .field_utils import (
+    get_primary_key_field,
     is_many_to_many_field,
     is_primary_key_field,
     prepare_where_conditions,
@@ -71,7 +72,7 @@ class DBModel(BaseModel):
             raise ObjectNotFound
 
     def _insert(self) -> Self:
-        prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
+        prepared_data = self._prepare_data_to_insert()
         fields = ", ".join(prepared_data.keys())
         values = ", ".join(
             f"'{value}'" if value else "NULL" for value in prepared_data.values()
@@ -79,12 +80,13 @@ class DBModel(BaseModel):
         sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
-        self.id = cursor.lastrowid
+        primary_key_field = get_primary_key_field(self.model_fields)
+        setattr(self, primary_key_field, cursor.lastrowid)
         self._update_many_to_many_intermediate_table()
         return self
 
     def _update(self) -> Self:
-        prepared_data = self._prepare_data_to_insert(self.model_dump(exclude={"id"}))
+        prepared_data = self._prepare_data_to_insert()
         fields = ", ".join(
             f"{field}='{value}'" if value else f"{field}=NULL"
             for field, value in prepared_data.items()
@@ -121,23 +123,29 @@ class DBModel(BaseModel):
             )
             cursor.connection.close()
 
-    def _prepare_data_to_insert(self, model_dict: dict) -> dict[str, Any]:
+    def _prepare_data_to_insert(self) -> dict[str, Any]:
         prepared_data = {}
-        for field_name, value in model_dict.items():
-            field_annotation = self.model_fields[field_name].annotation
-            if foreign_model := table_manager.get_foreign_key_model(field_annotation):
-                if isinstance(value, list):
+        primary_key_field = get_primary_key_field(self.model_fields)
+        model_dict = self.model_dump()
+        for field_name, field_info in self.model_fields.items():
+            field_value = model_dict.get(field_name)
+            if foreign_model := table_manager.get_foreign_key_model(
+                field_info.annotation
+            ):
+                if isinstance(field_value, list):
                     continue
-                elif not value:
+                elif not field_value:
                     prepared_data[field_name] = None
-                elif not value["id"]:
-                    value = foreign_model(**value).save()
+                elif not field_value["id"]:
+                    value = foreign_model(**field_value).save()
                     prepared_data[field_name] = value.id
                     getattr(self, field_name).id = value.id
                 else:
-                    prepared_data[field_name] = value["id"]
+                    prepared_data[field_name] = field_value["id"]
+            elif field_name == primary_key_field:
+                continue
             else:
-                prepared_data[field_name] = value
+                prepared_data[field_name] = field_value
         return prepared_data
 
     @classmethod

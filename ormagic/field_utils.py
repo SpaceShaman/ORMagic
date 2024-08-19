@@ -112,3 +112,10 @@ def prepare_where_conditions(*args, **kwargs) -> tuple[str, list]:
             conditions.append(arg.conditions)
             params.extend(arg.params)
     return " AND ".join(conditions), params
+
+
+def get_primary_key_field(model_fields: dict[str, FieldInfo]) -> str:
+    for field_name, field_info in model_fields.items():
+        if is_primary_key_field(field_info):
+            return field_name
+    raise ValueError("Primary key field not found")

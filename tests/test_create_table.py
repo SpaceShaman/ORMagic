@@ -131,3 +131,39 @@ def test_create_table_with_custom_primary_key(db_cursor):
         (0, "custom_id", "INTEGER", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
+
+
+def test_create_table_with_custom_primary_key_string(db_cursor):
+    class User(DBModel):
+        custom_id: str = DBField(primary_key=True)
+        name: str
+
+    User.create_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert "id" not in User.model_fields.keys()
+    assert "custom_id" in User.model_fields.keys()
+    assert data == [
+        (0, "custom_id", "TEXT", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]
+
+
+def test_create_table_with_custom_primary_key_uuid(db_cursor):
+    from uuid import UUID
+
+    class User(DBModel):
+        custom_id: UUID = DBField(primary_key=True)
+        name: str
+
+    User.create_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert "id" not in User.model_fields.keys()
+    assert "custom_id" in User.model_fields.keys()
+    assert data == [
+        (0, "custom_id", "TEXT", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]

@@ -3,6 +3,7 @@ from sqlite3 import OperationalError
 
 import pytest
 
+from ormagic.fields import DBField
 from ormagic.models import DBModel, ObjectNotFound
 
 
@@ -192,3 +193,18 @@ def test_get_object_with_many_to_many_relationship_without_related_objects(db_cu
     assert player_from_db.id == 1
     assert player_from_db.name == "Messi"
     assert len(player_from_db.teams) == 0
+
+
+def test_get_object_from_table_with_custom_primary_key(db_cursor):
+    class User(DBModel):
+        custom_id: int = DBField(primary_key=True)
+        name: str
+
+    User.create_table()
+
+    User(name="John").save()
+
+    user_from_db = User.get(custom_id=1)
+
+    assert user_from_db.custom_id == 1
+    assert user_from_db.name == "John"

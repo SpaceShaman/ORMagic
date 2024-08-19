@@ -360,3 +360,17 @@ def test_override_object_with_many_to_many_relationship(db_cursor):
     res = db_cursor.execute("SELECT * FROM user_course")
     data = res.fetchall()
     assert data == [(1, 1, 3)]
+
+
+def test_save_object_with_custom_primary_key_field_autoincrement(db_cursor):
+    class User(DBModel):
+        custom_id: int = DBField(primary_key=True)
+        name: str
+
+    User.create_table()
+
+    User(name="John").save()
+
+    res = db_cursor.execute("SELECT * FROM user")
+    data = res.fetchall()
+    assert data == [(1, "John")]
