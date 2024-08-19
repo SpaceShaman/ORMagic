@@ -25,6 +25,7 @@ theme:
     - search.suggest
     - search.highlight
     - navigation.footer
+    - content.code.copy
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default

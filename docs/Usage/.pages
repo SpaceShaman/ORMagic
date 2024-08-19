@@ -8,4 +8,5 @@ nav:
     - unique.md
     - foreign-keys.md
     - many-to-many.md
+    - custom-primary-key.md
     - fastapi.md

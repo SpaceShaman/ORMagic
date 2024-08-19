@@ -11,7 +11,6 @@ To create a table in the database, first create a class that inherits from `DBMo
         name: str
         age: int
 
-    # Create the table in the database
     User.create_table()
     ```
 
