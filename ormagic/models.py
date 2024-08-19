@@ -203,7 +203,7 @@ class DBModel(BaseModel):
             f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
         )
         return [
-            related_model._fetchone_raw_data(id=row[0], is_recursive_call=True)
+            related_model._fetchone_raw_data(is_recursive_call=True, model_id=row[0])
             for row in cursor.fetchall()
         ]
 
@@ -217,7 +217,7 @@ class DBModel(BaseModel):
                 if is_recursive_call:
                     continue
                 data_dict[key] = cls._process_many_to_many_data(
-                    field_info.annotation, data_dict["id"]
+                    field_info.annotation, data_dict[cls._get_primary_key_field_name()]
                 )
             elif not data_dict[key]:
                 continue
