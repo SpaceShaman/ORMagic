@@ -20,6 +20,12 @@ def is_unique_field(field_info: FieldInfo) -> bool:
     )
 
 
+def is_primary_key_field(field_info: FieldInfo) -> bool:
+    return bool(
+        field_info.json_schema_extra and field_info.json_schema_extra.get("primary_key")
+    )
+
+
 def transform_field_annotation_to_sql_type(
     annotation: Any,
 ) -> Literal["INTEGER", "TEXT"]:

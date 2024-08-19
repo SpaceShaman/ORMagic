@@ -3,8 +3,14 @@ from typing import Any, Self
 
 from pydantic import BaseModel
 
+from ormagic import DBField
+
 from . import table_manager
-from .field_utils import is_many_to_many_field, prepare_where_conditions
+from .field_utils import (
+    is_many_to_many_field,
+    is_primary_key_field,
+    prepare_where_conditions,
+)
 from .sql_utils import execute_sql
 
 
@@ -13,7 +19,15 @@ class ObjectNotFound(Exception):
 
 
 class DBModel(BaseModel):
-    id: int | None = None
+    id: int | None = DBField(primary_key=True)
+
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
+        super().__pydantic_init_subclass__(**kwargs)
+        for field_name, field_info in cls.model_fields.items():
+            if is_primary_key_field(field_info) and field_name != "id":
+                cls.model_fields.pop("id")
+                break
 
     @classmethod
     def create_table(cls) -> None:

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from ormagic.models import DBModel
+from ormagic import DBField, DBModel
 
 
 def test_create_table(db_cursor):
@@ -114,3 +114,20 @@ def test_create_tables_with_many_to_many_relationship(db_cursor):
     res = db_cursor.execute("PRAGMA table_info(grade_user)")
     data = res.fetchall()
     assert data == []
+
+
+def test_create_table_with_custom_primary_key(db_cursor):
+    class User(DBModel):
+        custom_id: int = DBField(primary_key=True)
+        name: str
+
+    User.create_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert "id" not in User.model_fields.keys()
+    assert "custom_id" in User.model_fields.keys()
+    assert data == [
+        (0, "custom_id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]

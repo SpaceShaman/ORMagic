@@ -6,6 +6,7 @@ from pydantic_core import PydanticUndefined
 from .field_utils import (
     get_on_delete_action,
     is_many_to_many_field,
+    is_primary_key_field,
     is_unique_field,
     transform_field_annotation_to_sql_type,
 )
@@ -13,10 +14,8 @@ from .sql_utils import execute_sql
 
 
 def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
-    columns = ["id INTEGER PRIMARY KEY"]
+    columns = []
     for field_name, field_info in model_fields.items():
-        if field_name == "id":
-            continue
         if is_many_to_many_field(field_info.annotation):
             _create_intermediate_table(table_name, field_info)
             continue
@@ -100,6 +99,8 @@ def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
     if foreign_model := get_foreign_key_model(field_info.annotation):
         action = get_on_delete_action(field_info)
         column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
+    if is_primary_key_field(field_info):
+        column_definition += " PRIMARY KEY"
     return column_definition
 
 
