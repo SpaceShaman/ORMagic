@@ -66,7 +66,7 @@ class DBModel(BaseModel):
     def delete(self) -> None:
         """Delete the object from the database."""
         cursor = execute_sql(
-            f"DELETE FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name}={self.model_id}"
+            f"DELETE FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name()}={self.model_id}"
         )
         cursor.connection.close()
         if cursor.rowcount == 0:
@@ -93,7 +93,7 @@ class DBModel(BaseModel):
             for field, value in prepared_data.items()
         )
         cursor = execute_sql(
-            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self.get_primary_key_field_name}={self.model_id}"
+            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self.get_primary_key_field_name()}={self.model_id}"
         )
         cursor.connection.close()
         self._update_many_to_many_intermediate_table()
@@ -134,20 +134,20 @@ class DBModel(BaseModel):
                     continue
                 elif not field_value:
                     prepared_data[field_name] = None
-                elif not field_value[self.get_primary_key_field_name]:
+                elif not field_value[self.get_primary_key_field_name()]:
                     foreign_model = foreign_model(**field_value).save()
                     prepared_data[field_name] = foreign_model.model_id
                     # getattr(self, field_name).id = foreign_model.model_id
                     setattr(
                         getattr(self, field_name),
-                        foreign_model.primary_key_field_name,
+                        foreign_model.get_primary_key_field_name(),
                         foreign_model.model_id,
                     )
                 else:
                     prepared_data[field_name] = field_value[
-                        self.get_primary_key_field_name
+                        self.get_primary_key_field_name()
                     ]
-            elif field_name == self.get_primary_key_field_name and not field_value:
+            elif field_name == self.get_primary_key_field_name() and not field_value:
                 continue
             else:
                 prepared_data[field_name] = field_value
@@ -158,7 +158,7 @@ class DBModel(BaseModel):
             return False
         return bool(
             execute_sql(
-                f"SELECT * FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name}={self.model_id}"
+                f"SELECT * FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name()}={self.model_id}"
             ).fetchone()
         )
 

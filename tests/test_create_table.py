@@ -199,3 +199,46 @@ def test_create_table_with_one_to_many_relationship_and_custom_primary_key(db_cu
     res = db_cursor.execute("PRAGMA foreign_key_list(post)")
     data = res.fetchall()
     assert data == [(0, 0, "user", "user", "custom_id", "CASCADE", "CASCADE", "NONE")]
+
+
+def test_create_table_with_many_to_many_relationship_and_custom_primary_key(db_cursor):
+    class Team(DBModel):
+        team_id: int = DBField(primary_key=True)
+        name: str
+
+    class Player(DBModel):
+        player_id: int = DBField(primary_key=True)
+        name: str
+        teams: list[Team] = []
+
+    Team.create_table()
+    Player.create_table()
+
+    res = db_cursor.execute("PRAGMA table_info(team)")
+    data = res.fetchall()
+    assert data == [
+        (0, "team_id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]
+
+    res = db_cursor.execute("PRAGMA table_info(player)")
+    data = res.fetchall()
+    assert data == [
+        (0, "player_id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]
+
+    res = db_cursor.execute("PRAGMA table_info(player_team)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "player_id", "INTEGER", 0, None, 0),
+        (2, "team_id", "INTEGER", 0, None, 0),
+    ]
+    # check if foreign key is correct
+    res = db_cursor.execute("PRAGMA foreign_key_list(player_team)")
+    data = res.fetchall()
+    assert data == [
+        (0, 0, "team_id", "team", "team_id", "CASCADE", "CASCADE", "NONE"),
+        (1, 0, "player_id", "player", "player_id", "CASCADE", "CASCADE", "NONE"),
+    ]
