@@ -17,7 +17,15 @@ def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
     columns = []
     for field_name, field_info in model_fields.items():
         if is_many_to_many_field(field_info.annotation):
-            _create_intermediate_table(table_name, field_info)
+            related_table_name = getattr(field_info.annotation, "__args__")[
+                0
+            ]._get_table_name()
+            _create_intermediate_table(
+                table_name,
+                "id",
+                related_table_name,
+                "id",
+            )
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
 
@@ -57,8 +65,9 @@ def get_foreign_key_model(field_annotation: Any) -> Type | None:
         return types_tuple[0]
 
 
-def _create_intermediate_table(table_name: str, field_info: FieldInfo) -> None:
-    related_table_name = getattr(field_info.annotation, "__args__")[0].__name__.lower()
+def _create_intermediate_table(
+    table_name: str, primary_key: str, related_table_name: str, related_primary_key: str
+) -> None:
     if _get_intermediate_table_name(table_name, related_table_name):
         return
     execute_sql(
@@ -66,8 +75,8 @@ def _create_intermediate_table(table_name: str, field_info: FieldInfo) -> None:
         "id INTEGER PRIMARY KEY, "
         f"{table_name}_id INTEGER, "
         f"{related_table_name}_id INTEGER, "
-        f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}(id) ON DELETE CASCADE, "
-        f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}(id) ON DELETE CASCADE)"
+        f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE, "
+        f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE)"
     )
 
 
