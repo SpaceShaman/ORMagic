@@ -167,3 +167,35 @@ def test_create_table_with_custom_primary_key_uuid(db_cursor):
         (0, "custom_id", "TEXT", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
+
+
+def test_create_table_with_one_to_many_relationship_and_custom_primary_key(db_cursor):
+    class User(DBModel):
+        custom_id: int = DBField(primary_key=True)
+        name: str
+
+    class Post(DBModel):
+        title: str
+        user: User
+
+    User.create_table()
+    Post.create_table()
+
+    res = db_cursor.execute("PRAGMA table_info(user)")
+    data = res.fetchall()
+    assert data == [
+        (0, "custom_id", "INTEGER", 0, None, 1),
+        (1, "name", "TEXT", 1, None, 0),
+    ]
+
+    res = db_cursor.execute("PRAGMA table_info(post)")
+    data = res.fetchall()
+    assert data == [
+        (0, "id", "INTEGER", 0, None, 1),
+        (1, "title", "TEXT", 1, None, 0),
+        (2, "user", "INTEGER", 1, None, 0),
+    ]
+    # check if foreign key is correct
+    res = db_cursor.execute("PRAGMA foreign_key_list(post)")
+    data = res.fetchall()
+    assert data == [(0, 0, "user", "user", "custom_id", "CASCADE", "CASCADE", "NONE")]

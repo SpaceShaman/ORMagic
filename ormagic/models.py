@@ -65,7 +65,9 @@ class DBModel(BaseModel):
 
     def delete(self) -> None:
         """Delete the object from the database."""
-        cursor = execute_sql(f"DELETE FROM {self._get_table_name()} WHERE id={self.id}")
+        cursor = execute_sql(
+            f"DELETE FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name}={self.model_id}"
+        )
         cursor.connection.close()
         if cursor.rowcount == 0:
             raise ObjectNotFound
@@ -79,19 +81,19 @@ class DBModel(BaseModel):
         sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
-        setattr(self, self.primary_key_field_name, cursor.lastrowid)
+        setattr(self, self.get_primary_key_field_name(), cursor.lastrowid)
         self._update_many_to_many_intermediate_table()
         return self
 
     def _update(self) -> Self:
         prepared_data = self._prepare_data_to_insert()
-        prepared_data.pop(self.primary_key_field_name)
+        prepared_data.pop(self.get_primary_key_field_name())
         fields = ", ".join(
             f"{field}='{value}'" if value else f"{field}=NULL"
             for field, value in prepared_data.items()
         )
         cursor = execute_sql(
-            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self.primary_key_field_name}={self.model_id}"
+            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self.get_primary_key_field_name}={self.model_id}"
         )
         cursor.connection.close()
         self._update_many_to_many_intermediate_table()
@@ -110,13 +112,13 @@ class DBModel(BaseModel):
             table_name, related_table_name
         )
         cursor = execute_sql(
-            f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.id}"
+            f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
         )
         for related_object in related_objects:
-            if not related_object.id:
+            if not related_object.model_id:
                 related_object = related_object.save()
             cursor = execute_sql(
-                f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.id}, {related_object.id})"
+                f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.model_id}, {related_object.model_id})"
             )
             cursor.connection.close()
 
@@ -132,13 +134,20 @@ class DBModel(BaseModel):
                     continue
                 elif not field_value:
                     prepared_data[field_name] = None
-                elif not field_value["id"]:
-                    value = foreign_model(**field_value).save()
-                    prepared_data[field_name] = value.id
-                    getattr(self, field_name).id = value.id
+                elif not field_value[self.get_primary_key_field_name]:
+                    foreign_model = foreign_model(**field_value).save()
+                    prepared_data[field_name] = foreign_model.model_id
+                    # getattr(self, field_name).id = foreign_model.model_id
+                    setattr(
+                        getattr(self, field_name),
+                        foreign_model.primary_key_field_name,
+                        foreign_model.model_id,
+                    )
                 else:
-                    prepared_data[field_name] = field_value["id"]
-            elif field_name == self.primary_key_field_name and not field_value:
+                    prepared_data[field_name] = field_value[
+                        self.get_primary_key_field_name
+                    ]
+            elif field_name == self.get_primary_key_field_name and not field_value:
                 continue
             else:
                 prepared_data[field_name] = field_value
@@ -149,7 +158,7 @@ class DBModel(BaseModel):
             return False
         return bool(
             execute_sql(
-                f"SELECT * FROM {self._get_table_name()} WHERE {self.primary_key_field_name}={self.model_id}"
+                f"SELECT * FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name}={self.model_id}"
             ).fetchone()
         )
 
@@ -238,14 +247,14 @@ class DBModel(BaseModel):
 
     @property
     def model_id(self) -> int | None:
-        return getattr(self, self.primary_key_field_name)
+        return getattr(self, self.get_primary_key_field_name())
 
-    @property
-    def primary_key_field_name(self) -> str:
+    @classmethod
+    def get_primary_key_field_name(cls) -> str:
         return next(
             (
                 field_name
-                for field_name, field_info in self.model_fields.items()
+                for field_name, field_info in cls.model_fields.items()
                 if is_primary_key_field(field_info)
             ),
             "",

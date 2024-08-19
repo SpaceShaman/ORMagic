@@ -98,7 +98,7 @@ def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
         column_definition += " UNIQUE"
     if foreign_model := get_foreign_key_model(field_info.annotation):
         action = get_on_delete_action(field_info)
-        column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}(id) ON UPDATE {action} ON DELETE {action}"
+        column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}({foreign_model.get_primary_key_field_name()}) ON UPDATE {action} ON DELETE {action}"
     if is_primary_key_field(field_info):
         column_definition += " PRIMARY KEY"
     return column_definition

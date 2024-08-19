@@ -208,3 +208,55 @@ def test_get_object_from_table_with_custom_primary_key(db_cursor):
 
     assert user_from_db.custom_id == 1
     assert user_from_db.name == "John"
+
+
+def test_get_object_with_one_to_many_relationship_and_custom_primary_key(db_cursor):
+    class User(DBModel):
+        custom_id: int = DBField(primary_key=True)
+        name: str
+
+    class Post(DBModel):
+        title: str
+        user: User
+
+    User.create_table()
+    Post.create_table()
+
+    user = User(name="John").save()
+    Post(title="First post", user=user).save()
+
+    post_from_db = Post.get(id=1)
+
+    assert post_from_db.id == 1
+    assert post_from_db.title == "First post"
+    assert post_from_db.user.custom_id == 1
+    assert post_from_db.user.name == "John"
+
+
+def test_get_object_with_many_to_many_relationship_and_custom_primary_key(db_cursor):
+    class Team(DBModel):
+        team_id: int = DBField(primary_key=True)
+        name: str
+        players: list["Player"] = []
+
+    class Player(DBModel):
+        player_id: int = DBField(primary_key=True)
+        name: str
+        teams: list[Team] = []
+
+    Team.create_table()
+    Player.create_table()
+
+    team1 = Team(team_id=1, name="Barcelona").save()
+    team2 = Team(team_id=2, name="Real Madrid").save()
+    Player(player_id=1, name="Messi", teams=[team1, team2]).save()
+
+    player_from_db = Player.get(player_id=1)
+
+    assert player_from_db.player_id == 1
+    assert player_from_db.name == "Messi"
+    assert len(player_from_db.teams) == 2
+    assert player_from_db.teams[0].team_id == 1
+    assert player_from_db.teams[0].name == "Barcelona"
+    assert player_from_db.teams[1].team_id == 2
+    assert player_from_db.teams[1].name == "Real Madrid"
