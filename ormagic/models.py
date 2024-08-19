@@ -32,12 +32,16 @@ class DBModel(BaseModel):
     @classmethod
     def create_table(cls) -> None:
         """Create a table in the database for the model."""
-        table_manager.create_table(cls._get_table_name(), cls.model_fields)
+        table_manager.create_table(
+            cls._get_table_name(), cls._get_primary_key_field_name(), cls.model_fields
+        )
 
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        table_manager.update_table(cls._get_table_name(), cls.model_fields)
+        table_manager.update_table(
+            cls._get_table_name(), cls._get_primary_key_field_name(), cls.model_fields
+        )
 
     @classmethod
     def drop_table(cls) -> None:
@@ -66,7 +70,7 @@ class DBModel(BaseModel):
     def delete(self) -> None:
         """Delete the object from the database."""
         cursor = execute_sql(
-            f"DELETE FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name()}={self.model_id}"
+            f"DELETE FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
         )
         cursor.connection.close()
         if cursor.rowcount == 0:
@@ -81,19 +85,19 @@ class DBModel(BaseModel):
         sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
-        setattr(self, self.get_primary_key_field_name(), cursor.lastrowid)
+        setattr(self, self._get_primary_key_field_name(), cursor.lastrowid)
         self._update_many_to_many_intermediate_table()
         return self
 
     def _update(self) -> Self:
         prepared_data = self._prepare_data_to_insert()
-        prepared_data.pop(self.get_primary_key_field_name())
+        prepared_data.pop(self._get_primary_key_field_name())
         fields = ", ".join(
             f"{field}='{value}'" if value else f"{field}=NULL"
             for field, value in prepared_data.items()
         )
         cursor = execute_sql(
-            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self.get_primary_key_field_name()}={self.model_id}"
+            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self._get_primary_key_field_name()}={self.model_id}"
         )
         cursor.connection.close()
         self._update_many_to_many_intermediate_table()
@@ -134,20 +138,20 @@ class DBModel(BaseModel):
                     continue
                 elif not field_value:
                     prepared_data[field_name] = None
-                elif not field_value[self.get_primary_key_field_name()]:
+                elif not field_value[self._get_primary_key_field_name()]:
                     foreign_model = foreign_model(**field_value).save()
                     prepared_data[field_name] = foreign_model.model_id
                     # getattr(self, field_name).id = foreign_model.model_id
                     setattr(
                         getattr(self, field_name),
-                        foreign_model.get_primary_key_field_name(),
+                        foreign_model._get_primary_key_field_name(),
                         foreign_model.model_id,
                     )
                 else:
                     prepared_data[field_name] = field_value[
-                        self.get_primary_key_field_name()
+                        self._get_primary_key_field_name()
                     ]
-            elif field_name == self.get_primary_key_field_name() and not field_value:
+            elif field_name == self._get_primary_key_field_name() and not field_value:
                 continue
             else:
                 prepared_data[field_name] = field_value
@@ -158,7 +162,7 @@ class DBModel(BaseModel):
             return False
         return bool(
             execute_sql(
-                f"SELECT * FROM {self._get_table_name()} WHERE {self.get_primary_key_field_name()}={self.model_id}"
+                f"SELECT * FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
             ).fetchone()
         )
 
@@ -247,10 +251,10 @@ class DBModel(BaseModel):
 
     @property
     def model_id(self) -> int | None:
-        return getattr(self, self.get_primary_key_field_name())
+        return getattr(self, self._get_primary_key_field_name())
 
     @classmethod
-    def get_primary_key_field_name(cls) -> str:
+    def _get_primary_key_field_name(cls) -> str:
         return next(
             (
                 field_name

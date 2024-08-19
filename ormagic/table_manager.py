@@ -13,18 +13,18 @@ from .field_utils import (
 from .sql_utils import execute_sql
 
 
-def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
+def create_table(table_name: str, primary_key: str, model_fields: dict[str, FieldInfo]):
     columns = []
     for field_name, field_info in model_fields.items():
         if is_many_to_many_field(field_info.annotation):
-            related_table_name = getattr(field_info.annotation, "__args__")[
-                0
-            ]._get_table_name()
+            related_table = getattr(field_info.annotation, "__args__")[0]
+            related_table_name = related_table._get_table_name()
+            related_primary_key = related_table._get_primary_key_field_name()
             _create_intermediate_table(
                 table_name,
-                "id",
+                primary_key,
                 related_table_name,
-                "id",
+                related_primary_key,
             )
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
@@ -34,9 +34,11 @@ def create_table(table_name: str, model_fields: dict[str, FieldInfo]):
     cursor.connection.close()
 
 
-def update_table(table_name: str, model_fields: dict[str, FieldInfo]) -> None:
+def update_table(
+    table_name: str, primary_key: str, model_fields: dict[str, FieldInfo]
+) -> None:
     if not _is_table_exists(table_name):
-        return create_table(table_name, model_fields)
+        return create_table(table_name, primary_key, model_fields)
     existing_columns = _fetch_existing_column_names_from_db(table_name)
     new_columns = _fetch_field_names_from_model(model_fields)
     if existing_columns == new_columns:
@@ -75,8 +77,8 @@ def _create_intermediate_table(
         "id INTEGER PRIMARY KEY, "
         f"{table_name}_id INTEGER, "
         f"{related_table_name}_id INTEGER, "
-        f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE, "
-        f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE)"
+        f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE ON UPDATE CASCADE, "
+        f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE) "
     )
 
 
@@ -107,7 +109,7 @@ def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
         column_definition += " UNIQUE"
     if foreign_model := get_foreign_key_model(field_info.annotation):
         action = get_on_delete_action(field_info)
-        column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}({foreign_model.get_primary_key_field_name()}) ON UPDATE {action} ON DELETE {action}"
+        column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model.__name__.lower()}({foreign_model._get_primary_key_field_name()}) ON UPDATE {action} ON DELETE {action}"
     if is_primary_key_field(field_info):
         column_definition += " PRIMARY KEY"
     return column_definition

@@ -239,6 +239,6 @@ def test_create_table_with_many_to_many_relationship_and_custom_primary_key(db_c
     res = db_cursor.execute("PRAGMA foreign_key_list(player_team)")
     data = res.fetchall()
     assert data == [
-        (0, 0, "team_id", "team", "team_id", "CASCADE", "CASCADE", "NONE"),
-        (1, 0, "player_id", "player", "player_id", "CASCADE", "CASCADE", "NONE"),
+        (0, 0, "team", "team_id", "team_id", "CASCADE", "CASCADE", "NONE"),
+        (1, 0, "player", "player_id", "player_id", "CASCADE", "CASCADE", "NONE"),
     ]
