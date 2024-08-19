@@ -117,6 +117,7 @@ The full documentation is available at [spaceshaman.github.io/ORMagic/](https://
     - [ ] Control flow functions
 - [ ] Bulk operations (save, update, delete)
 - [ ] Migrations
+- [ ] Integration with other databases
 <!--roadmap-end-->
 
 ## Changelog
