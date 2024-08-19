@@ -224,13 +224,21 @@ class DBModel(BaseModel):
             elif foreign_model := table_manager.get_foreign_key_model(
                 field_info.annotation
             ):
-                data_dict[key] = foreign_model._fetchone_raw_data(id=data_dict[key])
+                data_dict[key] = foreign_model._fetchone_raw_data(
+                    model_id=data_dict[key]
+                )
         return data_dict
 
     @classmethod
     def _fetchone_raw_data(
-        cls, is_recursive_call: bool = False, *args, **kwargs
+        cls,
+        is_recursive_call: bool = False,
+        model_id: int | None = None,
+        *args,
+        **kwargs,
     ) -> dict[str, Any]:
+        if model_id:
+            kwargs[cls._get_primary_key_field_name()] = model_id
         cursor = cls._fetch_raw_data(*args, **kwargs)
         data = cursor.fetchone()
         cursor.connection.close()
