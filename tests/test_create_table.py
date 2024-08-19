@@ -3,7 +3,7 @@ from typing import Optional
 from ormagic.models import DBModel
 
 
-def test_create_db_table(db_cursor):
+def test_create_table(db_cursor):
     class User(DBModel):
         name: str
         age: int
@@ -19,7 +19,7 @@ def test_create_db_table(db_cursor):
     ]
 
 
-def test_create_db_table_with_optional_field(db_cursor):
+def test_create_table_with_optional_field(db_cursor):
     class User(DBModel):
         name: str
         age: int
@@ -39,7 +39,7 @@ def test_create_db_table_with_optional_field(db_cursor):
     ]
 
 
-def test_create_db_table_with_default_value(db_cursor):
+def test_create_table_with_default_value(db_cursor):
     class User(DBModel):
         default_field: str = "default value"
 
@@ -53,7 +53,7 @@ def test_create_db_table_with_default_value(db_cursor):
     ]
 
 
-def test_create_db_tables_with_one_to_many_relationship(db_cursor):
+def test_create_tables_with_one_to_many_relationship(db_cursor):
     class User(DBModel):
         name: str
 
@@ -80,7 +80,7 @@ def test_create_db_tables_with_one_to_many_relationship(db_cursor):
     ]
 
 
-def test_create_db_tables_with_many_to_many_relationship(db_cursor):
+def test_create_tables_with_many_to_many_relationship(db_cursor):
     class User(DBModel):
         name: str
         groups: list["Grade"] = []
