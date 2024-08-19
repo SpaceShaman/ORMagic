@@ -80,7 +80,7 @@ class DBModel(BaseModel):
         sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
-        primary_key_field = get_primary_key_field(self.model_fields)
+        primary_key_field = get_primary_key_field(self.model_fields) or "id"
         setattr(self, primary_key_field, cursor.lastrowid)
         self._update_many_to_many_intermediate_table()
         return self
