@@ -7,7 +7,6 @@ from ormagic import DBField
 
 from . import table_manager
 from .field_utils import (
-    get_primary_key_field,
     is_many_to_many_field,
     is_primary_key_field,
     prepare_where_conditions,
@@ -47,7 +46,9 @@ class DBModel(BaseModel):
 
     def save(self) -> Self:
         """Save object to the database."""
-        return self._update() if self.id else self._insert()
+        if self.is_object_exists():
+            return self._update()
+        return self._insert()
 
     @classmethod
     def get(cls, *args, **kwargs) -> Self:
@@ -80,23 +81,21 @@ class DBModel(BaseModel):
         sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
         cursor = execute_sql(sql)
         cursor.connection.close()
-        primary_key_field = get_primary_key_field(self.model_fields) or "id"
-        setattr(self, primary_key_field, cursor.lastrowid)
+        setattr(self, self.primary_key_field_name, cursor.lastrowid)
         self._update_many_to_many_intermediate_table()
         return self
 
     def _update(self) -> Self:
         prepared_data = self._prepare_data_to_insert()
+        prepared_data.pop(self.primary_key_field_name)
         fields = ", ".join(
             f"{field}='{value}'" if value else f"{field}=NULL"
             for field, value in prepared_data.items()
         )
         cursor = execute_sql(
-            f"UPDATE {self._get_table_name()} SET {fields} WHERE id={self.id}"
+            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self.primary_key_field_name}={self.model_id}"
         )
         cursor.connection.close()
-        if cursor.rowcount == 0:
-            raise ObjectNotFound
         self._update_many_to_many_intermediate_table()
         return self
 
@@ -125,7 +124,6 @@ class DBModel(BaseModel):
 
     def _prepare_data_to_insert(self) -> dict[str, Any]:
         prepared_data = {}
-        primary_key_field = get_primary_key_field(self.model_fields)
         model_dict = self.model_dump()
         for field_name, field_info in self.model_fields.items():
             field_value = model_dict.get(field_name)
@@ -142,11 +140,20 @@ class DBModel(BaseModel):
                     getattr(self, field_name).id = value.id
                 else:
                     prepared_data[field_name] = field_value["id"]
-            elif field_name == primary_key_field:
+            elif field_name == self.primary_key_field_name and not field_value:
                 continue
             else:
                 prepared_data[field_name] = field_value
         return prepared_data
+
+    def is_object_exists(self) -> bool:
+        if not self.model_id:
+            return False
+        return bool(
+            execute_sql(
+                f"SELECT * FROM {self._get_table_name()} WHERE {self.primary_key_field_name}={self.model_id}"
+            ).fetchone()
+        )
 
     @classmethod
     def _prepare_order_by(
@@ -230,3 +237,18 @@ class DBModel(BaseModel):
     @classmethod
     def _get_table_name(cls) -> str:
         return cls.__name__.lower()
+
+    @property
+    def model_id(self) -> int | None:
+        return getattr(self, self.primary_key_field_name)
+
+    @property
+    def primary_key_field_name(self) -> str:
+        return next(
+            (
+                field_name
+                for field_name, field_info in self.model_fields.items()
+                if is_primary_key_field(field_info)
+            ),
+            "",
+        )

@@ -5,7 +5,6 @@ from typing import Optional
 import pytest
 
 from ormagic import DBField, DBModel
-from ormagic.models import ObjectNotFound
 
 
 @pytest.fixture
@@ -48,11 +47,6 @@ def test_override_object_in_db(prepare_db, db_cursor):
     res = db_cursor.execute("SELECT * FROM user")
     data = res.fetchall()
     assert data == [(1, "Jane", 25)]
-
-
-def test_try_override_non_existing_object_in_db(prepare_db, db_cursor):
-    with pytest.raises(ObjectNotFound):
-        User(id=1, name="Jane", age=25).save()
 
 
 def test_save_object_with_datetime_field_to_db(prepare_db, db_cursor):
@@ -374,3 +368,32 @@ def test_save_object_with_custom_primary_key_field_autoincrement(db_cursor):
     res = db_cursor.execute("SELECT * FROM user")
     data = res.fetchall()
     assert data == [(1, "John")]
+
+
+def test_save_object_with_custom_primary_key_field_and_set_id(db_cursor):
+    class User(DBModel):
+        custom_id: int = DBField(primary_key=True)
+        name: str
+
+    User.create_table()
+
+    User(custom_id=10, name="John").save()
+
+    res = db_cursor.execute("SELECT * FROM user")
+    data = res.fetchall()
+    assert data == [(10, "John")]
+
+
+def test_override_object_with_custom_primary_key_field(db_cursor):
+    class User(DBModel):
+        custom_id: int = DBField(primary_key=True)
+        name: str
+
+    User.create_table()
+
+    User(custom_id=10, name="John").save()
+    User(custom_id=10, name="Jane").save()
+
+    res = db_cursor.execute("SELECT * FROM user")
+    data = res.fetchall()
+    assert data == [(10, "Jane")]
