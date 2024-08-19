@@ -191,3 +191,6 @@ You can even build very complex queries by nesting Q objects:
     ```sql
     WHERE (name = 'Alice' AND age < 25 OR weight >= 70) OR (name = 'Bob' AND age > 30 OR weight <= 80)
     ```
+
+!!! info "Where does the name `Q` come from?"
+    The `Q` object is inspired by [Django's](https://www.djangoproject.com/) [`Q object`](https://docs.djangoproject.com/en/5.0/topics/db/queries/#complex-lookups-with-q-objects), which is used to build complex queries in [Django](https://www.djangoproject.com/) ORM.
