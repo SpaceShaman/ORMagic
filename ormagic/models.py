@@ -20,6 +20,7 @@ class ObjectNotFound(Exception):
 
 class DBModel(BaseModel):
     id: int | None = DBField(primary_key=True)
+    _is_transaction: bool = False
 
     @classmethod
     def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
