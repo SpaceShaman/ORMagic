@@ -1,4 +1,3 @@
-from sqlite3 import Cursor
 from typing import Any, Self
 
 from pydantic import BaseModel
@@ -11,7 +10,7 @@ from .field_utils import (
     is_primary_key_field,
     prepare_where_conditions,
 )
-from .sql_utils import execute_sql
+from .sql_utils import get_cursor
 
 
 class ObjectNotFound(Exception):
@@ -70,10 +69,10 @@ class DBModel(BaseModel):
 
     def delete(self) -> None:
         """Delete the object from the database."""
-        cursor = execute_sql(
-            f"DELETE FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
-        )
-        cursor.connection.close()
+        with get_cursor() as cursor:
+            cursor.execute(
+                f"DELETE FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
+            )
         if cursor.rowcount == 0:
             raise ObjectNotFound
 
@@ -83,9 +82,10 @@ class DBModel(BaseModel):
         values = ", ".join(
             f"'{value}'" if value else "NULL" for value in prepared_data.values()
         )
-        sql = f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
-        cursor = execute_sql(sql)
-        cursor.connection.close()
+        with get_cursor() as cursor:
+            cursor.execute(
+                f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
+            )
         setattr(self, self._get_primary_key_field_name(), cursor.lastrowid)
         self._update_many_to_many_intermediate_table()
         return self
@@ -97,10 +97,10 @@ class DBModel(BaseModel):
             f"{field}='{value}'" if value else f"{field}=NULL"
             for field, value in prepared_data.items()
         )
-        cursor = execute_sql(
-            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self._get_primary_key_field_name()}={self.model_id}"
-        )
-        cursor.connection.close()
+        with get_cursor() as cursor:
+            cursor.execute(
+                f"UPDATE {self._get_table_name()} SET {fields} WHERE {self._get_primary_key_field_name()}={self.model_id}"
+            )
         self._update_many_to_many_intermediate_table()
         return self
 
@@ -116,16 +116,16 @@ class DBModel(BaseModel):
         intermediate_table_name = table_manager._get_intermediate_table_name(
             table_name, related_table_name
         )
-        cursor = execute_sql(
-            f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
-        )
-        for related_object in related_objects:
-            if not related_object.model_id:
-                related_object = related_object.save()
-            cursor = execute_sql(
-                f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.model_id}, {related_object.model_id})"
+        with get_cursor() as cursor:
+            cursor.execute(
+                f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
             )
-            cursor.connection.close()
+            for related_object in related_objects:
+                if not related_object.model_id:
+                    related_object = related_object.save()
+                cursor.execute(
+                    f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.model_id}, {related_object.model_id})"
+                )
 
     def _prepare_data_to_insert(self) -> dict[str, Any]:
         prepared_data = {}
@@ -142,7 +142,6 @@ class DBModel(BaseModel):
                 elif not field_value[self._get_primary_key_field_name()]:
                     foreign_model = foreign_model(**field_value).save()
                     prepared_data[field_name] = foreign_model.model_id
-                    # getattr(self, field_name).id = foreign_model.model_id
                     setattr(
                         getattr(self, field_name),
                         foreign_model._get_primary_key_field_name(),
@@ -161,11 +160,11 @@ class DBModel(BaseModel):
     def is_object_exists(self) -> bool:
         if not self.model_id:
             return False
-        return bool(
-            execute_sql(
+        with get_cursor() as cursor:
+            cursor.execute(
                 f"SELECT * FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
-            ).fetchone()
-        )
+            )
+            return bool(cursor.fetchone())
 
     @classmethod
     def _prepare_order_by(
@@ -176,7 +175,7 @@ class DBModel(BaseModel):
         return f"{order_by[1:]} DESC" if order_by.startswith("-") else order_by
 
     @classmethod
-    def _fetch_raw_data(cls, *args, **kwargs) -> Cursor:
+    def _prepare_query_to_fetch_raw_data(cls, *args, **kwargs) -> tuple[str, list]:
         sql = f"SELECT * FROM {cls._get_table_name()}"
         where_conditions, where_params = prepare_where_conditions(*args, **kwargs)
         if where_conditions:
@@ -188,7 +187,7 @@ class DBModel(BaseModel):
             sql += f" LIMIT {limit}"
         if offset := kwargs.get("offset"):
             sql += f" OFFSET {offset}"
-        return execute_sql(sql, where_params)
+        return sql, where_params
 
     @classmethod
     def _process_many_to_many_data(
@@ -200,12 +199,14 @@ class DBModel(BaseModel):
         intermediate_table_name = table_manager._get_intermediate_table_name(
             table_name, related_table_name
         )
-        cursor = execute_sql(
-            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
-        )
+        with get_cursor() as cursor:
+            cursor.execute(
+                f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
+            )
+            rows = cursor.fetchall()
         return [
             related_model._fetchone_raw_data(is_recursive_call=True, model_id=row[0])
-            for row in cursor.fetchall()
+            for row in rows
         ]
 
     @classmethod
@@ -240,18 +241,20 @@ class DBModel(BaseModel):
     ) -> dict[str, Any]:
         if model_id:
             kwargs[cls._get_primary_key_field_name()] = model_id
-        cursor = cls._fetch_raw_data(*args, **kwargs)
-        data = cursor.fetchone()
-        cursor.connection.close()
+        query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
+        with get_cursor() as cursor:
+            cursor.execute(query, params)
+            data = cursor.fetchone()
         if not data:
             raise ObjectNotFound
         return cls._process_raw_data(data, is_recursive_call)
 
     @classmethod
     def _fetchall_raw_data(cls, *args, **kwargs) -> list[dict[str, Any]]:
-        cursor = cls._fetch_raw_data(*args, **kwargs)
-        data_list = cursor.fetchall()
-        cursor.connection.close()
+        query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
+        with get_cursor() as cursor:
+            cursor.execute(query, params)
+            data_list = cursor.fetchall()
         return [cls._process_raw_data(data) for data in data_list]
 
     @classmethod

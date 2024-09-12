@@ -13,7 +13,6 @@ def remove_db():
 @pytest.fixture
 def db_cursor():
     remove_db()
-    cursor = get_cursor()
-    yield cursor
-    cursor.connection.close()
+    with get_cursor() as cursor:
+        yield cursor
     remove_db()

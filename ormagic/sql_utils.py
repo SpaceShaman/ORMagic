@@ -1,20 +1,15 @@
 import sqlite3
+from contextlib import contextmanager
 from sqlite3 import Cursor
+from typing import Any, Generator
 
 
-def get_cursor() -> Cursor:
-    connection = sqlite3.connect("db.sqlite3")
-    cursor = connection.cursor()
-    cursor.executescript("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;")
-    return cursor
-
-
-def execute_sql(sql: str, parms: list | None = None) -> Cursor:
+@contextmanager
+def get_cursor() -> Generator[Cursor, Any, None]:
+    connection = sqlite3.connect("db.sqlite3", isolation_level=None)
+    connection.execute("PRAGMA foreign_keys = ON")
+    connection.execute("PRAGMA journal_mode = WAL")
     try:
-        cursor = get_cursor()
-        cursor = cursor.execute(sql) if parms is None else cursor.execute(sql, parms)
-        cursor.connection.commit()
-        return cursor
-    except Exception as e:
-        cursor.connection.close()
-        raise e
+        yield connection.cursor()
+    finally:
+        connection.close()
