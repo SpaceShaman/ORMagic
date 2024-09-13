@@ -14,10 +14,10 @@ from .field_utils import (
 
 
 def create_table(
+    cursor: Cursor,
     table_name: str,
     primary_key: str,
     model_fields: dict[str, FieldInfo],
-    cursor: Cursor,
 ):
     columns = []
     for field_name, field_info in model_fields.items():
@@ -26,7 +26,7 @@ def create_table(
             related_table_name = related_table._get_table_name()
             related_primary_key = related_table._get_primary_key_field_name()
             _create_intermediate_table(
-                table_name, primary_key, related_table_name, related_primary_key, cursor
+                cursor, table_name, primary_key, related_table_name, related_primary_key
             )
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
@@ -34,27 +34,27 @@ def create_table(
 
 
 def update_table(
+    cursor: Cursor,
     table_name: str,
     primary_key: str,
     model_fields: dict[str, FieldInfo],
-    cursor: Cursor,
 ) -> None:
-    if not _is_table_exists(table_name, cursor):
-        return create_table(table_name, primary_key, model_fields, cursor)
-    existing_columns = _fetch_existing_column_names_from_db(table_name, cursor)
+    if not _is_table_exists(cursor, table_name):
+        return create_table(cursor, table_name, primary_key, model_fields)
+    existing_columns = _fetch_existing_column_names_from_db(cursor, table_name)
     new_columns = _fetch_field_names_from_model(model_fields)
     if existing_columns == new_columns:
         return
     elif len(existing_columns) > len(new_columns):
         _drop_columns_from_existing_table(
-            table_name, existing_columns, new_columns, cursor
+            cursor, table_name, existing_columns, new_columns
         )
     elif len(existing_columns) == len(new_columns):
         return _rename_columns_in_existing_table(
-            table_name, existing_columns, new_columns, cursor
+            cursor, table_name, existing_columns, new_columns
         )
     _add_new_columns_to_existing_table(
-        table_name, model_fields, existing_columns, cursor
+        cursor, table_name, model_fields, existing_columns
     )
 
 
@@ -69,13 +69,13 @@ def get_foreign_key_model(field_annotation: Any) -> Type | None:
 
 
 def _create_intermediate_table(
+    cursor: Cursor,
     table_name: str,
     primary_key: str,
     related_table_name: str,
     related_primary_key: str,
-    cursor: Cursor,
 ) -> None:
-    if get_intermediate_table_name(table_name, related_table_name, cursor):
+    if get_intermediate_table_name(cursor, table_name, related_table_name):
         return
     cursor.execute(
         f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
@@ -88,7 +88,7 @@ def _create_intermediate_table(
 
 
 def get_intermediate_table_name(
-    table_name: str, related_table_name: str, cursor: Cursor
+    cursor: Cursor, table_name: str, related_table_name: str
 ) -> str | None:
     cursor.execute(
         f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
@@ -120,14 +120,14 @@ def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
     return column_definition
 
 
-def _is_table_exists(table_name: str, cursor: Cursor) -> bool:
+def _is_table_exists(cursor: Cursor, table_name: str) -> bool:
     cursor.execute(
         f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}'"
     )
     return cursor.fetchone()[0] == 1
 
 
-def _fetch_existing_column_names_from_db(table_name: str, cursor: Cursor) -> list[str]:
+def _fetch_existing_column_names_from_db(cursor: Cursor, table_name: str) -> list[str]:
     cursor.execute(f"PRAGMA table_info({table_name})")
     return [column[1] for column in cursor.fetchall()]
 
@@ -137,7 +137,7 @@ def _fetch_field_names_from_model(model_fields: dict[str, FieldInfo]) -> list[st
 
 
 def _rename_columns_in_existing_table(
-    table_name: str, old_columns: list[str], new_columns: list[str], cursor: Cursor
+    cursor: Cursor, table_name: str, old_columns: list[str], new_columns: list[str]
 ) -> None:
     for old_column_name, new_column_name in dict(zip(old_columns, new_columns)).items():
         cursor.execute(
@@ -146,10 +146,10 @@ def _rename_columns_in_existing_table(
 
 
 def _add_new_columns_to_existing_table(
+    cursor: Cursor,
     table_name: str,
     model_fields: dict[str, FieldInfo],
     existing_columns: list[str],
-    cursor: Cursor,
 ) -> None:
     for field_name, field_info in model_fields.items():
         if field_name in existing_columns:
@@ -159,7 +159,7 @@ def _add_new_columns_to_existing_table(
 
 
 def _drop_columns_from_existing_table(
-    table_name: str, existing_columns: list[str], new_columns: list[str], cursor: Cursor
+    cursor: Cursor, table_name: str, existing_columns: list[str], new_columns: list[str]
 ) -> None:
     columns_to_drop = set(existing_columns) - set(new_columns)
     for column_name in columns_to_drop:

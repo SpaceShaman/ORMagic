@@ -40,10 +40,10 @@ class DBModel(BaseModel):
         """Create a table in the database for the model."""
         with get_cursor() as cursor:
             create_table(
+                cursor,
                 cls._get_table_name(),
                 cls._get_primary_key_field_name(),
                 cls.model_fields,
-                cursor,
             )
 
     @classmethod
@@ -51,10 +51,10 @@ class DBModel(BaseModel):
         """Update the table in the database based on the model definition."""
         with get_cursor() as cursor:
             update_table(
+                cursor,
                 cls._get_table_name(),
                 cls._get_primary_key_field_name(),
                 cls.model_fields,
-                cursor,
             )
 
     @classmethod
@@ -139,7 +139,7 @@ class DBModel(BaseModel):
         table_name = self._get_table_name()
         related_table_name = related_objects[0].__class__.__name__.lower()
         intermediate_table_name = get_intermediate_table_name(
-            table_name, related_table_name, cursor
+            cursor, table_name, related_table_name
         )
         cursor.execute(
             f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
@@ -212,13 +212,13 @@ class DBModel(BaseModel):
 
     @classmethod
     def _process_many_to_many_data(
-        cls, annotation: Any, object_id: int, cursor: Cursor
+        cls, cursor: Cursor, annotation: Any, object_id: int
     ) -> list[dict[str, Any]]:
         table_name = cls._get_table_name()
         related_model = getattr(annotation, "__args__")[0]
         related_table_name = related_model.__name__.lower()
         intermediate_table_name = get_intermediate_table_name(
-            table_name, related_table_name, cursor
+            cursor, table_name, related_table_name
         )
         cursor.execute(
             f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
@@ -233,7 +233,7 @@ class DBModel(BaseModel):
 
     @classmethod
     def _process_raw_data(
-        cls, data: tuple, cursor: Cursor, is_recursive_call: bool = False
+        cls, cursor: Cursor, data: tuple, is_recursive_call: bool = False
     ) -> dict[str, Any]:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, field_info in cls.model_fields.items():
@@ -241,9 +241,9 @@ class DBModel(BaseModel):
                 if is_recursive_call:
                     continue
                 data_dict[key] = cls._process_many_to_many_data(
+                    cursor,
                     field_info.annotation,
                     data_dict[cls._get_primary_key_field_name()],
-                    cursor,
                 )
             elif not data_dict[key]:
                 continue
@@ -267,7 +267,7 @@ class DBModel(BaseModel):
         query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
         cursor.execute(query, params)
         if data := cursor.fetchone():
-            return cls._process_raw_data(data, cursor, is_recursive_call)
+            return cls._process_raw_data(cursor, data, is_recursive_call)
         else:
             raise ObjectNotFound
 
@@ -278,7 +278,7 @@ class DBModel(BaseModel):
         query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
         cursor.execute(query, params)
         data_list = cursor.fetchall()
-        return [cls._process_raw_data(data, cursor) for data in data_list]
+        return [cls._process_raw_data(cursor, data) for data in data_list]
 
     @classmethod
     def _get_table_name(cls) -> str:
