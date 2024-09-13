@@ -5,13 +5,18 @@ from pydantic import BaseModel
 
 from ormagic import DBField
 
-from . import table_manager
 from .field_utils import (
     is_many_to_many_field,
     is_primary_key_field,
     prepare_where_conditions,
 )
 from .sql_utils import get_cursor
+from .table_manager import (
+    create_table,
+    get_foreign_key_model,
+    get_intermediate_table_name,
+    update_table,
+)
 
 
 class ObjectNotFound(Exception):
@@ -33,21 +38,30 @@ class DBModel(BaseModel):
     @classmethod
     def create_table(cls) -> None:
         """Create a table in the database for the model."""
-        table_manager.create_table(
-            cls._get_table_name(), cls._get_primary_key_field_name(), cls.model_fields
-        )
+        with get_cursor() as cursor:
+            create_table(
+                cls._get_table_name(),
+                cls._get_primary_key_field_name(),
+                cls.model_fields,
+                cursor,
+            )
 
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        table_manager.update_table(
-            cls._get_table_name(), cls._get_primary_key_field_name(), cls.model_fields
-        )
+        with get_cursor() as cursor:
+            update_table(
+                cls._get_table_name(),
+                cls._get_primary_key_field_name(),
+                cls.model_fields,
+                cursor,
+            )
 
     @classmethod
     def drop_table(cls) -> None:
         """Remove the table from the database."""
-        table_manager.drop_table(cls._get_table_name())
+        with get_cursor() as cursor:
+            cursor.execute(f"DROP TABLE IF EXISTS {cls._get_table_name()}")
 
     def save(self) -> Self:
         """Save object to the database."""
@@ -61,17 +75,24 @@ class DBModel(BaseModel):
     @classmethod
     def get(cls, *args, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
-        return cls(**cls._fetchone_raw_data(*args, **kwargs))
+        with get_cursor() as cursor:
+            return cls(**cls._fetchone_raw_data(cursor, *args, **kwargs))
 
     @classmethod
     def filter(cls, *args, **kwargs) -> list[Self]:
         """Get objects from the database based on the given keyword arguments."""
-        return [cls(**data) for data in cls._fetchall_raw_data(*args, **kwargs)]
+        with get_cursor() as cursor:
+            return [
+                cls(**data) for data in cls._fetchall_raw_data(cursor, *args, **kwargs)
+            ]
 
     @classmethod
     def all(cls, *args, **kwargs) -> list[Self]:
         """Get all objects from the database."""
-        return [cls(**data) for data in cls._fetchall_raw_data(*args, **kwargs)]
+        with get_cursor() as cursor:
+            return [
+                cls(**data) for data in cls._fetchall_raw_data(cursor, *args, **kwargs)
+            ]
 
     def delete(self) -> None:
         """Delete the object from the database."""
@@ -117,8 +138,8 @@ class DBModel(BaseModel):
             return
         table_name = self._get_table_name()
         related_table_name = related_objects[0].__class__.__name__.lower()
-        intermediate_table_name = table_manager._get_intermediate_table_name(
-            table_name, related_table_name
+        intermediate_table_name = get_intermediate_table_name(
+            table_name, related_table_name, cursor
         )
         cursor.execute(
             f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
@@ -135,9 +156,7 @@ class DBModel(BaseModel):
         model_dict = self.model_dump()
         for field_name, field_info in self.model_fields.items():
             field_value = model_dict.get(field_name)
-            if foreign_model := table_manager.get_foreign_key_model(
-                field_info.annotation
-            ):
+            if foreign_model := get_foreign_key_model(field_info.annotation):
                 if isinstance(field_value, list):
                     continue
                 elif not field_value:
@@ -193,27 +212,28 @@ class DBModel(BaseModel):
 
     @classmethod
     def _process_many_to_many_data(
-        cls, annotation: Any, object_id: int
+        cls, annotation: Any, object_id: int, cursor: Cursor
     ) -> list[dict[str, Any]]:
         table_name = cls._get_table_name()
         related_model = getattr(annotation, "__args__")[0]
         related_table_name = related_model.__name__.lower()
-        intermediate_table_name = table_manager._get_intermediate_table_name(
-            table_name, related_table_name
+        intermediate_table_name = get_intermediate_table_name(
+            table_name, related_table_name, cursor
         )
-        with get_cursor() as cursor:
-            cursor.execute(
-                f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
-            )
-            rows = cursor.fetchall()
+        cursor.execute(
+            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
+        )
+        rows = cursor.fetchall()
         return [
-            related_model._fetchone_raw_data(is_recursive_call=True, model_id=row[0])
+            related_model._fetchone_raw_data(
+                cursor, is_recursive_call=True, model_id=row[0]
+            )
             for row in rows
         ]
 
     @classmethod
     def _process_raw_data(
-        cls, data: tuple, is_recursive_call: bool = False
+        cls, data: tuple, cursor: Cursor, is_recursive_call: bool = False
     ) -> dict[str, Any]:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, field_info in cls.model_fields.items():
@@ -221,21 +241,22 @@ class DBModel(BaseModel):
                 if is_recursive_call:
                     continue
                 data_dict[key] = cls._process_many_to_many_data(
-                    field_info.annotation, data_dict[cls._get_primary_key_field_name()]
+                    field_info.annotation,
+                    data_dict[cls._get_primary_key_field_name()],
+                    cursor,
                 )
             elif not data_dict[key]:
                 continue
-            elif foreign_model := table_manager.get_foreign_key_model(
-                field_info.annotation
-            ):
+            elif foreign_model := get_foreign_key_model(field_info.annotation):
                 data_dict[key] = foreign_model._fetchone_raw_data(
-                    model_id=data_dict[key]
+                    cursor, model_id=data_dict[key]
                 )
         return data_dict
 
     @classmethod
     def _fetchone_raw_data(
         cls,
+        cursor: Cursor,
         is_recursive_call: bool = False,
         model_id: int | None = None,
         *args,
@@ -244,20 +265,20 @@ class DBModel(BaseModel):
         if model_id:
             kwargs[cls._get_primary_key_field_name()] = model_id
         query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
-        with get_cursor() as cursor:
-            cursor.execute(query, params)
-            data = cursor.fetchone()
-        if not data:
+        cursor.execute(query, params)
+        if data := cursor.fetchone():
+            return cls._process_raw_data(data, cursor, is_recursive_call)
+        else:
             raise ObjectNotFound
-        return cls._process_raw_data(data, is_recursive_call)
 
     @classmethod
-    def _fetchall_raw_data(cls, *args, **kwargs) -> list[dict[str, Any]]:
+    def _fetchall_raw_data(
+        cls, cursor: Cursor, *args, **kwargs
+    ) -> list[dict[str, Any]]:
         query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
-        with get_cursor() as cursor:
-            cursor.execute(query, params)
-            data_list = cursor.fetchall()
-        return [cls._process_raw_data(data) for data in data_list]
+        cursor.execute(query, params)
+        data_list = cursor.fetchall()
+        return [cls._process_raw_data(data, cursor) for data in data_list]
 
     @classmethod
     def _get_table_name(cls) -> str:

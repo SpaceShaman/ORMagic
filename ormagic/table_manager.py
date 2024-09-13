@@ -1,3 +1,4 @@
+from sqlite3 import Cursor
 from typing import Any, Type, get_args
 
 from pydantic.fields import FieldInfo
@@ -10,10 +11,14 @@ from .field_utils import (
     is_unique_field,
     transform_field_annotation_to_sql_type,
 )
-from .sql_utils import get_cursor
 
 
-def create_table(table_name: str, primary_key: str, model_fields: dict[str, FieldInfo]):
+def create_table(
+    table_name: str,
+    primary_key: str,
+    model_fields: dict[str, FieldInfo],
+    cursor: Cursor,
+):
     columns = []
     for field_name, field_info in model_fields.items():
         if is_many_to_many_field(field_info.annotation):
@@ -21,40 +26,36 @@ def create_table(table_name: str, primary_key: str, model_fields: dict[str, Fiel
             related_table_name = related_table._get_table_name()
             related_primary_key = related_table._get_primary_key_field_name()
             _create_intermediate_table(
-                table_name,
-                primary_key,
-                related_table_name,
-                related_primary_key,
+                table_name, primary_key, related_table_name, related_primary_key, cursor
             )
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
-    with get_cursor() as cursor:
-        cursor.execute(
-            f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})"
-        )
+    cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})")
 
 
 def update_table(
-    table_name: str, primary_key: str, model_fields: dict[str, FieldInfo]
+    table_name: str,
+    primary_key: str,
+    model_fields: dict[str, FieldInfo],
+    cursor: Cursor,
 ) -> None:
-    if not _is_table_exists(table_name):
-        return create_table(table_name, primary_key, model_fields)
-    existing_columns = _fetch_existing_column_names_from_db(table_name)
+    if not _is_table_exists(table_name, cursor):
+        return create_table(table_name, primary_key, model_fields, cursor)
+    existing_columns = _fetch_existing_column_names_from_db(table_name, cursor)
     new_columns = _fetch_field_names_from_model(model_fields)
     if existing_columns == new_columns:
         return
     elif len(existing_columns) > len(new_columns):
-        _drop_columns_from_existing_table(table_name, existing_columns, new_columns)
+        _drop_columns_from_existing_table(
+            table_name, existing_columns, new_columns, cursor
+        )
     elif len(existing_columns) == len(new_columns):
         return _rename_columns_in_existing_table(
-            table_name, existing_columns, new_columns
+            table_name, existing_columns, new_columns, cursor
         )
-    _add_new_columns_to_existing_table(table_name, model_fields, existing_columns)
-
-
-def drop_table(table_name: str) -> None:
-    with get_cursor() as cursor:
-        cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+    _add_new_columns_to_existing_table(
+        table_name, model_fields, existing_columns, cursor
+    )
 
 
 def get_foreign_key_model(field_annotation: Any) -> Type | None:
@@ -68,35 +69,37 @@ def get_foreign_key_model(field_annotation: Any) -> Type | None:
 
 
 def _create_intermediate_table(
-    table_name: str, primary_key: str, related_table_name: str, related_primary_key: str
+    table_name: str,
+    primary_key: str,
+    related_table_name: str,
+    related_primary_key: str,
+    cursor: Cursor,
 ) -> None:
-    if _get_intermediate_table_name(table_name, related_table_name):
+    if get_intermediate_table_name(table_name, related_table_name, cursor):
         return
-    with get_cursor() as cursor:
-        cursor.execute(
-            f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
-            "id INTEGER PRIMARY KEY, "
-            f"{table_name}_id INTEGER, "
-            f"{related_table_name}_id INTEGER, "
-            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE ON UPDATE CASCADE, "
-            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE) "
-        )
+    cursor.execute(
+        f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
+        "id INTEGER PRIMARY KEY, "
+        f"{table_name}_id INTEGER, "
+        f"{related_table_name}_id INTEGER, "
+        f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE ON UPDATE CASCADE, "
+        f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE) "
+    )
 
 
-def _get_intermediate_table_name(
-    table_name: str, related_table_name: str
+def get_intermediate_table_name(
+    table_name: str, related_table_name: str, cursor: Cursor
 ) -> str | None:
-    with get_cursor() as cursor:
-        cursor.execute(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
-        )
-        count = cursor.fetchone()[0]
-        if count == 1:
-            return f"{table_name}_{related_table_name}"
-        cursor.execute(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
-        )
-        count = cursor.fetchone()[0]
+    cursor.execute(
+        f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
+    )
+    count = cursor.fetchone()[0]
+    if count == 1:
+        return f"{table_name}_{related_table_name}"
+    cursor.execute(
+        f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
+    )
+    count = cursor.fetchone()[0]
     return f"{related_table_name}_{table_name}" if count == 1 else None
 
 
@@ -117,20 +120,16 @@ def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
     return column_definition
 
 
-def _is_table_exists(table_name: str) -> bool:
-    with get_cursor() as cursor:
-        cursor.execute(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}'"
-        )
-        exist = cursor.fetchone()[0] == 1
-    return exist
+def _is_table_exists(table_name: str, cursor: Cursor) -> bool:
+    cursor.execute(
+        f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}'"
+    )
+    return cursor.fetchone()[0] == 1
 
 
-def _fetch_existing_column_names_from_db(table_name: str) -> list[str]:
-    with get_cursor() as cursor:
-        cursor.execute(f"PRAGMA table_info({table_name})")
-        existed_fields = [column[1] for column in cursor.fetchall()]
-    return existed_fields
+def _fetch_existing_column_names_from_db(table_name: str, cursor: Cursor) -> list[str]:
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    return [column[1] for column in cursor.fetchall()]
 
 
 def _fetch_field_names_from_model(model_fields: dict[str, FieldInfo]) -> list[str]:
@@ -138,34 +137,30 @@ def _fetch_field_names_from_model(model_fields: dict[str, FieldInfo]) -> list[st
 
 
 def _rename_columns_in_existing_table(
-    table_name: str, old_columns: list[str], new_columns: list[str]
+    table_name: str, old_columns: list[str], new_columns: list[str], cursor: Cursor
 ) -> None:
-    with get_cursor() as cursor:
-        for old_column_name, new_column_name in dict(
-            zip(old_columns, new_columns)
-        ).items():
-            cursor.execute(
-                f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
-            )
+    for old_column_name, new_column_name in dict(zip(old_columns, new_columns)).items():
+        cursor.execute(
+            f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
+        )
 
 
 def _add_new_columns_to_existing_table(
     table_name: str,
     model_fields: dict[str, FieldInfo],
     existing_columns: list[str],
+    cursor: Cursor,
 ) -> None:
-    with get_cursor() as cursor:
-        for field_name, field_info in model_fields.items():
-            if field_name in existing_columns:
-                continue
-            column_definition = _prepare_column_definition(field_name, field_info)
-            cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_definition}")
+    for field_name, field_info in model_fields.items():
+        if field_name in existing_columns:
+            continue
+        column_definition = _prepare_column_definition(field_name, field_info)
+        cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_definition}")
 
 
 def _drop_columns_from_existing_table(
-    table_name: str, existing_columns: list[str], new_columns: list[str]
+    table_name: str, existing_columns: list[str], new_columns: list[str], cursor: Cursor
 ) -> None:
     columns_to_drop = set(existing_columns) - set(new_columns)
-    with get_cursor() as cursor:
-        for column_name in columns_to_drop:
-            cursor.execute(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
+    for column_name in columns_to_drop:
+        cursor.execute(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
