@@ -1,3 +1,4 @@
+from sqlite3 import Cursor
 from typing import Any, Self
 
 from pydantic import BaseModel
@@ -50,7 +51,12 @@ class DBModel(BaseModel):
 
     def save(self) -> Self:
         """Save object to the database."""
-        return self._update() if self.is_object_exists() else self._insert()
+        with get_cursor() as cursor:
+            return (
+                self._update(cursor)
+                if self.is_object_exists(cursor)
+                else self._insert(cursor)
+            )
 
     @classmethod
     def get(cls, *args, **kwargs) -> Self:
@@ -76,35 +82,33 @@ class DBModel(BaseModel):
         if cursor.rowcount == 0:
             raise ObjectNotFound
 
-    def _insert(self) -> Self:
+    def _insert(self, cursor: Cursor) -> Self:
         prepared_data = self._prepare_data_to_insert()
         fields = ", ".join(prepared_data.keys())
         values = ", ".join(
             f"'{value}'" if value else "NULL" for value in prepared_data.values()
         )
-        with get_cursor() as cursor:
-            cursor.execute(
-                f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
-            )
+        cursor.execute(
+            f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
+        )
         setattr(self, self._get_primary_key_field_name(), cursor.lastrowid)
-        self._update_many_to_many_intermediate_table()
+        self._update_many_to_many_intermediate_table(cursor)
         return self
 
-    def _update(self) -> Self:
+    def _update(self, cursor: Cursor) -> Self:
         prepared_data = self._prepare_data_to_insert()
         prepared_data.pop(self._get_primary_key_field_name())
         fields = ", ".join(
             f"{field}='{value}'" if value else f"{field}=NULL"
             for field, value in prepared_data.items()
         )
-        with get_cursor() as cursor:
-            cursor.execute(
-                f"UPDATE {self._get_table_name()} SET {fields} WHERE {self._get_primary_key_field_name()}={self.model_id}"
-            )
-        self._update_many_to_many_intermediate_table()
+        cursor.execute(
+            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self._get_primary_key_field_name()}={self.model_id}"
+        )
+        self._update_many_to_many_intermediate_table(cursor)
         return self
 
-    def _update_many_to_many_intermediate_table(self) -> None:
+    def _update_many_to_many_intermediate_table(self, cursor: Cursor) -> None:
         related_objects = []
         for field_name, field_info in self.model_fields.items():
             if is_many_to_many_field(field_info.annotation):
@@ -116,16 +120,15 @@ class DBModel(BaseModel):
         intermediate_table_name = table_manager._get_intermediate_table_name(
             table_name, related_table_name
         )
-        with get_cursor() as cursor:
+        cursor.execute(
+            f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
+        )
+        for related_object in related_objects:
+            if not related_object.model_id:
+                related_object = related_object.save()
             cursor.execute(
-                f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
+                f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.model_id}, {related_object.model_id})"
             )
-            for related_object in related_objects:
-                if not related_object.model_id:
-                    related_object = related_object.save()
-                cursor.execute(
-                    f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.model_id}, {related_object.model_id})"
-                )
 
     def _prepare_data_to_insert(self) -> dict[str, Any]:
         prepared_data = {}
@@ -157,14 +160,13 @@ class DBModel(BaseModel):
                 prepared_data[field_name] = field_value
         return prepared_data
 
-    def is_object_exists(self) -> bool:
+    def is_object_exists(self, cursor: Cursor) -> bool:
         if not self.model_id:
             return False
-        with get_cursor() as cursor:
-            cursor.execute(
-                f"SELECT * FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
-            )
-            return bool(cursor.fetchone())
+        cursor.execute(
+            f"SELECT * FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
+        )
+        return bool(cursor.fetchone())
 
     @classmethod
     def _prepare_order_by(
