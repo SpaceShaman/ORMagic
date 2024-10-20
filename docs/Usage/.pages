@@ -9,4 +9,5 @@ nav:
     - foreign-keys.md
     - many-to-many.md
     - custom-primary-key.md
+    - transactions.md
     - fastapi.md
