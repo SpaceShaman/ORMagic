@@ -1,12 +1,8 @@
-from ormagic import DBModel, transaction
+from ormagic import transaction
 
 
-def test_model_is_transaction_if_in_transaction():
-    class User(DBModel):
-        name: str
-
+def test_is_under_transaction():
     with transaction():
-        user = User(name="Alice")
-        assert user._is_transaction is True
+        assert transaction._is_transaction is True
 
-    assert user._is_transaction is False
+    assert transaction._is_transaction is False

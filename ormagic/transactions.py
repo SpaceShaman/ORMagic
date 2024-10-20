@@ -1,9 +1,10 @@
-from ormagic import DBModel
-
-
 class transaction:
-    def __enter__(self):
-        DBModel._is_transaction = True
+    _is_transaction = False
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        DBModel._is_transaction = False
+    @classmethod
+    def __enter__(cls):
+        cls._is_transaction = True
+
+    @classmethod
+    def __exit__(cls, exc_type, exc_value, traceback):
+        cls._is_transaction = False
