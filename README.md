@@ -109,13 +109,13 @@ The full documentation is available at [spaceshaman.github.io/ORMagic/](https://
     - [x] Rename column
     - [x] Drop column
 - [x] Custom primary key
+- [x] Transactions
 - [ ] Functions
     - [ ] Aggregate functions
     - [ ] String functions
     - [ ] Date and time functions
     - [ ] Mathematical functions
     - [ ] Control flow functions
-- [ ] Transactions
 - [ ] Migrations
 - [ ] Integration with other databases
 <!--roadmap-end-->
