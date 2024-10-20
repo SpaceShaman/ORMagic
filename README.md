@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-light.png">
-  <img src="docs/assets/logo-dark.png">
+  <img src="docs/assets/logo-dark.png" alt="ORMagic">
 </picture>
 
 <!--intro-start-->
