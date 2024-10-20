@@ -1,8 +1,8 @@
-import sqlite3
 from contextlib import contextmanager
 from sqlite3 import Cursor
 from typing import Any, Generator
 
+from ormagic.connection import create_connection
 from ormagic.transactions import transaction
 
 
@@ -13,11 +13,8 @@ def get_cursor() -> Generator[Cursor, Any, None]:
             yield transaction._cursor
         finally:
             pass
-
     else:
-        connection = sqlite3.connect("db.sqlite3", isolation_level=None)
-        connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute("PRAGMA journal_mode = WAL")
+        connection = create_connection()
         try:
             yield connection.cursor()
         finally:

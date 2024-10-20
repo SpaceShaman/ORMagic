@@ -5,12 +5,12 @@ from pydantic import BaseModel
 
 from ormagic import DBField
 
+from .cursor import get_cursor
 from .field_utils import (
     is_many_to_many_field,
     is_primary_key_field,
     prepare_where_conditions,
 )
-from .sql_utils import get_cursor
 from .table_manager import (
     create_table,
     get_foreign_key_model,

@@ -1,4 +1,4 @@
-import sqlite3
+from ormagic.connection import create_connection
 
 
 class transaction:
@@ -9,9 +9,7 @@ class transaction:
     @classmethod
     def __enter__(cls):
         cls._is_transaction = True
-        cls._connection = sqlite3.connect("db.sqlite3", isolation_level=None)
-        cls._connection.execute("PRAGMA foreign_keys = ON")
-        cls._connection.execute("PRAGMA journal_mode = WAL")
+        cls._connection = create_connection()
         cls._cursor = cls._connection.cursor()
         cls._cursor.execute("BEGIN")
 

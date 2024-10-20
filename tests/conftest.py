@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from ormagic.sql_utils import get_cursor
+from ormagic.cursor import get_cursor
 
 
 @pytest.fixture
