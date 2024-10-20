@@ -10,7 +10,7 @@ from ormagic.transactions import transaction
 def get_cursor() -> Generator[Cursor, Any, None]:
     if transaction._is_transaction:
         try:
-            yield transaction._cursor
+            yield transaction._connection.cursor()
         finally:
             pass
     else:
