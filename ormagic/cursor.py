@@ -9,10 +9,7 @@ from ormagic.transactions import transaction
 @contextmanager
 def get_cursor() -> Generator[Cursor, Any, None]:
     if transaction._is_transaction:
-        try:
-            yield transaction._connection.cursor()
-        finally:
-            pass
+        yield transaction._connection.cursor()
     else:
         connection = create_connection()
         try:
