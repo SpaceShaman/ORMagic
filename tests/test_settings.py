@@ -31,3 +31,18 @@ def test_setup_with_invalid_database_url():
 
     with pytest.raises(SettingsError):
         create_connection()
+
+
+def test_setup_for_sqlite_with_custom_journal_mode():
+    os.environ["ORMAGIC_DATABASE_URL"] = "sqlite://test.db"
+    os.environ["ORMAGIC_JOURNAL_MODE"] = "DELETE"
+
+    connection = create_connection()
+    cursor = connection.cursor()
+    cursor.execute("PRAGMA journal_mode")
+    result = cursor.fetchone()
+
+    connection.close()
+    os.remove("test.db")
+
+    assert result[0] == "delete"

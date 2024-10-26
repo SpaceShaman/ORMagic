@@ -12,3 +12,4 @@ class Settings:
             raise SettingsError("Database URL is not valid")
         self.db_type = self.database_url.split("://")[0]
         self.path = self.database_url.split("://")[1]
+        self.journal_mode = os.getenv("ORMAGIC_JOURNAL_MODE", "WAL")
