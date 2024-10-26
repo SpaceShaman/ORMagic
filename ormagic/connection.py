@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from sqlite3 import connect
 from typing import Protocol
@@ -28,7 +29,10 @@ class ConnectionCreator(ABC):
 
 class SQLiteConnectionCreator(ConnectionCreator):
     def create_connection(self) -> Connection:
-        connection = connect("db.sqlite3", isolation_level=None)
+        database = os.environ.get("ORMAGIC_DATABASE", "sqlite://db.sqlite3").replace(
+            "sqlite://", ""
+        )
+        connection = connect(database, isolation_level=None)
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA journal_mode = WAL")
         return connection
