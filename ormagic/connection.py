@@ -31,9 +31,7 @@ class ConnectionCreator(ABC):
 class SQLiteConnectionCreator(ConnectionCreator):
     def create_connection(self) -> Connection:
         settings = Settings()
-        connection = connect(
-            settings.database.replace("sqlite://", ""), isolation_level=None
-        )
+        connection = connect(settings.path, isolation_level=None)
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA journal_mode = WAL")
         return connection
@@ -45,7 +43,7 @@ class DatabaseNotSupported(Exception):
 
 def create_connection() -> Connection:
     settings = Settings()
-    if settings.database.startswith("sqlite://"):
+    if settings.db_type == "sqlite":
         return SQLiteConnectionCreator().create_connection()
     else:
-        raise DatabaseNotSupported(f"Database {settings.database} is not supported")
+        raise DatabaseNotSupported(f"Database {settings.db_type} is not supported")

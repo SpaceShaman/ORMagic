@@ -13,7 +13,7 @@ def db_cursor():
 
 @pytest.fixture(autouse=True)
 def remove_db():
-    os.environ["ORMAGIC_DATABASE"] = "sqlite://db.sqlite3"
+    os.environ["ORMAGIC_DATABASE_URL"] = "sqlite://db.sqlite3"
     yield
     if os.path.exists("db.sqlite3"):
         os.remove("db.sqlite3")

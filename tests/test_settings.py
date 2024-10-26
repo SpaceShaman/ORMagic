@@ -4,10 +4,11 @@ from sqlite3 import Connection
 import pytest
 
 from ormagic.connection import DatabaseNotSupported, create_connection
+from ormagic.settings import SettingsError
 
 
 def test_setup_for_sqlite():
-    os.environ["ORMAGIC_DATABASE"] = "sqlite://test.db"
+    os.environ["ORMAGIC_DATABASE_URL"] = "sqlite://test.db"
 
     connection = create_connection()
     connection.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)")
@@ -19,7 +20,14 @@ def test_setup_for_sqlite():
 
 
 def test_setup_for_not_supported_database():
-    os.environ["ORMAGIC_DATABASE"] = "not_supported://test.db"
+    os.environ["ORMAGIC_DATABASE_URL"] = "not_supported://test.db"
 
     with pytest.raises(DatabaseNotSupported):
+        create_connection()
+
+
+def test_setup_with_invalid_database_url():
+    os.environ["ORMAGIC_DATABASE_URL"] = "invalid_url"
+
+    with pytest.raises(SettingsError):
         create_connection()
