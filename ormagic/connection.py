@@ -1,7 +1,8 @@
-import os
 from abc import ABC, abstractmethod
 from sqlite3 import connect
 from typing import Protocol
+
+from .settings import Settings
 
 
 class Cursor(Protocol):
@@ -29,10 +30,10 @@ class ConnectionCreator(ABC):
 
 class SQLiteConnectionCreator(ConnectionCreator):
     def create_connection(self) -> Connection:
-        database = os.environ.get("ORMAGIC_DATABASE", "sqlite://db.sqlite3").replace(
-            "sqlite://", ""
+        settings = Settings()
+        connection = connect(
+            settings.database.replace("sqlite://", ""), isolation_level=None
         )
-        connection = connect(database, isolation_level=None)
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA journal_mode = WAL")
         return connection
@@ -43,8 +44,8 @@ class DatabaseNotSupported(Exception):
 
 
 def create_connection() -> Connection:
-    database = os.environ.get("ORMAGIC_DATABASE", "sqlite://db.sqlite3")
-    if database.startswith("sqlite://"):
+    settings = Settings()
+    if settings.database.startswith("sqlite://"):
         return SQLiteConnectionCreator().create_connection()
     else:
-        raise DatabaseNotSupported(f"Database {database} is not supported")
+        raise DatabaseNotSupported(f"Database {settings.database} is not supported")
