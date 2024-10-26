@@ -1,7 +1,9 @@
 import os
 from sqlite3 import Connection
 
-from ormagic.connection import create_connection
+import pytest
+
+from ormagic.connection import DatabaseNotSupported, create_connection
 
 
 def test_setup_for_sqlite():
@@ -14,3 +16,10 @@ def test_setup_for_sqlite():
     assert os.path.exists("test.db")
     connection.close()
     os.remove("test.db")
+
+
+def test_setup_for_not_supported_database():
+    os.environ["ORMAGIC_DATABASE"] = "not_supported://test.db"
+
+    with pytest.raises(DatabaseNotSupported):
+        create_connection()

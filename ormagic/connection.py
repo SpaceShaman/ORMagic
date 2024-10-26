@@ -38,5 +38,13 @@ class SQLiteConnectionCreator(ConnectionCreator):
         return connection
 
 
+class DatabaseNotSupported(Exception):
+    pass
+
+
 def create_connection() -> Connection:
-    return SQLiteConnectionCreator().create_connection()
+    database = os.environ.get("ORMAGIC_DATABASE", "sqlite://db.sqlite3")
+    if database.startswith("sqlite://"):
+        return SQLiteConnectionCreator().create_connection()
+    else:
+        raise DatabaseNotSupported(f"Database {database} is not supported")
