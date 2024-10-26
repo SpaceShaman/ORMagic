@@ -1,6 +1,4 @@
-from sqlite3 import Connection
-
-from ormagic.connection import create_connection
+from .connection import Connection, create_connection
 
 
 class transaction:

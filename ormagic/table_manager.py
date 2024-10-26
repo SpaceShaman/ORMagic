@@ -1,9 +1,9 @@
-from sqlite3 import Cursor
 from typing import Any, Type, get_args
 
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
+from .connection import Cursor
 from .field_utils import (
     get_on_delete_action,
     is_many_to_many_field,

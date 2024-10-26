@@ -1,13 +1,12 @@
 from contextlib import contextmanager
-from sqlite3 import Cursor
-from typing import Any, Generator
+from typing import Generator
 
-from ormagic.connection import create_connection
-from ormagic.transactions import transaction
+from .connection import Cursor, create_connection
+from .transactions import transaction
 
 
 @contextmanager
-def get_cursor() -> Generator[Cursor, Any, None]:
+def get_cursor() -> Generator[Cursor, None, None]:
     if transaction._is_transaction:
         yield transaction._connection.cursor()
     else:

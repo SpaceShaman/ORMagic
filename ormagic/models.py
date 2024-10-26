@@ -1,10 +1,10 @@
-from sqlite3 import Cursor
 from typing import Any, Self
 
 from pydantic import BaseModel
 
 from ormagic import DBField
 
+from .connection import Cursor
 from .cursor import get_cursor
 from .field_utils import (
     is_many_to_many_field,
