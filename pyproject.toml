@@ -11,7 +11,8 @@ repository = "https://github.com/SpaceShaman/ORMagic"
 keywords = ["sql", "orm", "database", "sqlite", "db", "sqlite3", "pydantic", "fastapi"]
 classifiers = [
     "Framework :: Pydantic",
-    "Framework :: Pydantic :: 2"
+    "Framework :: Pydantic :: 2",
+    "Programming Language :: SQL",
 ]
 
 [tool.poetry.dependencies]
