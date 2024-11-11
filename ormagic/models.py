@@ -109,9 +109,9 @@ class DBModel(BaseModel):
             f"'{value}'" if value else "NULL" for value in prepared_data.values()
         )
         cursor.execute(
-            f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values})"
+            f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values}) RETURNING {self._get_primary_key_field_name()}"
         )
-        setattr(self, self._get_primary_key_field_name(), cursor.lastrowid)
+        setattr(self, self._get_primary_key_field_name(), cursor.fetchone()[0])
         self._update_many_to_many_intermediate_table(cursor)
         return self
 
