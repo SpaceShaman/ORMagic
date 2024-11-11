@@ -99,7 +99,9 @@ class DBModel(BaseModel):
             cursor.execute(
                 f"DELETE FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
             )
-        if cursor.rowcount == 0:
+            cursor.execute("SELECT changes()")
+            result = cursor.fetchone()[0]
+        if result == 0:
             raise ObjectNotFound
 
     def _insert(self, cursor: Cursor) -> Self:
