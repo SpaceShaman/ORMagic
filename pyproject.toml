@@ -18,6 +18,10 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.11"
 pydantic = "^2.8.2"
+psycopg = {extras = ["binary"], version = "^3", optional = true}
+
+[tool.poetry.extras]
+postgres = ["psycopg"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
