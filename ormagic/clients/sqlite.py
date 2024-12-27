@@ -55,3 +55,6 @@ class SQLiteClient:
 
     def add_column(self, table_name: str, column_name: str) -> None:
         self.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name}")
+
+    def drop_table(self, table_name: str) -> None:
+        self.execute(f"DROP TABLE {table_name}")

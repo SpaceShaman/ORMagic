@@ -58,8 +58,7 @@ class DBModel(BaseModel):
     @classmethod
     def drop_table(cls) -> None:
         """Remove the table from the database."""
-        with get_cursor() as cursor:
-            cursor.execute(f"DROP TABLE IF EXISTS {cls._get_table_name()}")
+        get_client().drop_table(cls._get_table_name())
 
     def save(self) -> Self:
         """Save object to the database."""
