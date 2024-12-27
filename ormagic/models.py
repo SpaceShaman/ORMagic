@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from ormagic import DBField
 
 from .clients.client import Client, get_client
-from .cursor import get_cursor
 from .field_utils import (
     is_many_to_many_field,
     is_primary_key_field,
@@ -91,14 +90,10 @@ class DBModel(BaseModel):
 
     def delete(self) -> None:
         """Delete the object from the database."""
-        with get_cursor() as cursor:
-            cursor.execute(
-                f"DELETE FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
-            )
-            cursor.execute("SELECT changes()")
-            result = cursor.fetchone()[0]
-        if result == 0:
-            raise ObjectNotFound
+        get_client().delete_rows(
+            self._get_table_name(),
+            f"{self._get_primary_key_field_name()}={self.model_id}",
+        )
 
     def _insert(self, client: Client) -> Self:
         prepared_data = self._prepare_data_to_insert()

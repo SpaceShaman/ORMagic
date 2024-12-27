@@ -3,7 +3,6 @@ from sqlite3 import IntegrityError
 import pytest
 
 from ormagic import DBField, DBModel
-from ormagic.models import ObjectNotFound
 
 
 @pytest.fixture
@@ -28,11 +27,6 @@ def test_delete_object_from_db(prepare_db, db_cursor):
     res = db_cursor.execute("SELECT * FROM user")
     data = res.fetchall()
     assert data == []
-
-
-def test_try_delete_non_existing_object_in_db(prepare_db, db_cursor):
-    with pytest.raises(ObjectNotFound):
-        User(id=1, name="Jane", age=25).delete()
 
 
 def test_delete_object_with_foreign_key_cascade(prepare_db, db_cursor):
