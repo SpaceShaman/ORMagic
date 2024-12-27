@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from ormagic import DBField
 
-from .clients.client import get_client
+from .clients.client import Client, get_client
 from .connection import Cursor
 from .cursor import get_cursor
 from .field_utils import (
@@ -62,12 +62,12 @@ class DBModel(BaseModel):
 
     def save(self) -> Self:
         """Save object to the database."""
-        with get_cursor() as cursor:
-            return (
-                self._update(cursor)
-                if self.is_object_exists(cursor)
-                else self._insert(cursor)
-            )
+        client = get_client()
+        return (
+            self._update(client)
+            if self.is_object_exists(client)
+            else self._insert(client)
+        )
 
     @classmethod
     def get(cls, *args, **kwargs) -> Self:
@@ -102,33 +102,30 @@ class DBModel(BaseModel):
         if result == 0:
             raise ObjectNotFound
 
-    def _insert(self, cursor: Cursor) -> Self:
+    def _insert(self, client: Client) -> Self:
         prepared_data = self._prepare_data_to_insert()
-        fields = ", ".join(prepared_data.keys())
-        values = ", ".join(
-            f"'{value}'" if value else "NULL" for value in prepared_data.values()
+        row_id = client.insert_row_and_get_id(
+            self._get_table_name(),
+            list(prepared_data.keys()),
+            list(prepared_data.values()),
+            self._get_primary_key_field_name(),
         )
-        cursor.execute(
-            f"INSERT INTO {self._get_table_name()} ({fields}) VALUES ({values}) RETURNING {self._get_primary_key_field_name()}"
-        )
-        setattr(self, self._get_primary_key_field_name(), cursor.fetchone()[0])
-        self._update_many_to_many_intermediate_table(cursor)
+        setattr(self, self._get_primary_key_field_name(), row_id)
+        self._update_many_to_many_intermediate_table(client)
         return self
 
-    def _update(self, cursor: Cursor) -> Self:
-        prepared_data = self._prepare_data_to_insert()
-        prepared_data.pop(self._get_primary_key_field_name())
-        fields = ", ".join(
-            f"{field}='{value}'" if value else f"{field}=NULL"
-            for field, value in prepared_data.items()
+    def _update(self, client: Client) -> Self:
+        data = self._prepare_data_to_insert()
+        data.pop(self._get_primary_key_field_name())
+        client.update_rows(
+            self._get_table_name(),
+            data,
+            f"{self._get_primary_key_field_name()}={self.model_id}",
         )
-        cursor.execute(
-            f"UPDATE {self._get_table_name()} SET {fields} WHERE {self._get_primary_key_field_name()}={self.model_id}"
-        )
-        self._update_many_to_many_intermediate_table(cursor)
+        self._update_many_to_many_intermediate_table(client)
         return self
 
-    def _update_many_to_many_intermediate_table(self, cursor: Cursor) -> None:
+    def _update_many_to_many_intermediate_table(self, client: Client) -> None:
         related_objects = []
         for field_name, field_info in self.model_fields.items():
             if is_many_to_many_field(field_info.annotation):
@@ -138,16 +135,16 @@ class DBModel(BaseModel):
         table_name = self._get_table_name()
         related_table_name = related_objects[0].__class__.__name__.lower()
         intermediate_table_name = get_intermediate_table_name(
-            cursor, table_name, related_table_name
+            client, table_name, related_table_name
         )
-        cursor.execute(
-            f"DELETE FROM {intermediate_table_name} WHERE {table_name}_id={self.model_id}"
-        )
+        client.delete_rows(intermediate_table_name, f"{table_name}_id={self.model_id}")
         for related_object in related_objects:
             if not related_object.model_id:
                 related_object = related_object.save()
-            cursor.execute(
-                f"INSERT INTO {intermediate_table_name} ({table_name}_id, {related_table_name}_id) VALUES ({self.model_id}, {related_object.model_id})"
+            client.insert_row(
+                intermediate_table_name,
+                [f"{table_name}_id", f"{related_table_name}_id"],
+                [str(self.model_id), str(related_object.model_id)],
             )
 
     def _prepare_data_to_insert(self) -> dict[str, Any]:
@@ -178,13 +175,13 @@ class DBModel(BaseModel):
                 prepared_data[field_name] = field_value
         return prepared_data
 
-    def is_object_exists(self, cursor: Cursor) -> bool:
+    def is_object_exists(self, client: Client) -> bool:
         if not self.model_id:
             return False
-        cursor.execute(
-            f"SELECT * FROM {self._get_table_name()} WHERE {self._get_primary_key_field_name()}={self.model_id}"
+        return client.is_row_exists(
+            self._get_table_name(),
+            f"{self._get_primary_key_field_name()}={self.model_id}",
         )
-        return bool(cursor.fetchone())
 
     @classmethod
     def _prepare_order_by(

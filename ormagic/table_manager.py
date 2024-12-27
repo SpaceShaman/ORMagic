@@ -94,11 +94,12 @@ def _create_intermediate_table(
 
 def get_intermediate_table_name(
     client: Client, table_name: str, related_table_name: str
-) -> str | None:
+) -> str:
     if client.is_table_exists(f"{table_name}_{related_table_name}"):
         return f"{table_name}_{related_table_name}"
     elif client.is_table_exists(f"{related_table_name}_{table_name}"):
         return f"{related_table_name}_{table_name}"
+    return ""
 
 
 def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:

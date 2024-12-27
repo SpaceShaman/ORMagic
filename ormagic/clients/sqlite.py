@@ -1,4 +1,5 @@
 from sqlite3 import Connection, Cursor, connect
+from typing import Any
 
 from ormagic.settings import Settings
 
@@ -58,3 +59,34 @@ class SQLiteClient:
 
     def drop_table(self, table_name: str) -> None:
         self.execute(f"DROP TABLE {table_name}")
+
+    def update_rows(self, table_name: str, fields: dict[str, Any], where: str) -> None:
+        set_fields = ", ".join(
+            f"{field} = '{value}'" if value else f"{field} = NULL"
+            for field, value in fields.items()
+        )
+        self.execute(f"UPDATE {table_name} SET {set_fields} WHERE {where}")
+
+    def delete_rows(self, table_name: str, where: str) -> None:
+        self.execute(f"DELETE FROM {table_name} WHERE {where}")
+
+    def insert_row(
+        self, table_name: str, columns: list[str], values: list[str]
+    ) -> None:
+        self.execute(
+            f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(['?' for _ in values])})",
+            values,
+        )
+
+    def insert_row_and_get_id(
+        self, table_name: str, columns: list[str], values: list[str], id_column: str
+    ) -> int:
+        cursor = self.execute(
+            f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(['?' for _ in values])}) RETURNING {id_column}",
+            values,
+        )
+        return cursor.fetchone()[0]
+
+    def is_row_exists(self, table_name: str, where: str) -> bool:
+        cursor = self.execute(f"SELECT count(*) FROM {table_name} WHERE {where}")
+        return cursor.fetchone()[0] == 1
