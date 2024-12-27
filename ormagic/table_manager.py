@@ -3,6 +3,7 @@ from typing import Any, Type, get_args
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
+from .clients.client import Client
 from .connection import Cursor
 from .field_utils import (
     get_on_delete_action,
@@ -14,7 +15,7 @@ from .field_utils import (
 
 
 def create_table(
-    cursor: Cursor,
+    client: Client,
     table_name: str,
     primary_key: str,
     model_fields: dict[str, FieldInfo],
@@ -26,11 +27,11 @@ def create_table(
             related_table_name = related_table._get_table_name()
             related_primary_key = related_table._get_primary_key_field_name()
             _create_intermediate_table(
-                cursor, table_name, primary_key, related_table_name, related_primary_key
+                client, table_name, primary_key, related_table_name, related_primary_key
             )
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
-    cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})")
+    client.create_table(table_name, columns)
 
 
 def update_table(
@@ -69,38 +70,33 @@ def get_foreign_key_model(field_annotation: Any) -> Type | None:
 
 
 def _create_intermediate_table(
-    cursor: Cursor,
+    client: Client,
     table_name: str,
     primary_key: str,
     related_table_name: str,
     related_primary_key: str,
 ) -> None:
-    if get_intermediate_table_name(cursor, table_name, related_table_name):
+    if get_intermediate_table_name(client, table_name, related_table_name):
         return
-    cursor.execute(
-        f"CREATE TABLE IF NOT EXISTS {table_name}_{related_table_name} ("
-        "id INTEGER PRIMARY KEY, "
-        f"{table_name}_id INTEGER, "
-        f"{related_table_name}_id INTEGER, "
-        f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE ON UPDATE CASCADE, "
-        f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE) "
+    client.create_table(
+        f"{table_name}_{related_table_name}",
+        [
+            "id INTEGER PRIMARY KEY",
+            f"{table_name}_id INTEGER",
+            f"{related_table_name}_id INTEGER",
+            f"FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE ON UPDATE CASCADE",
+            f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE",
+        ],
     )
 
 
 def get_intermediate_table_name(
-    cursor: Cursor, table_name: str, related_table_name: str
+    client: Client, table_name: str, related_table_name: str
 ) -> str | None:
-    cursor.execute(
-        f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}_{related_table_name}'"
-    )
-    count = cursor.fetchone()[0]
-    if count == 1:
+    if client.is_table_exists(f"{table_name}_{related_table_name}"):
         return f"{table_name}_{related_table_name}"
-    cursor.execute(
-        f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{related_table_name}_{table_name}'"
-    )
-    count = cursor.fetchone()[0]
-    return f"{related_table_name}_{table_name}" if count == 1 else None
+    elif client.is_table_exists(f"{related_table_name}_{table_name}"):
+        return f"{related_table_name}_{table_name}"
 
 
 def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:

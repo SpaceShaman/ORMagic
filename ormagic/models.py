@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from ormagic import DBField
 
+from .clients.client import get_client
 from .connection import Cursor
 from .cursor import get_cursor
 from .field_utils import (
@@ -37,13 +38,12 @@ class DBModel(BaseModel):
     @classmethod
     def create_table(cls) -> None:
         """Create a table in the database for the model."""
-        with get_cursor() as cursor:
-            create_table(
-                cursor,
-                cls._get_table_name(),
-                cls._get_primary_key_field_name(),
-                cls.model_fields,
-            )
+        create_table(
+            get_client(),
+            cls._get_table_name(),
+            cls._get_primary_key_field_name(),
+            cls.model_fields,
+        )
 
     @classmethod
     def update_table(cls) -> None:
