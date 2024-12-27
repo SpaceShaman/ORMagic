@@ -60,6 +60,7 @@ def client_context() -> Generator[Client, None, None]:
         yield transaction._client
     else:
         client = get_client()
+        client.create_connection()
         try:
             yield client
         finally:

@@ -9,6 +9,7 @@ class transaction:
     def __enter__(cls):
         cls._is_transaction = True
         cls._client = get_client()
+        cls._client.create_connection()
         cls._client.execute("BEGIN")
 
     @classmethod

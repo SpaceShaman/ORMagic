@@ -5,15 +5,13 @@ from ormagic.settings import Settings
 
 
 class SQLiteClient:
-    def __init__(self) -> None:
-        self.connection = self.create_connection()
-        self.cursor = self.connection.cursor()
-
     def create_connection(self) -> Connection:
         settings = Settings()
         connection = connect(settings.path, isolation_level=None)
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute(f"PRAGMA journal_mode = {settings.journal_mode}")
+        self.connection = connection
+        self.cursor = connection.cursor()
         return connection
 
     def execute(self, sql: str, parameters: list | None = None) -> Cursor:

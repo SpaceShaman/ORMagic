@@ -2,18 +2,17 @@ import os
 
 import pytest
 
-from ormagic.clients.client import DatabaseNotSupported, get_client
+from ormagic.clients.client import DatabaseNotSupported, client_context, get_client
 from ormagic.settings import SettingsError
 
 
 def test_setup_for_sqlite():
     os.environ["ORMAGIC_DATABASE_URL"] = "sqlite://test.db"
 
-    client = get_client()
-    client.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)")
+    with client_context() as client:
+        client.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)")
 
     assert os.path.exists("test.db")
-    client.close()
     os.remove("test.db")
 
 
@@ -35,10 +34,8 @@ def test_setup_for_sqlite_with_custom_journal_mode():
     os.environ["ORMAGIC_DATABASE_URL"] = "sqlite://test.db"
     os.environ["ORMAGIC_JOURNAL_MODE"] = "DELETE"
 
-    client = get_client()
-    result = client.fetchone("PRAGMA journal_mode")
-
-    client.close()
+    with client_context() as client:
+        result = client.fetchone("PRAGMA journal_mode")
     os.remove("test.db")
 
     assert result[0] == "delete"
