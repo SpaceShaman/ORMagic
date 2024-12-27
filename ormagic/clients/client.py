@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 from .sqlite import SQLiteClient
 
@@ -30,6 +30,8 @@ class Client(Protocol):
     ) -> int: ...
 
     def is_row_exists(self, table_name: str, where: str) -> bool: ...
+    def fetchone(self, sql: str, parameters: list[Any]) -> Any: ...
+    def fetchall(self, sql: str, parameters: list[Any]) -> list[Any]: ...
 
 
 def get_client() -> Client:

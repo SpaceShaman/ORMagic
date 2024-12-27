@@ -90,3 +90,11 @@ class SQLiteClient:
     def is_row_exists(self, table_name: str, where: str) -> bool:
         cursor = self.execute(f"SELECT count(*) FROM {table_name} WHERE {where}")
         return cursor.fetchone()[0] == 1
+
+    def fetchone(self, sql: str, parameters: list[Any]) -> Any:
+        cursor = self.execute(sql, parameters)
+        return cursor.fetchone()
+
+    def fetchall(self, sql: str, parameters: list[Any]) -> list[Any]:
+        cursor = self.execute(sql, parameters)
+        return cursor.fetchall()

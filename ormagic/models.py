@@ -72,8 +72,7 @@ class DBModel(BaseModel):
     @classmethod
     def get(cls, *args, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
-        with get_cursor() as cursor:
-            return cls(**cls._fetchone_raw_data(cursor, *args, **kwargs))
+        return cls(**cls._fetchone_raw_data(get_client(), *args, **kwargs))
 
     @classmethod
     def filter(cls, *args, **kwargs) -> list[Self]:
@@ -194,7 +193,7 @@ class DBModel(BaseModel):
     @classmethod
     def _prepare_query_to_fetch_raw_data(cls, *args, **kwargs) -> tuple[str, list]:
         sql = f"SELECT * FROM {cls._get_table_name()}"
-        where_conditions, where_params = prepare_where_conditions(*args, **kwargs)
+        where_conditions, params = prepare_where_conditions(*args, **kwargs)
         if where_conditions:
             sql += f" WHERE {where_conditions}"
         if order_by := kwargs.get("order_by"):
@@ -204,32 +203,32 @@ class DBModel(BaseModel):
             sql += f" LIMIT {limit}"
         if offset := kwargs.get("offset"):
             sql += f" OFFSET {offset}"
-        return sql, where_params
+        return sql, params
 
     @classmethod
     def _process_many_to_many_data(
-        cls, cursor: Cursor, annotation: Any, object_id: int
+        cls, client: Client, annotation: Any, object_id: int
     ) -> list[dict[str, Any]]:
         table_name = cls._get_table_name()
         related_model = getattr(annotation, "__args__")[0]
         related_table_name = related_model.__name__.lower()
         intermediate_table_name = get_intermediate_table_name(
-            cursor, table_name, related_table_name
+            client, table_name, related_table_name
         )
-        cursor.execute(
-            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id={object_id}"
+        rows = client.fetchall(
+            f"SELECT {related_table_name}_id FROM {intermediate_table_name} WHERE {table_name}_id=?",
+            [object_id],
         )
-        rows = cursor.fetchall()
         return [
             related_model._fetchone_raw_data(
-                cursor, is_recursive_call=True, model_id=row[0]
+                client, is_recursive_call=True, model_id=row[0]
             )
             for row in rows
         ]
 
     @classmethod
     def _process_raw_data(
-        cls, cursor: Cursor, data: tuple, is_recursive_call: bool = False
+        cls, client: Client, data: tuple, is_recursive_call: bool = False
     ) -> dict[str, Any]:
         data_dict = dict(zip(cls.model_fields.keys(), data))
         for key, field_info in cls.model_fields.items():
@@ -237,7 +236,7 @@ class DBModel(BaseModel):
                 if is_recursive_call:
                     continue
                 data_dict[key] = cls._process_many_to_many_data(
-                    cursor,
+                    client,
                     field_info.annotation,
                     data_dict[cls._get_primary_key_field_name()],
                 )
@@ -245,14 +244,14 @@ class DBModel(BaseModel):
                 continue
             elif foreign_model := get_foreign_key_model(field_info.annotation):
                 data_dict[key] = foreign_model._fetchone_raw_data(
-                    cursor, model_id=data_dict[key]
+                    client, model_id=data_dict[key]
                 )
         return data_dict
 
     @classmethod
     def _fetchone_raw_data(
         cls,
-        cursor: Cursor,
+        client: Client,
         is_recursive_call: bool = False,
         model_id: int | None = None,
         *args,
@@ -260,10 +259,9 @@ class DBModel(BaseModel):
     ) -> dict[str, Any]:
         if model_id:
             kwargs[cls._get_primary_key_field_name()] = model_id
-        query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
-        cursor.execute(query, params)
-        if data := cursor.fetchone():
-            return cls._process_raw_data(cursor, data, is_recursive_call)
+        sql, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
+        if data := client.fetchone(sql, params):
+            return cls._process_raw_data(client, data, is_recursive_call)
         else:
             raise ObjectNotFound
 
