@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from ormagic import DBField
 
 from .clients.client import Client, get_client
-from .connection import Cursor
 from .cursor import get_cursor
 from .field_utils import (
     is_many_to_many_field,
@@ -77,18 +76,18 @@ class DBModel(BaseModel):
     @classmethod
     def filter(cls, *args, **kwargs) -> list[Self]:
         """Get objects from the database based on the given keyword arguments."""
-        with get_cursor() as cursor:
-            return [
-                cls(**data) for data in cls._fetchall_raw_data(cursor, *args, **kwargs)
-            ]
+        return [
+            cls(**data)
+            for data in cls._fetchall_raw_data(get_client(), *args, **kwargs)
+        ]
 
     @classmethod
     def all(cls, *args, **kwargs) -> list[Self]:
         """Get all objects from the database."""
-        with get_cursor() as cursor:
-            return [
-                cls(**data) for data in cls._fetchall_raw_data(cursor, *args, **kwargs)
-            ]
+        return [
+            cls(**data)
+            for data in cls._fetchall_raw_data(get_client(), *args, **kwargs)
+        ]
 
     def delete(self) -> None:
         """Delete the object from the database."""
@@ -267,12 +266,11 @@ class DBModel(BaseModel):
 
     @classmethod
     def _fetchall_raw_data(
-        cls, cursor: Cursor, *args, **kwargs
+        cls, client: Client, *args, **kwargs
     ) -> list[dict[str, Any]]:
         query, params = cls._prepare_query_to_fetch_raw_data(*args, **kwargs)
-        cursor.execute(query, params)
-        data_list = cursor.fetchall()
-        return [cls._process_raw_data(cursor, data) for data in data_list]
+        data_list = client.fetchall(query, params)
+        return [cls._process_raw_data(client, data) for data in data_list]
 
     @classmethod
     def _get_table_name(cls) -> str:
