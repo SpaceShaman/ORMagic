@@ -32,31 +32,33 @@ def create_table(
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
     client.create_table(table_name, columns)
+    client.close()
 
 
 def update_table(
-    cursor: Cursor,
+    client: Client,
     table_name: str,
     primary_key: str,
     model_fields: dict[str, FieldInfo],
 ) -> None:
-    if not _is_table_exists(cursor, table_name):
-        return create_table(cursor, table_name, primary_key, model_fields)
-    existing_columns = _fetch_existing_column_names_from_db(cursor, table_name)
-    new_columns = _fetch_field_names_from_model(model_fields)
+    if not client.is_table_exists(table_name):
+        return create_table(client, table_name, primary_key, model_fields)
+    existing_columns = client.get_column_names(table_name)
+    new_columns = _get_model_field_names(model_fields)
     if existing_columns == new_columns:
         return
     elif len(existing_columns) > len(new_columns):
         _drop_columns_from_existing_table(
-            cursor, table_name, existing_columns, new_columns
+            client, table_name, existing_columns, new_columns
         )
     elif len(existing_columns) == len(new_columns):
         return _rename_columns_in_existing_table(
-            cursor, table_name, existing_columns, new_columns
+            client, table_name, existing_columns, new_columns
         )
     _add_new_columns_to_existing_table(
-        cursor, table_name, model_fields, existing_columns
+        client, table_name, model_fields, existing_columns
     )
+    client.close()
 
 
 def get_foreign_key_model(field_annotation: Any) -> Type | None:
@@ -123,26 +125,19 @@ def _is_table_exists(cursor: Cursor, table_name: str) -> bool:
     return cursor.fetchone()[0] == 1
 
 
-def _fetch_existing_column_names_from_db(cursor: Cursor, table_name: str) -> list[str]:
-    cursor.execute(f"PRAGMA table_info({table_name})")
-    return [column[1] for column in cursor.fetchall()]
-
-
-def _fetch_field_names_from_model(model_fields: dict[str, FieldInfo]) -> list[str]:
+def _get_model_field_names(model_fields: dict[str, FieldInfo]) -> list[str]:
     return list(model_fields.keys())
 
 
 def _rename_columns_in_existing_table(
-    cursor: Cursor, table_name: str, old_columns: list[str], new_columns: list[str]
+    client: Client, table_name: str, old_columns: list[str], new_columns: list[str]
 ) -> None:
     for old_column_name, new_column_name in dict(zip(old_columns, new_columns)).items():
-        cursor.execute(
-            f"ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}"
-        )
+        client.rename_column(table_name, old_column_name, new_column_name)
 
 
 def _add_new_columns_to_existing_table(
-    cursor: Cursor,
+    client: Client,
     table_name: str,
     model_fields: dict[str, FieldInfo],
     existing_columns: list[str],
@@ -151,12 +146,12 @@ def _add_new_columns_to_existing_table(
         if field_name in existing_columns:
             continue
         column_definition = _prepare_column_definition(field_name, field_info)
-        cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_definition}")
+        client.add_column(table_name, column_definition)
 
 
 def _drop_columns_from_existing_table(
-    cursor: Cursor, table_name: str, existing_columns: list[str], new_columns: list[str]
+    client: Client, table_name: str, existing_columns: list[str], new_columns: list[str]
 ) -> None:
     columns_to_drop = set(existing_columns) - set(new_columns)
     for column_name in columns_to_drop:
-        cursor.execute(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
+        client.drop_column(table_name, column_name)

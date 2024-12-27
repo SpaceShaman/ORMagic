@@ -48,13 +48,12 @@ class DBModel(BaseModel):
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        with get_cursor() as cursor:
-            update_table(
-                cursor,
-                cls._get_table_name(),
-                cls._get_primary_key_field_name(),
-                cls.model_fields,
-            )
+        update_table(
+            get_client(),
+            cls._get_table_name(),
+            cls._get_primary_key_field_name(),
+            cls.model_fields,
+        )
 
     @classmethod
     def drop_table(cls) -> None:
