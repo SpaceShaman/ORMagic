@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from ormagic import DBField
 
-from .clients.client import Client, get_client
+from .clients.client import Client, client_context
 from .field_utils import (
     is_many_to_many_field,
     is_primary_key_field,
@@ -36,64 +36,69 @@ class DBModel(BaseModel):
     @classmethod
     def create_table(cls) -> None:
         """Create a table in the database for the model."""
-        create_table(
-            get_client(),
-            cls._get_table_name(),
-            cls._get_primary_key_field_name(),
-            cls.model_fields,
-        )
+        with client_context() as client:
+            create_table(
+                client,
+                cls._get_table_name(),
+                cls._get_primary_key_field_name(),
+                cls.model_fields,
+            )
 
     @classmethod
     def update_table(cls) -> None:
         """Update the table in the database based on the model definition."""
-        update_table(
-            get_client(),
-            cls._get_table_name(),
-            cls._get_primary_key_field_name(),
-            cls.model_fields,
-        )
+        with client_context() as client:
+            update_table(
+                client,
+                cls._get_table_name(),
+                cls._get_primary_key_field_name(),
+                cls.model_fields,
+            )
 
     @classmethod
     def drop_table(cls) -> None:
         """Remove the table from the database."""
-        get_client().drop_table(cls._get_table_name())
+        with client_context() as client:
+            client.drop_table(cls._get_table_name())
 
     def save(self) -> Self:
         """Save object to the database."""
-        client = get_client()
-        return (
-            self._update(client)
-            if self.is_object_exists(client)
-            else self._insert(client)
-        )
+        with client_context() as client:
+            return (
+                self._update(client)
+                if self.is_object_exists(client)
+                else self._insert(client)
+            )
 
     @classmethod
     def get(cls, *args, **kwargs) -> Self:
         """Get an object from the database based on the given keyword arguments."""
-        return cls(**cls._fetchone_raw_data(get_client(), *args, **kwargs))
+        with client_context() as client:
+            return cls(**cls._fetchone_raw_data(client, *args, **kwargs))
 
     @classmethod
     def filter(cls, *args, **kwargs) -> list[Self]:
         """Get objects from the database based on the given keyword arguments."""
-        return [
-            cls(**data)
-            for data in cls._fetchall_raw_data(get_client(), *args, **kwargs)
-        ]
+        with client_context() as client:
+            return [
+                cls(**data) for data in cls._fetchall_raw_data(client, *args, **kwargs)
+            ]
 
     @classmethod
     def all(cls, *args, **kwargs) -> list[Self]:
         """Get all objects from the database."""
-        return [
-            cls(**data)
-            for data in cls._fetchall_raw_data(get_client(), *args, **kwargs)
-        ]
+        with client_context() as client:
+            return [
+                cls(**data) for data in cls._fetchall_raw_data(client, *args, **kwargs)
+            ]
 
     def delete(self) -> None:
         """Delete the object from the database."""
-        get_client().delete_rows(
-            self._get_table_name(),
-            f"{self._get_primary_key_field_name()}={self.model_id}",
-        )
+        with client_context() as client:
+            client.delete_rows(
+                self._get_table_name(),
+                f"{self._get_primary_key_field_name()}={self.model_id}",
+            )
 
     def _insert(self, client: Client) -> Self:
         prepared_data = self._prepare_data_to_insert()

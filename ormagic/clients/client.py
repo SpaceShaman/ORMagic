@@ -1,10 +1,21 @@
-from typing import Any, Protocol
+from contextlib import contextmanager
+from typing import Any, Generator, Protocol
+
+from ormagic.settings import Settings
 
 from .sqlite import SQLiteClient
 
 
+class DatabaseNotSupported(Exception):
+    pass
+
+
 class Client(Protocol):
+    def create_connection(self) -> Any: ...
+    def execute(self, sql: str, parameters: list | None = None) -> Any: ...
     def close(self) -> None: ...
+    def rollback(self) -> None: ...
+    def commit(self) -> None: ...
     def create_table(self, table_name: str, columns: list[str]) -> None: ...
     def is_table_exists(self, table_name: str) -> bool: ...
     def get_column_names(self, table_name: str) -> list[str]: ...
@@ -30,9 +41,26 @@ class Client(Protocol):
     ) -> int: ...
 
     def is_row_exists(self, table_name: str, where: str) -> bool: ...
-    def fetchone(self, sql: str, parameters: list[Any]) -> Any: ...
-    def fetchall(self, sql: str, parameters: list[Any]) -> list[Any]: ...
+    def fetchone(self, sql: str, parameters: list[Any] | None = None) -> Any: ...
+    def fetchall(self, sql: str, parameters: list[Any] | None = None) -> list[Any]: ...
 
 
 def get_client() -> Client:
-    return SQLiteClient()
+    settings = Settings()
+    if settings.db_type == "sqlite":
+        return SQLiteClient()
+    raise DatabaseNotSupported(f"{settings.db_type} is not supported")
+
+
+@contextmanager
+def client_context() -> Generator[Client, None, None]:
+    from ormagic.transactions import transaction
+
+    if transaction._is_transaction:
+        yield transaction._client
+    else:
+        client = get_client()
+        try:
+            yield client
+        finally:
+            client.close()

@@ -4,32 +4,33 @@ from typing import Any
 from ormagic.settings import Settings
 
 
-def _create_connection() -> Connection:
-    settings = Settings()
-    connection = connect(settings.path, isolation_level=None)
-    connection.execute("PRAGMA foreign_keys = ON")
-    connection.execute(f"PRAGMA journal_mode = {settings.journal_mode}")
-    return connection
-
-
 class SQLiteClient:
     def __init__(self) -> None:
-        self.connection = _create_connection()
+        self.connection = self.create_connection()
         self.cursor = self.connection.cursor()
 
+    def create_connection(self) -> Connection:
+        settings = Settings()
+        connection = connect(settings.path, isolation_level=None)
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute(f"PRAGMA journal_mode = {settings.journal_mode}")
+        return connection
+
     def execute(self, sql: str, parameters: list | None = None) -> Cursor:
-        try:
-            return (
-                self.cursor.execute(sql, parameters)
-                if parameters
-                else self.cursor.execute(sql)
-            )
-        except Exception as e:
-            self.connection.close()
-            raise e
+        return (
+            self.cursor.execute(sql, parameters)
+            if parameters
+            else self.cursor.execute(sql)
+        )
 
     def close(self) -> None:
         self.connection.close()
+
+    def rollback(self) -> None:
+        self.connection.rollback()
+
+    def commit(self) -> None:
+        self.connection.commit()
 
     def create_table(self, table_name: str, columns: list[str]) -> None:
         self.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})")
@@ -91,10 +92,10 @@ class SQLiteClient:
         cursor = self.execute(f"SELECT count(*) FROM {table_name} WHERE {where}")
         return cursor.fetchone()[0] == 1
 
-    def fetchone(self, sql: str, parameters: list[Any]) -> Any:
+    def fetchone(self, sql: str, parameters: list[Any] | None = None) -> Any:
         cursor = self.execute(sql, parameters)
         return cursor.fetchone()
 
-    def fetchall(self, sql: str, parameters: list[Any]) -> list[Any]:
+    def fetchall(self, sql: str, parameters: list[Any] | None = None) -> list[Any]:
         cursor = self.execute(sql, parameters)
         return cursor.fetchall()

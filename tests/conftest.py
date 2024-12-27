@@ -2,13 +2,13 @@ import os
 
 import pytest
 
-from ormagic.cursor import get_cursor
+from ormagic.clients.client import client_context
 
 
 @pytest.fixture
 def db_cursor():
-    with get_cursor() as cursor:
-        yield cursor
+    with client_context() as client:
+        yield client.create_connection().cursor()
 
 
 @pytest.fixture(autouse=True)

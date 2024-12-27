@@ -4,7 +4,6 @@ from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
 from .clients.client import Client
-from .connection import Cursor
 from .field_utils import (
     get_on_delete_action,
     is_many_to_many_field,
@@ -32,7 +31,6 @@ def create_table(
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
     client.create_table(table_name, columns)
-    client.close()
 
 
 def update_table(
@@ -58,7 +56,6 @@ def update_table(
     _add_new_columns_to_existing_table(
         client, table_name, model_fields, existing_columns
     )
-    client.close()
 
 
 def get_foreign_key_model(field_annotation: Any) -> Type | None:
@@ -117,13 +114,6 @@ def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
     if is_primary_key_field(field_info):
         column_definition += " PRIMARY KEY"
     return column_definition
-
-
-def _is_table_exists(cursor: Cursor, table_name: str) -> bool:
-    cursor.execute(
-        f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}'"
-    )
-    return cursor.fetchone()[0] == 1
 
 
 def _get_model_field_names(model_fields: dict[str, FieldInfo]) -> list[str]:
