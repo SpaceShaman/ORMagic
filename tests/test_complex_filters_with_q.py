@@ -4,14 +4,14 @@ from ormagic import DBModel, Q
 
 
 @pytest.fixture
-def prepare_db(db_cursor):
-    db_cursor.execute(
+def prepare_db(cursor):
+    cursor.execute(
         "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
     )
-    db_cursor.connection.commit()
+    cursor.connection.commit()
     data = [("Alice", 30), ("Bob", 25), ("Charlie", 35), ("David", 40)]
-    db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
-    db_cursor.connection.commit()
+    cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    cursor.connection.commit()
 
 
 def test_filter_two_fields_with_q_objects_or_operator(prepare_db):

@@ -5,7 +5,7 @@ import pytest
 from ormagic import DBField, DBModel
 
 
-def test_save_object_after_save_integrity_error(db_cursor):
+def test_save_object_after_save_integrity_error(cursor):
     class User(DBModel):
         name: str = DBField(unique=True)
         age: int
@@ -27,7 +27,7 @@ def test_save_object_after_save_integrity_error(db_cursor):
     assert res[1].age == 25
 
 
-def test_save_object_after_delete_operational_error(db_cursor):
+def test_save_object_after_delete_operational_error(cursor):
     class User(DBModel):
         name: str = DBField(unique=True)
         age: int

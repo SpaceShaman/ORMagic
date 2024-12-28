@@ -8,14 +8,14 @@ from ormagic.models import DBModel, ObjectNotFound
 
 
 @pytest.fixture
-def prepare_db(db_cursor):
-    db_cursor.execute(
+def prepare_db(cursor):
+    cursor.execute(
         "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
     )
-    db_cursor.connection.commit()
+    cursor.connection.commit()
     data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
-    db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
-    db_cursor.connection.commit()
+    cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    cursor.connection.commit()
 
 
 class User(DBModel):
@@ -57,7 +57,7 @@ def test_try_to_get_object_from_db_with_wrong_condition(prepare_db):
         User.get(wrong_field="John")
 
 
-def test_get_object_from_db_with_datetime_field(prepare_db, db_cursor):
+def test_get_object_from_db_with_datetime_field(prepare_db, cursor):
     class UserWithDatetime(DBModel):
         name: str
         created_at: datetime
@@ -71,7 +71,7 @@ def test_get_object_from_db_with_datetime_field(prepare_db, db_cursor):
     assert user_from_db.created_at == datetime(2022, 3, 1, 12, 20, 31)
 
 
-def test_get_object_from_db_with_foreign_key(db_cursor):
+def test_get_object_from_db_with_foreign_key(cursor):
     class Team(DBModel):
         name: str
 
@@ -92,7 +92,7 @@ def test_get_object_from_db_with_foreign_key(db_cursor):
     assert player_from_db.team.name == "Barcelona"
 
 
-def test_get_object_from_db_with_optional_foreign_key_not_set(db_cursor):
+def test_get_object_from_db_with_optional_foreign_key_not_set(cursor):
     class Team(DBModel):
         name: str
 
@@ -111,7 +111,7 @@ def test_get_object_from_db_with_optional_foreign_key_not_set(db_cursor):
     assert player_from_db.team is None
 
 
-def test_get_object_from_db_with_optional_foreign_key_set(db_cursor):
+def test_get_object_from_db_with_optional_foreign_key_set(cursor):
     class Team(DBModel):
         name: str
 
@@ -132,7 +132,7 @@ def test_get_object_from_db_with_optional_foreign_key_set(db_cursor):
     assert player_from_db.team.name == "Barcelona"  # type: ignore
 
 
-def test_get_object_with_many_to_many_relationship(db_cursor):
+def test_get_object_with_many_to_many_relationship(cursor):
     class Team(DBModel):
         name: str
         players: list["Player"] = []
@@ -176,7 +176,7 @@ def test_get_object_with_many_to_many_relationship(db_cursor):
     assert team2_from_db.players[1].name == "Ronaldo"
 
 
-def test_get_object_with_many_to_many_relationship_without_related_objects(db_cursor):
+def test_get_object_with_many_to_many_relationship_without_related_objects(cursor):
     class Team(DBModel):
         name: str
 
@@ -195,7 +195,7 @@ def test_get_object_with_many_to_many_relationship_without_related_objects(db_cu
     assert len(player_from_db.teams) == 0
 
 
-def test_get_object_from_table_with_custom_primary_key(db_cursor):
+def test_get_object_from_table_with_custom_primary_key(cursor):
     class User(DBModel):
         custom_id: int = DBField(primary_key=True)
         name: str
@@ -210,7 +210,7 @@ def test_get_object_from_table_with_custom_primary_key(db_cursor):
     assert user_from_db.name == "John"
 
 
-def test_get_object_with_one_to_many_relationship_and_custom_primary_key(db_cursor):
+def test_get_object_with_one_to_many_relationship_and_custom_primary_key(cursor):
     class User(DBModel):
         custom_id: int = DBField(primary_key=True)
         name: str
@@ -233,7 +233,7 @@ def test_get_object_with_one_to_many_relationship_and_custom_primary_key(db_curs
     assert post_from_db.user.name == "John"
 
 
-def test_get_object_with_many_to_many_relationship_and_custom_primary_key(db_cursor):
+def test_get_object_with_many_to_many_relationship_and_custom_primary_key(cursor):
     class Team(DBModel):
         team_id: int = DBField(primary_key=True)
         name: str

@@ -1,7 +1,7 @@
 from ormagic import DBModel
 
 
-def test_try_to_get_all_users_with_sql_injection(db_cursor):
+def test_try_to_get_all_users_with_sql_injection(cursor):
     class User(DBModel):
         name: str
         age: int
@@ -16,7 +16,7 @@ def test_try_to_get_all_users_with_sql_injection(db_cursor):
     assert len(users) == 0
 
 
-def test_try_to_get_all_users_with_sql_injection_in_list(db_cursor):
+def test_try_to_get_all_users_with_sql_injection_in_list(cursor):
     class User(DBModel):
         name: str
         age: int

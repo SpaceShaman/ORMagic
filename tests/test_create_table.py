@@ -3,14 +3,14 @@ from typing import Optional
 from ormagic import DBField, DBModel
 
 
-def test_create_table(db_cursor):
+def test_create_table(cursor):
     class User(DBModel):
         name: str
         age: int
 
     User.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
@@ -19,7 +19,7 @@ def test_create_table(db_cursor):
     ]
 
 
-def test_create_table_with_optional_field(db_cursor):
+def test_create_table_with_optional_field(cursor):
     class User(DBModel):
         name: str
         age: int
@@ -28,7 +28,7 @@ def test_create_table_with_optional_field(db_cursor):
 
     User.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
@@ -39,13 +39,13 @@ def test_create_table_with_optional_field(db_cursor):
     ]
 
 
-def test_create_table_with_default_value(db_cursor):
+def test_create_table_with_default_value(cursor):
     class User(DBModel):
         default_field: str = "default value"
 
     User.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
@@ -53,7 +53,7 @@ def test_create_table_with_default_value(db_cursor):
     ]
 
 
-def test_create_tables_with_one_to_many_relationship(db_cursor):
+def test_create_tables_with_one_to_many_relationship(cursor):
     class User(DBModel):
         name: str
 
@@ -64,14 +64,14 @@ def test_create_tables_with_one_to_many_relationship(db_cursor):
     User.create_table()
     Post.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
 
-    res = db_cursor.execute("PRAGMA table_info(post)")
+    res = cursor.execute("PRAGMA table_info(post)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
@@ -80,7 +80,7 @@ def test_create_tables_with_one_to_many_relationship(db_cursor):
     ]
 
 
-def test_create_tables_with_many_to_many_relationship(db_cursor):
+def test_create_tables_with_many_to_many_relationship(cursor):
     class User(DBModel):
         name: str
         groups: list["Grade"] = []
@@ -92,38 +92,38 @@ def test_create_tables_with_many_to_many_relationship(db_cursor):
     User.create_table()
     Grade.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
-    res = db_cursor.execute("PRAGMA table_info(grade)")
+    res = cursor.execute("PRAGMA table_info(grade)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
-    res = db_cursor.execute("PRAGMA table_info(user_grade)")
+    res = cursor.execute("PRAGMA table_info(user_grade)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
         (1, "user_id", "INTEGER", 0, None, 0),
         (2, "grade_id", "INTEGER", 0, None, 0),
     ]
-    res = db_cursor.execute("PRAGMA table_info(grade_user)")
+    res = cursor.execute("PRAGMA table_info(grade_user)")
     data = res.fetchall()
     assert data == []
 
 
-def test_create_table_with_custom_primary_key(db_cursor):
+def test_create_table_with_custom_primary_key(cursor):
     class User(DBModel):
         custom_id: int = DBField(primary_key=True)
         name: str
 
     User.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert "id" not in User.model_fields.keys()
     assert "custom_id" in User.model_fields.keys()
@@ -133,14 +133,14 @@ def test_create_table_with_custom_primary_key(db_cursor):
     ]
 
 
-def test_create_table_with_custom_primary_key_string(db_cursor):
+def test_create_table_with_custom_primary_key_string(cursor):
     class User(DBModel):
         custom_id: str = DBField(primary_key=True)
         name: str
 
     User.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert "id" not in User.model_fields.keys()
     assert "custom_id" in User.model_fields.keys()
@@ -150,7 +150,7 @@ def test_create_table_with_custom_primary_key_string(db_cursor):
     ]
 
 
-def test_create_table_with_custom_primary_key_uuid(db_cursor):
+def test_create_table_with_custom_primary_key_uuid(cursor):
     from uuid import UUID
 
     class User(DBModel):
@@ -159,7 +159,7 @@ def test_create_table_with_custom_primary_key_uuid(db_cursor):
 
     User.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert "id" not in User.model_fields.keys()
     assert "custom_id" in User.model_fields.keys()
@@ -169,7 +169,7 @@ def test_create_table_with_custom_primary_key_uuid(db_cursor):
     ]
 
 
-def test_create_table_with_one_to_many_relationship_and_custom_primary_key(db_cursor):
+def test_create_table_with_one_to_many_relationship_and_custom_primary_key(cursor):
     class User(DBModel):
         custom_id: int = DBField(primary_key=True)
         name: str
@@ -181,14 +181,14 @@ def test_create_table_with_one_to_many_relationship_and_custom_primary_key(db_cu
     User.create_table()
     Post.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(user)")
+    res = cursor.execute("PRAGMA table_info(user)")
     data = res.fetchall()
     assert data == [
         (0, "custom_id", "INTEGER", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
 
-    res = db_cursor.execute("PRAGMA table_info(post)")
+    res = cursor.execute("PRAGMA table_info(post)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
@@ -196,12 +196,12 @@ def test_create_table_with_one_to_many_relationship_and_custom_primary_key(db_cu
         (2, "user", "INTEGER", 1, None, 0),
     ]
     # check if foreign key is correct
-    res = db_cursor.execute("PRAGMA foreign_key_list(post)")
+    res = cursor.execute("PRAGMA foreign_key_list(post)")
     data = res.fetchall()
     assert data == [(0, 0, "user", "user", "custom_id", "CASCADE", "CASCADE", "NONE")]
 
 
-def test_create_table_with_many_to_many_relationship_and_custom_primary_key(db_cursor):
+def test_create_table_with_many_to_many_relationship_and_custom_primary_key(cursor):
     class Team(DBModel):
         team_id: int = DBField(primary_key=True)
         name: str
@@ -214,21 +214,21 @@ def test_create_table_with_many_to_many_relationship_and_custom_primary_key(db_c
     Team.create_table()
     Player.create_table()
 
-    res = db_cursor.execute("PRAGMA table_info(team)")
+    res = cursor.execute("PRAGMA table_info(team)")
     data = res.fetchall()
     assert data == [
         (0, "team_id", "INTEGER", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
 
-    res = db_cursor.execute("PRAGMA table_info(player)")
+    res = cursor.execute("PRAGMA table_info(player)")
     data = res.fetchall()
     assert data == [
         (0, "player_id", "INTEGER", 0, None, 1),
         (1, "name", "TEXT", 1, None, 0),
     ]
 
-    res = db_cursor.execute("PRAGMA table_info(player_team)")
+    res = cursor.execute("PRAGMA table_info(player_team)")
     data = res.fetchall()
     assert data == [
         (0, "id", "INTEGER", 0, None, 1),
@@ -236,7 +236,7 @@ def test_create_table_with_many_to_many_relationship_and_custom_primary_key(db_c
         (2, "team_id", "INTEGER", 0, None, 0),
     ]
     # check if foreign key is correct
-    res = db_cursor.execute("PRAGMA foreign_key_list(player_team)")
+    res = cursor.execute("PRAGMA foreign_key_list(player_team)")
     data = res.fetchall()
     assert data == [
         (0, 0, "team", "team_id", "team_id", "CASCADE", "CASCADE", "NONE"),

@@ -6,14 +6,14 @@ from ormagic.models import DBModel
 
 
 @pytest.fixture
-def prepare_db(db_cursor):
-    db_cursor.execute(
+def prepare_db(cursor):
+    cursor.execute(
         "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL, height INTEGER NOT NULL)"
     )
-    db_cursor.connection.commit()
+    cursor.connection.commit()
     data = [("John", 30, 180), ("Jane", 25, 190), ("Doe", 35, 170), ("John", 35, 160)]
-    db_cursor.executemany("INSERT INTO user (name, age, height) VALUES (?, ?, ?)", data)
-    db_cursor.connection.commit()
+    cursor.executemany("INSERT INTO user (name, age, height) VALUES (?, ?, ?)", data)
+    cursor.connection.commit()
 
 
 class User(DBModel):
@@ -22,7 +22,7 @@ class User(DBModel):
     height: int
 
 
-def test_order_by_asc(prepare_db, db_cursor):
+def test_order_by_asc(prepare_db, cursor):
     users = User.filter(order_by="age")
 
     assert len(users) == 4
@@ -36,7 +36,7 @@ def test_order_by_asc(prepare_db, db_cursor):
     assert users[3].age == 35
 
 
-def test_order_by_desc(prepare_db, db_cursor):
+def test_order_by_desc(prepare_db, cursor):
     users = User.filter(order_by="-age")
 
     assert len(users) == 4
@@ -50,7 +50,7 @@ def test_order_by_desc(prepare_db, db_cursor):
     assert users[3].age == 25
 
 
-def test_order_by_multiple_asc(prepare_db, db_cursor):
+def test_order_by_multiple_asc(prepare_db, cursor):
     users = User.filter(order_by=("age", "height"))
 
     assert len(users) == 4
@@ -68,7 +68,7 @@ def test_order_by_multiple_asc(prepare_db, db_cursor):
     assert users[3].height == 170
 
 
-def test_order_by_multiple_desc(prepare_db, db_cursor):
+def test_order_by_multiple_desc(prepare_db, cursor):
     users = User.filter(order_by=("-age", "-height"))
 
     assert len(users) == 4
@@ -86,7 +86,7 @@ def test_order_by_multiple_desc(prepare_db, db_cursor):
     assert users[3].height == 190
 
 
-def test_order_by_multiple_mixed(prepare_db, db_cursor):
+def test_order_by_multiple_mixed(prepare_db, cursor):
     users = User.filter(order_by=("-age", "height"))
 
     assert len(users) == 4
@@ -104,12 +104,12 @@ def test_order_by_multiple_mixed(prepare_db, db_cursor):
     assert users[3].height == 190
 
 
-def test_order_by_invalid_field(prepare_db, db_cursor):
+def test_order_by_invalid_field(prepare_db, cursor):
     with pytest.raises(OperationalError):
         User.filter(order_by="invalid_field")
 
 
-def test_order_by_with_filter(prepare_db, db_cursor):
+def test_order_by_with_filter(prepare_db, cursor):
     users = User.filter(age=35, order_by="height")
 
     assert len(users) == 2
@@ -121,7 +121,7 @@ def test_order_by_with_filter(prepare_db, db_cursor):
     assert users[1].height == 170
 
 
-def test_order_by_all(prepare_db, db_cursor):
+def test_order_by_all(prepare_db, cursor):
     users = User.all(order_by="age")
 
     assert len(users) == 4

@@ -4,11 +4,11 @@ from ormagic.models import DBModel
 
 
 @pytest.fixture
-def prepare_db(db_cursor):
-    db_cursor.execute(
+def prepare_db(cursor):
+    cursor.execute(
         "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
     )
-    db_cursor.connection.commit()
+    cursor.connection.commit()
 
 
 class User(DBModel):
@@ -16,10 +16,10 @@ class User(DBModel):
     age: int
 
 
-def test_get_all_objects_from_db(db_cursor, prepare_db):
+def test_get_all_objects_from_db(cursor, prepare_db):
     data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
-    db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
-    db_cursor.connection.commit()
+    cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    cursor.connection.commit()
     users = User.all()
 
     assert len(users) == 4
@@ -38,7 +38,7 @@ def test_get_all_objects_from_db(db_cursor, prepare_db):
     assert users[3].age == 40
 
 
-def test_get_all_objects_from_db_with_empty_table(db_cursor, prepare_db):
+def test_get_all_objects_from_db_with_empty_table(cursor, prepare_db):
     users = User.all()
 
     assert len(users) == 0

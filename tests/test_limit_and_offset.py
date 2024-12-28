@@ -4,11 +4,11 @@ from ormagic.models import DBModel
 
 
 @pytest.fixture
-def prepare_db(db_cursor):
-    db_cursor.execute(
+def prepare_db(cursor):
+    cursor.execute(
         "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
     )
-    db_cursor.connection.commit()
+    cursor.connection.commit()
     data = [
         ("Alice", 90),
         ("Bob", 80),
@@ -20,8 +20,8 @@ def prepare_db(db_cursor):
         ("Helen", 20),
         ("Ivy", 10),
     ]
-    db_cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
-    db_cursor.connection.commit()
+    cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    cursor.connection.commit()
 
 
 class User(DBModel):
