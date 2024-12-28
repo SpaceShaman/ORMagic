@@ -75,7 +75,6 @@ class PostgresAssertor:
             (table_name, table_name),
         )
         return self.cursor.fetchall()
-        return self.cursor.fetchall()
 
 
 def assert_table_schema(cursor, table_name: str, expected_columns: list[Column]):
