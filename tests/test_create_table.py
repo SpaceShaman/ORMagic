@@ -67,25 +67,28 @@ def test_create_tables_with_one_to_many_relationship(cursor):
 
     class Post(DBModel):
         title: str
-        user: User
+        author: User
 
     User.create_table()
     Post.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
-
-    res = cursor.execute("PRAGMA table_info(post)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "title", "TEXT", 1, None, 0),
-        (2, "user", "INTEGER", 1, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
+    assert_table_schema(
+        cursor,
+        "posts",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="title", type="TEXT"),
+            Column(name="author", type="INTEGER"),
+        ],
+    )
 
 
 def test_create_tables_with_many_to_many_relationship(cursor):
