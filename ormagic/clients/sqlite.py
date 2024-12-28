@@ -31,7 +31,6 @@ class SQLiteClient:
         self.connection.commit()
 
     def create_table(self, table_name: str, columns: list[str]) -> None:
-        sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})"
         self.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})")
 
     def is_table_exists(self, table_name: str) -> bool:

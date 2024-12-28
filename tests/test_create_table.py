@@ -32,15 +32,17 @@ def test_create_table_with_optional_field(cursor):
 
     User.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-        (2, "age", "INTEGER", 1, None, 0),
-        (3, "optional_field", "TEXT", 0, None, 0),
-        (4, "another_optional_field", "INTEGER", 0, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+            Column(name="age", type="INTEGER"),
+            Column(name="optional_field", type="TEXT", nullable=True),
+            Column(name="another_optional_field", type="INTEGER", nullable=True),
+        ],
+    )
 
 
 def test_create_table_with_default_value(cursor):

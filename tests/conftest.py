@@ -27,3 +27,4 @@ def cleanup():
         with client_context() as client:
             client.execute("DROP SCHEMA public CASCADE")
             client.execute("CREATE SCHEMA public")
+            client.commit()
