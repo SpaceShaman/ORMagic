@@ -50,7 +50,7 @@ def get_client() -> Client:
     settings = Settings()
     if settings.db_type == "sqlite":
         return SQLiteClient()
-    elif settings.db_type == "postgres":
+    elif settings.db_type == "postgresql":
         return PostgresClient()
     raise DatabaseNotSupported(f"{settings.db_type} is not supported")
 

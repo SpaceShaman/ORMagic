@@ -9,7 +9,7 @@ from ormagic.settings import Settings
 class PostgresClient:
     def create_connection(self) -> connection:
         settings = Settings()
-        connection = connect(settings.path)
+        connection = connect(settings.database_url)
         self.connection = connection
         self.cursor = connection.cursor()
         return connection
