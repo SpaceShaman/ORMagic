@@ -103,28 +103,31 @@ def test_create_tables_with_many_to_many_relationship(cursor):
     User.create_table()
     Grade.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
-    res = cursor.execute("PRAGMA table_info(grade)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
-    res = cursor.execute("PRAGMA table_info(user_grade)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "user_id", "INTEGER", 0, None, 0),
-        (2, "grade_id", "INTEGER", 0, None, 0),
-    ]
-    res = cursor.execute("PRAGMA table_info(grade_user)")
-    data = res.fetchall()
-    assert data == []
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
+    assert_table_schema(
+        cursor,
+        "grades",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
+    assert_table_schema(
+        cursor,
+        "users_grades",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="users_id", type="INTEGER"),
+            Column(name="grades_id", type="INTEGER"),
+        ],
+    )
 
 
 def test_create_table_with_custom_primary_key(cursor):

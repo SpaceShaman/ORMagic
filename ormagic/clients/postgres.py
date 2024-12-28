@@ -33,7 +33,7 @@ class PostgresClient:
 
     def is_table_exists(self, table_name: str) -> bool:
         cursor = self.execute(
-            f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{table_name}'"
+            f"SELECT count(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
         )
         result = cursor.fetchone()
         return result is not None and result[0] == 1
