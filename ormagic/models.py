@@ -274,7 +274,7 @@ class DBModel(BaseModel):
 
     @classmethod
     def _get_table_name(cls) -> str:
-        return cls.__name__.lower()
+        return f"{cls.__name__.lower()}s"
 
     @property
     def model_id(self) -> int | None:

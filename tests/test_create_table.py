@@ -2,6 +2,8 @@ from typing import Optional
 
 from ormagic import DBField, DBModel
 
+from .asserts import Column, assert_table_schema
+
 
 def test_create_table(cursor):
     class User(DBModel):
@@ -10,13 +12,20 @@ def test_create_table(cursor):
 
     User.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-        (2, "age", "INTEGER", 1, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        # [
+        #     (0, "id", "INTEGER", 0, None, 1),
+        #     (1, "name", "TEXT", 1, None, 0),
+        #     (2, "age", "INTEGER", 1, None, 0),
+        # ],
+        [
+            Column(name="id", type="INTEGER"),
+            Column(name="name", type="TEXT"),
+            Column(name="age", type="INTEGER"),
+        ],
+    )
 
 
 def test_create_table_with_optional_field(cursor):

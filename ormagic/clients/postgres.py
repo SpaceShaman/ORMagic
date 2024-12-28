@@ -29,6 +29,7 @@ class PostgresClient:
 
     def create_table(self, table_name: str, columns: list[str]) -> None:
         self.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(columns)})")
+        self.commit()
 
     def is_table_exists(self, table_name: str) -> bool:
         cursor = self.execute(
