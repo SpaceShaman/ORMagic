@@ -21,7 +21,7 @@ def test_create_table(cursor):
         #     (2, "age", "INTEGER", 1, None, 0),
         # ],
         [
-            Column(name="id", type="INTEGER"),
+            Column(name="id", type="INTEGER", is_primary_key=True),
             Column(name="name", type="TEXT"),
             Column(name="age", type="INTEGER"),
         ],
