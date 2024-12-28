@@ -26,7 +26,7 @@ class SQLiteAssertor:
         for i, column in enumerate(columns):
             assert column[1] == expected_columns[i].name
             assert column[2] == expected_columns[i].type
-            assert column[3] == expected_columns[i].nullable
+            assert column[3] == 0 if expected_columns[i].nullable else 1
             assert column[4] == expected_columns[i].default
             assert column[5] == expected_columns[i].is_primary_key
 

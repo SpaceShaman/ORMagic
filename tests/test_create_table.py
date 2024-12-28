@@ -15,11 +15,6 @@ def test_create_table(cursor):
     assert_table_schema(
         cursor,
         "users",
-        # [
-        #     (0, "id", "INTEGER", 0, None, 1),
-        #     (1, "name", "TEXT", 1, None, 0),
-        #     (2, "age", "INTEGER", 1, None, 0),
-        # ],
         [
             Column(name="id", type="INTEGER", is_primary_key=True),
             Column(name="name", type="TEXT"),
