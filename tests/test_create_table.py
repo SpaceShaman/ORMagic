@@ -51,12 +51,14 @@ def test_create_table_with_default_value(cursor):
 
     User.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "default_field", "TEXT", 0, "'default value'", 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="default_field", type="TEXT", default="'default value'"),
+        ],
+    )
 
 
 def test_create_tables_with_one_to_many_relationship(cursor):

@@ -48,7 +48,11 @@ class PostgresAssertor:
             assert column[0] == expected_column.name
             assert column[1] == expected_column.type.lower()
             assert column[2] == "YES" if expected_column.nullable else "NO"
-            assert column[3] == expected_column.default
+            assert column[3] == (
+                f"{expected_column.default}::{expected_column.type.lower()}"
+                if expected_column.default
+                else None
+            )
             assert column[4] == expected_column.is_primary_key
 
     def _get_table_columns(self, table_name):
