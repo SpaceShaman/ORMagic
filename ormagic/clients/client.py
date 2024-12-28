@@ -3,6 +3,7 @@ from typing import Any, Generator, Protocol
 
 from ormagic.settings import Settings
 
+from .postgres import PostgresClient
 from .sqlite import SQLiteClient
 
 
@@ -49,6 +50,8 @@ def get_client() -> Client:
     settings = Settings()
     if settings.db_type == "sqlite":
         return SQLiteClient()
+    elif settings.db_type == "postgres":
+        return PostgresClient()
     raise DatabaseNotSupported(f"{settings.db_type} is not supported")
 
 
