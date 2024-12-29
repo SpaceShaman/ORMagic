@@ -195,24 +195,6 @@ def test_create_table_with_one_to_many_relationship_and_custom_primary_key(curso
     User.create_table()
     Post.create_table()
 
-    # res = cursor.execute("PRAGMA table_info(user)")
-    # data = res.fetchall()
-    # assert data == [
-    #     (0, "custom_id", "INTEGER", 0, None, 1),
-    #     (1, "name", "TEXT", 1, None, 0),
-    # ]
-
-    # res = cursor.execute("PRAGMA table_info(post)")
-    # data = res.fetchall()
-    # assert data == [
-    #     (0, "id", "INTEGER", 0, None, 1),
-    #     (1, "title", "TEXT", 1, None, 0),
-    #     (2, "user", "INTEGER", 1, None, 0),
-    # ]
-    # # check if foreign key is correct
-    # res = cursor.execute("PRAGMA foreign_key_list(post)")
-    # data = res.fetchall()
-    # assert data == [(0, 0, "user", "user", "custom_id", "CASCADE", "CASCADE", "NONE")]
     assert_table_schema(
         cursor,
         "users",
