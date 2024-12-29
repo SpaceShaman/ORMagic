@@ -154,14 +154,14 @@ def test_create_table_with_custom_primary_key_string(cursor):
 
     User.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert "id" not in User.model_fields.keys()
-    assert "custom_id" in User.model_fields.keys()
-    assert data == [
-        (0, "custom_id", "TEXT", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="custom_id", type="TEXT", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
 
 
 def test_create_table_with_custom_primary_key_uuid(cursor):
