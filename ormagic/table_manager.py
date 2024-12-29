@@ -1,4 +1,4 @@
-from typing import Any, Type, get_args
+from typing import TYPE_CHECKING, Any, Type, get_args
 
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
@@ -12,6 +12,9 @@ from .field_utils import (
     transform_field_annotation_to_sql_type,
 )
 
+if TYPE_CHECKING:
+    from .models import DBModel
+
 
 def create_table(
     client: Client,
@@ -20,17 +23,15 @@ def create_table(
     model_fields: dict[str, FieldInfo],
 ):
     columns = []
+    related_tables = []
     for field_name, field_info in model_fields.items():
         if is_many_to_many_field(field_info.annotation):
-            related_table = getattr(field_info.annotation, "__args__")[0]
-            related_table_name = related_table._get_table_name()
-            related_primary_key = related_table._get_primary_key_field_name()
-            _create_intermediate_table(
-                client, table_name, primary_key, related_table_name, related_primary_key
-            )
+            related_tables.append(getattr(field_info.annotation, "__args__")[0])
             continue
         columns.append(_prepare_column_definition(field_name, field_info))
     client.create_table(table_name, columns)
+    for related_table in related_tables:
+        _create_intermediate_table(client, table_name, primary_key, related_table)
 
 
 def update_table(
@@ -72,9 +73,12 @@ def _create_intermediate_table(
     client: Client,
     table_name: str,
     primary_key: str,
-    related_table_name: str,
-    related_primary_key: str,
+    related_table: "DBModel",
 ) -> None:
+    related_table_name = related_table._get_table_name()
+    related_primary_key = related_table._get_primary_key_field_name()
+    if not client.is_table_exists(related_table_name):
+        return
     if get_intermediate_table_name(client, table_name, related_table_name):
         return
     client.create_table(
@@ -87,6 +91,8 @@ def _create_intermediate_table(
             f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE",
         ],
     )
+    # sql = f"CREATE TABLE {table_name}_{related_table_name} (id INTEGER PRIMARY KEY, {table_name}_id INTEGER, {related_table_name}_id INTEGER, FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE ON UPDATE CASCADE, FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE)"
+    # client.execute(sql)
 
 
 def get_intermediate_table_name(

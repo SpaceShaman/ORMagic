@@ -121,11 +121,11 @@ def test_create_tables_with_many_to_many_relationship(cursor):
     )
     assert_table_schema(
         cursor,
-        "users_grades",
+        "grades_users",
         [
             Column(name="id", type="INTEGER", is_primary_key=True),
-            Column(name="users_id", type="INTEGER"),
             Column(name="grades_id", type="INTEGER"),
+            Column(name="users_id", type="INTEGER"),
         ],
     )
 
