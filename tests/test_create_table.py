@@ -2,7 +2,7 @@ from typing import Optional
 
 from ormagic import DBField, DBModel
 
-from .asserts import Column, assert_table_schema
+from .asserts import Column, ForeignKey, assert_foreign_keys, assert_table_schema
 
 
 def test_create_table(cursor):
@@ -173,14 +173,14 @@ def test_create_table_with_custom_primary_key_uuid(cursor):
 
     User.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert "id" not in User.model_fields.keys()
-    assert "custom_id" in User.model_fields.keys()
-    assert data == [
-        (0, "custom_id", "TEXT", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="custom_id", type="TEXT", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
 
 
 def test_create_table_with_one_to_many_relationship_and_custom_primary_key(cursor):
@@ -190,29 +190,57 @@ def test_create_table_with_one_to_many_relationship_and_custom_primary_key(curso
 
     class Post(DBModel):
         title: str
-        user: User
+        author: User
 
     User.create_table()
     Post.create_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "custom_id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
+    # res = cursor.execute("PRAGMA table_info(user)")
+    # data = res.fetchall()
+    # assert data == [
+    #     (0, "custom_id", "INTEGER", 0, None, 1),
+    #     (1, "name", "TEXT", 1, None, 0),
+    # ]
 
-    res = cursor.execute("PRAGMA table_info(post)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "title", "TEXT", 1, None, 0),
-        (2, "user", "INTEGER", 1, None, 0),
-    ]
-    # check if foreign key is correct
-    res = cursor.execute("PRAGMA foreign_key_list(post)")
-    data = res.fetchall()
-    assert data == [(0, 0, "user", "user", "custom_id", "CASCADE", "CASCADE", "NONE")]
+    # res = cursor.execute("PRAGMA table_info(post)")
+    # data = res.fetchall()
+    # assert data == [
+    #     (0, "id", "INTEGER", 0, None, 1),
+    #     (1, "title", "TEXT", 1, None, 0),
+    #     (2, "user", "INTEGER", 1, None, 0),
+    # ]
+    # # check if foreign key is correct
+    # res = cursor.execute("PRAGMA foreign_key_list(post)")
+    # data = res.fetchall()
+    # assert data == [(0, 0, "user", "user", "custom_id", "CASCADE", "CASCADE", "NONE")]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="custom_id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
+    assert_table_schema(
+        cursor,
+        "posts",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="title", type="TEXT"),
+            Column(name="author", type="INTEGER"),
+        ],
+    )
+    assert_foreign_keys(
+        cursor,
+        "posts",
+        [
+            ForeignKey(
+                column_name="author",
+                foreign_table_name="users",
+                column_name_in_foreign_table="custom_id",
+            )
+        ],
+    )
 
 
 def test_create_table_with_many_to_many_relationship_and_custom_primary_key(cursor):

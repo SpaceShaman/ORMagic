@@ -12,8 +12,20 @@ class Column(BaseModel):
     is_primary_key: bool = False
 
 
+class ForeignKey(BaseModel):
+    column_name: str
+    foreign_table_name: str
+    column_name_in_foreign_table: str
+    on_delete: str = "CASCADE"
+    on_update: str = "CASCADE"
+
+
 class Assertor(Protocol):
     def assert_table_schema(self, table_name: str, expected_columns: list[Column]): ...
+
+    def assert_foreign_keys(
+        self, table_name: str, expected_foreign_keys: list[ForeignKey]
+    ): ...
 
 
 class SQLiteAssertor:
@@ -29,6 +41,23 @@ class SQLiteAssertor:
             assert column[3] == 0 if expected_columns[i].nullable else 1
             assert column[4] == expected_columns[i].default
             assert column[5] == expected_columns[i].is_primary_key
+
+    def assert_foreign_keys(
+        self, table_name: str, expected_foreign_keys: list[ForeignKey]
+    ):
+        foreign_keys = self._get_foreign_keys(table_name)
+        assert len(foreign_keys) == len(expected_foreign_keys)
+        for i, foreign_key in enumerate(foreign_keys):
+            assert foreign_key[2] == expected_foreign_keys[i].foreign_table_name
+            assert foreign_key[3] == expected_foreign_keys[i].column_name
+            assert (
+                foreign_key[4] == expected_foreign_keys[i].column_name_in_foreign_table
+            )
+            assert foreign_key[5] == expected_foreign_keys[i].on_delete
+            assert foreign_key[6] == expected_foreign_keys[i].on_update
+
+    def _get_foreign_keys(self, table_name):
+        return self.cursor.execute(f"PRAGMA foreign_key_list({table_name});").fetchall()
 
     def _get_table_columns(self, table_name):
         return self.cursor.execute(f"PRAGMA table_info({table_name});").fetchall()
@@ -81,11 +110,6 @@ class PostgresAssertor:
         return self.cursor.fetchall()
 
 
-def assert_table_schema(cursor, table_name: str, expected_columns: list[Column]):
-    assertor = _get_assertor(cursor)
-    assertor.assert_table_schema(table_name, expected_columns)
-
-
 def _get_assertor(cursor) -> Assertor:
     if _is_sqlite():
         return SQLiteAssertor(cursor)
@@ -100,3 +124,15 @@ def _is_sqlite() -> bool:
 
 def _is_postgres() -> bool:
     return os.getenv("ORMAGIC_DATABASE_URL", "").startswith("postgresql")
+
+
+def assert_table_schema(cursor, table_name: str, expected_columns: list[Column]):
+    assertor = _get_assertor(cursor)
+    assertor.assert_table_schema(table_name, expected_columns)
+
+
+def assert_foreign_keys(
+    cursor, table_name: str, expected_foreign_keys: list[ForeignKey]
+):
+    assertor = _get_assertor(cursor)
+    assertor.assert_foreign_keys(table_name, expected_foreign_keys)
