@@ -36,9 +36,7 @@ class SQLiteAssertor:
         columns = self._get_table_columns(table_name)
         assert len(columns) == len(expected_columns)
         for column in columns:
-            expected_column = next(
-                filter(lambda c: c.name == column[1], expected_columns)
-            )
+            expected_column = _get_expected_column(expected_columns, column[1])
             assert column[1] == expected_column.name
             assert column[2] == expected_column.type
             assert column[3] == 0 if expected_column.nullable else 1
@@ -50,14 +48,15 @@ class SQLiteAssertor:
     ):
         foreign_keys = self._get_foreign_keys(table_name)
         assert len(foreign_keys) == len(expected_foreign_keys)
-        for i, foreign_key in enumerate(foreign_keys):
-            assert foreign_key[2] == expected_foreign_keys[i].foreign_table_name
-            assert foreign_key[3] == expected_foreign_keys[i].column_name
-            assert (
-                foreign_key[4] == expected_foreign_keys[i].column_name_in_foreign_table
+        for foreign_key in foreign_keys:
+            expected_foreign_key = _get_expected_foreign_key(
+                expected_foreign_keys, foreign_key[3]
             )
-            assert foreign_key[5] == expected_foreign_keys[i].on_delete
-            assert foreign_key[6] == expected_foreign_keys[i].on_update
+            assert foreign_key[2] == expected_foreign_key.foreign_table_name
+            assert foreign_key[3] == expected_foreign_key.column_name
+            assert foreign_key[4] == expected_foreign_key.column_name_in_foreign_table
+            assert foreign_key[5] == expected_foreign_key.on_delete
+            assert foreign_key[6] == expected_foreign_key.on_update
 
     def _get_foreign_keys(self, table_name):
         return self.cursor.execute(f"PRAGMA foreign_key_list({table_name});").fetchall()
@@ -74,9 +73,7 @@ class PostgresAssertor:
         columns = self._get_table_columns(table_name)
         assert len(columns) == len(expected_columns)
         for column in columns:
-            expected_column = next(
-                filter(lambda c: c.name == column[0], expected_columns)
-            )
+            expected_column = _get_expected_column(expected_columns, column[0])
             assert column[0] == expected_column.name
             assert column[1] == expected_column.type.lower()
             assert column[2] == "YES" if expected_column.nullable else "NO"
@@ -93,10 +90,8 @@ class PostgresAssertor:
         foreign_keys = self._get_foreign_keys(table_name)
         assert len(foreign_keys) == len(expected_foreign_keys)
         for foreign_key in foreign_keys:
-            expected_foreign_key = next(
-                filter(
-                    lambda fk: fk.column_name == foreign_key[0], expected_foreign_keys
-                )
+            expected_foreign_key = _get_expected_foreign_key(
+                expected_foreign_keys, foreign_key[0]
             )
             assert foreign_key[0] == expected_foreign_key.column_name
             assert foreign_key[1] == expected_foreign_key.foreign_table_name
@@ -150,6 +145,16 @@ class PostgresAssertor:
             (table_name, table_name),
         )
         return self.cursor.fetchall()
+
+
+def _get_expected_column(expected_columns: list[Column], column_name: str) -> Column:
+    return next(filter(lambda c: c.name == column_name, expected_columns))
+
+
+def _get_expected_foreign_key(
+    expected_foreign_keys: list[ForeignKey], column_name: str
+) -> ForeignKey:
+    return next(filter(lambda fk: fk.column_name == column_name, expected_foreign_keys))
 
 
 def _get_assertor(cursor) -> Assertor:
