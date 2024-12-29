@@ -89,14 +89,17 @@ class PostgresAssertor:
     ):
         foreign_keys = self._get_foreign_keys(table_name)
         assert len(foreign_keys) == len(expected_foreign_keys)
-        for i, foreign_key in enumerate(foreign_keys):
-            assert foreign_key[0] == expected_foreign_keys[i].column_name
-            assert foreign_key[1] == expected_foreign_keys[i].foreign_table_name
-            assert (
-                foreign_key[2] == expected_foreign_keys[i].column_name_in_foreign_table
+        for foreign_key in foreign_keys:
+            expected_foreign_key = next(
+                filter(
+                    lambda fk: fk.column_name == foreign_key[0], expected_foreign_keys
+                )
             )
-            assert foreign_key[3] == expected_foreign_keys[i].on_delete
-            assert foreign_key[4] == expected_foreign_keys[i].on_update
+            assert foreign_key[0] == expected_foreign_key.column_name
+            assert foreign_key[1] == expected_foreign_key.foreign_table_name
+            assert foreign_key[2] == expected_foreign_key.column_name_in_foreign_table
+            assert foreign_key[3] == expected_foreign_key.on_delete
+            assert foreign_key[4] == expected_foreign_key.on_update
 
     def _get_foreign_keys(self, table_name):
         self.cursor.execute(

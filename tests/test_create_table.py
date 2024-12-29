@@ -89,6 +89,17 @@ def test_create_tables_with_one_to_many_relationship(cursor):
             Column(name="author", type="INTEGER"),
         ],
     )
+    assert_foreign_keys(
+        cursor,
+        "posts",
+        [
+            ForeignKey(
+                column_name="author",
+                foreign_table_name="users",
+                column_name_in_foreign_table="id",
+            )
+        ],
+    )
 
 
 def test_create_tables_with_many_to_many_relationship(cursor):
@@ -126,6 +137,22 @@ def test_create_tables_with_many_to_many_relationship(cursor):
             Column(name="id", type="INTEGER", is_primary_key=True),
             Column(name="grades_id", type="INTEGER"),
             Column(name="users_id", type="INTEGER"),
+        ],
+    )
+    assert_foreign_keys(
+        cursor,
+        "grades_users",
+        [
+            ForeignKey(
+                column_name="users_id",
+                foreign_table_name="users",
+                column_name_in_foreign_table="id",
+            ),
+            ForeignKey(
+                column_name="grades_id",
+                foreign_table_name="grades",
+                column_name_in_foreign_table="id",
+            ),
         ],
     )
 
