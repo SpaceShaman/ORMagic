@@ -35,12 +35,15 @@ class SQLiteAssertor:
     def assert_table_schema(self, table_name: str, expected_columns: list[Column]):
         columns = self._get_table_columns(table_name)
         assert len(columns) == len(expected_columns)
-        for i, column in enumerate(columns):
-            assert column[1] == expected_columns[i].name
-            assert column[2] == expected_columns[i].type
-            assert column[3] == 0 if expected_columns[i].nullable else 1
-            assert column[4] == expected_columns[i].default
-            assert column[5] == expected_columns[i].is_primary_key
+        for column in columns:
+            expected_column = next(
+                filter(lambda c: c.name == column[1], expected_columns)
+            )
+            assert column[1] == expected_column.name
+            assert column[2] == expected_column.type
+            assert column[3] == 0 if expected_column.nullable else 1
+            assert column[4] == expected_column.default
+            assert column[5] == expected_column.is_primary_key
 
     def assert_foreign_keys(
         self, table_name: str, expected_foreign_keys: list[ForeignKey]
