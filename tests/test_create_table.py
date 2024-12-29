@@ -265,31 +265,44 @@ def test_create_table_with_many_to_many_relationship_and_custom_primary_key(curs
     Team.create_table()
     Player.create_table()
 
-    res = cursor.execute("PRAGMA table_info(team)")
-    data = res.fetchall()
-    assert data == [
-        (0, "team_id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
-
-    res = cursor.execute("PRAGMA table_info(player)")
-    data = res.fetchall()
-    assert data == [
-        (0, "player_id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-    ]
-
-    res = cursor.execute("PRAGMA table_info(player_team)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "player_id", "INTEGER", 0, None, 0),
-        (2, "team_id", "INTEGER", 0, None, 0),
-    ]
-    # check if foreign key is correct
-    res = cursor.execute("PRAGMA foreign_key_list(player_team)")
-    data = res.fetchall()
-    assert data == [
-        (0, 0, "team", "team_id", "team_id", "CASCADE", "CASCADE", "NONE"),
-        (1, 0, "player", "player_id", "player_id", "CASCADE", "CASCADE", "NONE"),
-    ]
+    assert_table_schema(
+        cursor,
+        "teams",
+        [
+            Column(name="team_id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
+    assert_table_schema(
+        cursor,
+        "players",
+        [
+            Column(name="player_id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
+    assert_table_schema(
+        cursor,
+        "players_teams",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="players_id", type="INTEGER"),
+            Column(name="teams_id", type="INTEGER"),
+        ],
+    )
+    assert_foreign_keys(
+        cursor,
+        "players_teams",
+        [
+            ForeignKey(
+                column_name="players_id",
+                foreign_table_name="players",
+                column_name_in_foreign_table="player_id",
+            ),
+            ForeignKey(
+                column_name="teams_id",
+                foreign_table_name="teams",
+                column_name_in_foreign_table="team_id",
+            ),
+        ],
+    )
