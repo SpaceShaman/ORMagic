@@ -1,10 +1,13 @@
 from ormagic.models import DBModel
 
+from .asserts import assert_table_schema
+
 
 def test_drop_table(cursor):
-    cursor.execute("CREATE TABLE user (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)")
-    cursor.connection.commit()
-    cursor.execute("INSERT INTO user (name, age) VALUES ('Alice', 25)")
+    cursor.execute(
+        "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)"
+    )
+    cursor.execute("INSERT INTO users (id, name, age) VALUES (0, 'Alice', 25)")
     cursor.connection.commit()
 
     class User(DBModel):
@@ -13,6 +16,4 @@ def test_drop_table(cursor):
 
     User.drop_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == []
+    assert_table_schema(cursor, "users", [])
