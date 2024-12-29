@@ -84,6 +84,42 @@ class PostgresAssertor:
             )
             assert column[4] == expected_column.is_primary_key
 
+    def assert_foreign_keys(
+        self, table_name: str, expected_foreign_keys: list[ForeignKey]
+    ):
+        foreign_keys = self._get_foreign_keys(table_name)
+        assert len(foreign_keys) == len(expected_foreign_keys)
+        for i, foreign_key in enumerate(foreign_keys):
+            assert foreign_key[0] == expected_foreign_keys[i].column_name
+            assert foreign_key[1] == expected_foreign_keys[i].foreign_table_name
+            assert (
+                foreign_key[2] == expected_foreign_keys[i].column_name_in_foreign_table
+            )
+            assert foreign_key[3] == expected_foreign_keys[i].on_delete
+            assert foreign_key[4] == expected_foreign_keys[i].on_update
+
+    def _get_foreign_keys(self, table_name):
+        self.cursor.execute(
+            """
+            SELECT
+                kcu.column_name,
+                ccu.table_name AS foreign_table_name,
+                ccu.column_name AS column_name_in_foreign_table,
+                rc.delete_rule AS on_delete,
+                rc.update_rule AS on_update
+            FROM information_schema.table_constraints AS tc
+            JOIN information_schema.key_column_usage AS kcu
+            ON tc.constraint_name = kcu.constraint_name
+            JOIN information_schema.constraint_column_usage AS ccu
+            ON ccu.constraint_name = tc.constraint_name
+            JOIN information_schema.referential_constraints AS rc
+            ON rc.constraint_name = tc.constraint_name
+            WHERE tc.table_name = %s
+            """,
+            (table_name,),
+        )
+        return self.cursor.fetchall()
+
     def _get_table_columns(self, table_name):
         self.cursor.execute(
             """
