@@ -6,13 +6,13 @@ from ormagic import DBField
 
 from .clients.client import Client, client_context
 from .field_utils import (
-    get_foreign_key_model,
     is_many_to_many_field,
     is_primary_key_field,
     prepare_where_conditions,
 )
 from .table_manager import (
     create_table,
+    get_foreign_key_model,
     get_intermediate_table_name,
     update_table,
 )

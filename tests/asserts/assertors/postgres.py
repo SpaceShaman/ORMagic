@@ -14,11 +14,17 @@ class PostgresAssertor:
             assert column[0] == expected_column.name
             assert column[1] == expected_column.type.lower()
             assert column[2] == "YES" if expected_column.nullable else "NO"
-            assert column[3] == (
-                f"{expected_column.default}::{expected_column.type.lower()}"
-                if expected_column.default
-                else None
-            )
+            if expected_column.is_primary_key and expected_column.type == "INTEGER":
+                assert (
+                    column[3]
+                    == f"nextval('{table_name}_{expected_column.name}_seq'::regclass)"
+                )
+            else:
+                assert column[3] == (
+                    f"{expected_column.default}::{expected_column.type.lower()}"
+                    if expected_column.default
+                    else None
+                )
             assert column[4] == expected_column.is_primary_key
 
     def assert_foreign_keys(
