@@ -15,6 +15,7 @@ class PostgresClient:
         return connection
 
     def execute(self, sql: str, parameters: list | None = None) -> cursor:
+        sql = sql.replace("?", "%s")
         self.cursor.execute(sql, parameters)
         self.commit()
         return self.cursor

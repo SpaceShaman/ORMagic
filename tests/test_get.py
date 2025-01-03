@@ -5,16 +5,24 @@ import pytest
 
 from ormagic.fields import DBField
 from ormagic.models import DBModel, ObjectNotFound
+from ormagic.settings import Settings
 
 
 @pytest.fixture
 def prepare_db(cursor):
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    )
-    cursor.connection.commit()
     data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
-    cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    if Settings().db_type == "postgresql":
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.executemany("INSERT INTO users (name, age) VALUES (%s, %s)", data)
+    else:
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.executemany("INSERT INTO users (name, age) VALUES (?, ?)", data)
     cursor.connection.commit()
 
 
