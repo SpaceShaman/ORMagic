@@ -1,13 +1,27 @@
 import pytest
 
 from ormagic.models import DBModel
+from ormagic.settings import Settings
 
 
 @pytest.fixture
 def prepare_db(cursor):
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    )
+    if Settings().db_type == "postgresql":
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+    else:
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+    cursor.connection.commit()
+
+
+def insert_into_users(cursor, data):
+    if Settings().db_type == "postgresql":
+        cursor.executemany("INSERT INTO users (name, age) VALUES (%s, %s)", data)
+    else:
+        cursor.executemany("INSERT INTO users (name, age) VALUES (?, ?)", data)
     cursor.connection.commit()
 
 
@@ -17,9 +31,8 @@ class User(DBModel):
 
 
 def test_get_all_objects_from_db(cursor, prepare_db):
-    data = [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)]
-    cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
-    cursor.connection.commit()
+    insert_into_users(cursor, [("John", 30), ("Jane", 25), ("Doe", 35), ("John", 40)])
+
     users = User.all()
 
     assert len(users) == 4

@@ -1,15 +1,10 @@
-from typing import TYPE_CHECKING, Any, Type, get_args
+from typing import TYPE_CHECKING
 
 from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined
 
 from .clients.client import Client
 from .field_utils import (
-    get_on_delete_action,
     is_many_to_many_field,
-    is_primary_key_field,
-    is_unique_field,
-    transform_field_annotation_to_sql_type,
 )
 
 if TYPE_CHECKING:
@@ -28,7 +23,7 @@ def create_table(
         if is_many_to_many_field(field_info.annotation):
             related_tables.append(getattr(field_info.annotation, "__args__")[0])
             continue
-        columns.append(_prepare_column_definition(field_name, field_info))
+        columns.append(client.prepare_column_definition(field_name, field_info))
     client.create_table(table_name, columns)
     for related_table in related_tables:
         _create_intermediate_table(client, table_name, primary_key, related_table)
@@ -59,16 +54,6 @@ def update_table(
     )
 
 
-def get_foreign_key_model(field_annotation: Any) -> Type | None:
-    from .models import DBModel
-
-    types_tuple = get_args(field_annotation)
-    if not types_tuple and field_annotation and issubclass(field_annotation, DBModel):
-        return field_annotation
-    if types_tuple and issubclass(types_tuple[0], DBModel):
-        return types_tuple[0]
-
-
 def _create_intermediate_table(
     client: Client,
     table_name: str,
@@ -91,8 +76,6 @@ def _create_intermediate_table(
             f"FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE",
         ],
     )
-    # sql = f"CREATE TABLE {table_name}_{related_table_name} (id INTEGER PRIMARY KEY, {table_name}_id INTEGER, {related_table_name}_id INTEGER, FOREIGN KEY ({table_name}_id) REFERENCES {table_name}({primary_key}) ON DELETE CASCADE ON UPDATE CASCADE, FOREIGN KEY ({related_table_name}_id) REFERENCES {related_table_name}({related_primary_key}) ON DELETE CASCADE ON UPDATE CASCADE)"
-    # client.execute(sql)
 
 
 def get_intermediate_table_name(
@@ -103,23 +86,6 @@ def get_intermediate_table_name(
     elif client.is_table_exists(f"{related_table_name}_{table_name}"):
         return f"{related_table_name}_{table_name}"
     return ""
-
-
-def _prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
-    field_type = transform_field_annotation_to_sql_type(field_info.annotation)
-    column_definition = f"{field_name} {field_type}"
-    if field_info.default not in (PydanticUndefined, None):
-        column_definition += f" DEFAULT '{field_info.default}'"
-    if field_info.is_required():
-        column_definition += " NOT NULL"
-    if is_unique_field(field_info):
-        column_definition += " UNIQUE"
-    if foreign_model := get_foreign_key_model(field_info.annotation):
-        action = get_on_delete_action(field_info)
-        column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model._get_table_name()}({foreign_model._get_primary_key_field_name()}) ON UPDATE {action} ON DELETE {action}"
-    if is_primary_key_field(field_info):
-        column_definition += " PRIMARY KEY"
-    return column_definition
 
 
 def _get_model_field_names(model_fields: dict[str, FieldInfo]) -> list[str]:
@@ -142,7 +108,7 @@ def _add_new_columns_to_existing_table(
     for field_name, field_info in model_fields.items():
         if field_name in existing_columns:
             continue
-        column_definition = _prepare_column_definition(field_name, field_info)
+        column_definition = client.prepare_column_definition(field_name, field_info)
         client.add_column(table_name, column_definition)
 
 

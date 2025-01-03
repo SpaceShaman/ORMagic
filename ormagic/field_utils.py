@@ -1,5 +1,5 @@
 from types import NoneType
-from typing import Any, Literal, Union, get_args
+from typing import Any, Literal, Type, Union, get_args
 
 from pydantic.fields import FieldInfo
 
@@ -112,3 +112,13 @@ def prepare_where_conditions(*args, **kwargs) -> tuple[str, list]:
             conditions.append(arg.conditions)
             params.extend(arg.params)
     return " AND ".join(conditions), params
+
+
+def get_foreign_key_model(field_annotation: Any) -> Type | None:
+    from .models import DBModel
+
+    types_tuple = get_args(field_annotation)
+    if not types_tuple and field_annotation and issubclass(field_annotation, DBModel):
+        return field_annotation
+    if types_tuple and issubclass(types_tuple[0], DBModel):
+        return types_tuple[0]

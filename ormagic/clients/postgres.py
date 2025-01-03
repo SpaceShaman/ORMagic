@@ -2,7 +2,16 @@ from typing import Any
 
 from psycopg2 import connect
 from psycopg2._psycopg import connection, cursor
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 
+from ormagic.field_utils import (
+    get_foreign_key_model,
+    get_on_delete_action,
+    is_primary_key_field,
+    is_unique_field,
+    transform_field_annotation_to_sql_type,
+)
 from ormagic.settings import Settings
 
 
@@ -97,3 +106,20 @@ class PostgresClient:
     def fetchall(self, sql: str, parameters: list[Any] | None = None) -> list[Any]:
         cursor = self.execute(sql, parameters)
         return cursor.fetchall()
+
+    def prepare_column_definition(self, field_name: str, field_info: FieldInfo) -> str:
+        field_type = transform_field_annotation_to_sql_type(field_info.annotation)
+        column_definition = f"{field_name} {field_type}"
+        if field_info.default not in (PydanticUndefined, None):
+            column_definition += f" DEFAULT '{field_info.default}'"
+        if field_info.is_required():
+            column_definition += " NOT NULL"
+        if is_unique_field(field_info):
+            column_definition += " UNIQUE"
+        if foreign_model := get_foreign_key_model(field_info.annotation):
+            action = get_on_delete_action(field_info)
+            column_definition += f", FOREIGN KEY ({field_name}) REFERENCES {foreign_model._get_table_name()}({foreign_model._get_primary_key_field_name()}) ON UPDATE {action} ON DELETE {action}"
+        if is_primary_key_field(field_info):
+            column_definition = column_definition.replace("INTEGER", "SERIAL")
+            column_definition += " PRIMARY KEY"
+        return column_definition

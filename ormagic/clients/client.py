@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 from typing import Any, Generator, Protocol
 
+from pydantic.fields import FieldInfo
+
 from ormagic.settings import Settings
 
 from .postgres import PostgresClient
@@ -44,6 +46,10 @@ class Client(Protocol):
     def is_row_exists(self, table_name: str, where: str) -> bool: ...
     def fetchone(self, sql: str, parameters: list[Any] | None = None) -> Any: ...
     def fetchall(self, sql: str, parameters: list[Any] | None = None) -> list[Any]: ...
+
+    def prepare_column_definition(
+        self, field_name: str, field_info: FieldInfo
+    ) -> str: ...
 
 
 def get_client() -> Client:
