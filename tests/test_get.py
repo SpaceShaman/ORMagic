@@ -225,20 +225,20 @@ def test_get_object_with_one_to_many_relationship_and_custom_primary_key(cursor)
 
     class Post(DBModel):
         title: str
-        user: User
+        author: User
 
     User.create_table()
     Post.create_table()
 
     user = User(name="John").save()
-    Post(title="First post", user=user).save()
+    Post(title="First post", author=user).save()
 
     post_from_db = Post.get(id=1)
 
     assert post_from_db.id == 1
     assert post_from_db.title == "First post"
-    assert post_from_db.user.custom_id == 1
-    assert post_from_db.user.name == "John"
+    assert post_from_db.author.custom_id == 1
+    assert post_from_db.author.name == "John"
 
 
 def test_get_object_with_many_to_many_relationship_and_custom_primary_key(cursor):
