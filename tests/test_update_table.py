@@ -5,15 +5,26 @@ import pytest
 
 from ormagic.fields import DBField
 from ormagic.models import DBModel
+from ormagic.settings import Settings
+
+from .asserts import Column, assert_table_schema
 
 
 @pytest.fixture(autouse=True)
 def prepare_db(cursor):
-    cursor.execute(
-        "CREATE TABLE user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    )
-    cursor.connection.commit()
-    cursor.execute("INSERT INTO user (name, age) VALUES ('Alice', 25)")
+    data = ("Alice", 25)
+    if Settings().db_type == "postgresql":
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.execute("INSERT INTO users (name, age) VALUES (%s, %s)", data)
+    else:
+        cursor.execute(
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.execute("INSERT INTO users (name, age) VALUES (?, ?)", data)
     cursor.connection.commit()
 
 
@@ -25,14 +36,16 @@ def test_add_optional_column_to_existing_table(cursor):
 
     User.update_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-        (2, "age", "INTEGER", 1, None, 0),
-        (3, "weight", "INTEGER", 0, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+            Column(name="age", type="INTEGER"),
+            Column(name="weight", type="INTEGER"),
+        ],
+    )
 
 
 def test_try_add_column_to_existing_table_with_not_null_constraint(cursor):

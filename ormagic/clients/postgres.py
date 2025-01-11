@@ -47,8 +47,10 @@ class PostgresClient:
         return result is not None and result[0] == 1
 
     def get_column_names(self, table_name: str) -> list[str]:
-        cursor = self.execute(f"PRAGMA table_info({table_name})")
-        return [column[1] for column in cursor.fetchall()]
+        cursor = self.execute(
+            f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}'"
+        )
+        return [column[0] for column in cursor.fetchall()]
 
     def drop_column(self, table_name: str, column_name: str) -> None:
         self.execute(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
