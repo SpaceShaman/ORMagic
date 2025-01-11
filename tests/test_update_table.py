@@ -96,15 +96,17 @@ def test_add_multiple_columns_to_existing_table(cursor):
 
     User.update_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-        (2, "age", "INTEGER", 1, None, 0),
-        (3, "weight", "INTEGER", 0, "'10'", 0),
-        (4, "height", "INTEGER", 0, "'170'", 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+            Column(name="age", type="INTEGER"),
+            Column(name="weight", type="INTEGER", default="'10'"),
+            Column(name="height", type="INTEGER", default="'170'"),
+        ],
+    )
 
 
 def test_update_non_existing_table_will_create_a_new_one(cursor):
