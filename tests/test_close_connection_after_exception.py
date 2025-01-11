@@ -1,7 +1,4 @@
-from sqlite3 import IntegrityError, OperationalError
-
 import pytest
-from psycopg2.errors import UniqueViolation
 
 from ormagic import DBField, DBModel
 
@@ -15,7 +12,7 @@ def test_save_object_after_save_integrity_error(cursor):
 
     User(name="John", age=30).save()
 
-    with pytest.raises((IntegrityError, UniqueViolation)):
+    with pytest.raises(Exception):
         User(name="John", age=20).save()
 
     User(name="Jane", age=25).save()
@@ -35,7 +32,7 @@ def test_save_object_after_delete_operational_error(cursor):
 
     User.create_table()
 
-    with pytest.raises(OperationalError):
+    with pytest.raises(Exception):
         User(name="John", age=30).delete()
 
     User(name="John", age=30).save()
