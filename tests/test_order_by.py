@@ -1,6 +1,7 @@
 from sqlite3 import OperationalError
 
 import pytest
+from psycopg2.errors import UndefinedColumn
 
 from ormagic.models import DBModel
 from ormagic.settings import Settings
@@ -117,7 +118,7 @@ def test_order_by_multiple_mixed(prepare_db, cursor):
 
 
 def test_order_by_invalid_field(prepare_db, cursor):
-    with pytest.raises(OperationalError):
+    with pytest.raises((OperationalError, UndefinedColumn)):
         User.filter(order_by="invalid_field")
 
 
