@@ -28,10 +28,10 @@ def test_delete_object_from_db(prepare_db, cursor):
     cursor.execute("INSERT INTO users (name, age) VALUES ('John', 30)")
     cursor.connection.commit()
 
-    # User(id=1, name="Jane", age=25).delete()
+    User(id=1, name="Jane", age=25).delete()
 
-    res = cursor.execute("SELECT * FROM users")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == []
 
 
