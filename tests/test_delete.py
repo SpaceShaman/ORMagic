@@ -20,6 +20,12 @@ def prepare_db(cursor):
     cursor.connection.commit()
 
 
+def assert_table_data(cursor, table_name, expected_data):
+    cursor.execute(f"SELECT * FROM {table_name}")
+    data = cursor.fetchall()
+    assert data == expected_data
+
+
 class User(DBModel):
     name: str
     age: int
@@ -31,9 +37,7 @@ def test_delete_object_from_db(prepare_db, cursor):
 
     User(id=1, name="Jane", age=25).delete()
 
-    cursor.execute("SELECT * FROM users")
-    data = cursor.fetchall()
-    assert data == []
+    assert_table_data(cursor, "users", [])
 
 
 def test_delete_object_with_foreign_key_cascade(prepare_db, cursor):
@@ -47,13 +51,8 @@ def test_delete_object_with_foreign_key_cascade(prepare_db, cursor):
 
     user.delete()
 
-    cursor.execute("SELECT * FROM users")
-    data = cursor.fetchall()
-    assert data == []
-
-    cursor.execute("SELECT * FROM posts")
-    data = cursor.fetchall()
-    assert data == []
+    assert_table_data(cursor, "users", [])
+    assert_table_data(cursor, "posts", [])
 
 
 def test_delete_object_with_foreign_key_cascade_by_default(prepare_db, cursor):
@@ -67,13 +66,8 @@ def test_delete_object_with_foreign_key_cascade_by_default(prepare_db, cursor):
 
     user.delete()
 
-    cursor.execute("SELECT * FROM users")
-    data = cursor.fetchall()
-    assert data == []
-
-    cursor.execute("SELECT * FROM posts")
-    data = cursor.fetchall()
-    assert data == []
+    assert_table_data(cursor, "users", [])
+    assert_table_data(cursor, "posts", [])
 
 
 def test_delete_object_with_foreign_key_set_null(prepare_db, cursor):
@@ -87,13 +81,8 @@ def test_delete_object_with_foreign_key_set_null(prepare_db, cursor):
 
     user.delete()
 
-    cursor.execute("SELECT * FROM users")
-    data = cursor.fetchall()
-    assert data == []
-
-    cursor.execute("SELECT * FROM posts")
-    data = cursor.fetchall()
-    assert data == [(1, "First post", None)]
+    assert_table_data(cursor, "users", [])
+    assert_table_data(cursor, "posts", [(1, "First post", None)])
 
 
 def test_delete_object_with_foreign_key_restrict(prepare_db, cursor):
@@ -108,13 +97,8 @@ def test_delete_object_with_foreign_key_restrict(prepare_db, cursor):
     with pytest.raises((IntegrityError, ForeignKeyViolation)):
         user.delete()
 
-    cursor.execute("SELECT * FROM users")
-    data = cursor.fetchall()
-    assert data == [(1, "John", 30)]
-
-    cursor.execute("SELECT * FROM posts")
-    data = cursor.fetchall()
-    assert data == [(1, "First post", 1)]
+    assert_table_data(cursor, "users", [(1, "John", 30)])
+    assert_table_data(cursor, "posts", [(1, "First post", 1)])
 
 
 def test_delete_object_with_foreign_key_set_default(prepare_db, cursor):
@@ -129,13 +113,8 @@ def test_delete_object_with_foreign_key_set_default(prepare_db, cursor):
 
     user.delete()
 
-    cursor.execute("SELECT * FROM users")
-    data = cursor.fetchall()
-    assert data == [(1, "Jane", 25)]
-
-    cursor.execute("SELECT * FROM posts")
-    data = cursor.fetchall()
-    assert data == [(1, "First post", 1)]
+    assert_table_data(cursor, "users", [(1, "Jane", 25)])
+    assert_table_data(cursor, "posts", [(1, "First post", 1)])
 
 
 def test_delete_object_with_foreign_key_no_action(prepare_db, cursor):
@@ -150,10 +129,5 @@ def test_delete_object_with_foreign_key_no_action(prepare_db, cursor):
     with pytest.raises((IntegrityError, ForeignKeyViolation)):
         user.delete()
 
-    cursor.execute("SELECT * FROM users")
-    data = cursor.fetchall()
-    assert data == [(1, "John", 30)]
-
-    cursor.execute("SELECT * FROM posts")
-    data = cursor.fetchall()
-    assert data == [(1, "First post", 1)]
+    assert_table_data(cursor, "users", [(1, "John", 30)])
+    assert_table_data(cursor, "posts", [(1, "First post", 1)])
