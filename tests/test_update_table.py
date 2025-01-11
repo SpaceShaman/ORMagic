@@ -115,9 +115,14 @@ def test_update_non_existing_table_will_create_a_new_one(cursor):
 
     NonExistingTable.update_table()
 
-    res = cursor.execute("PRAGMA table_info(nonexistingtable)")
-    data = res.fetchall()
-    assert data == [(0, "id", "INTEGER", 0, None, 1), (1, "name", "TEXT", 1, None, 0)]
+    assert_table_schema(
+        cursor,
+        "nonexistingtables",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
 
 
 def test_rename_column_in_existing_table(cursor):
