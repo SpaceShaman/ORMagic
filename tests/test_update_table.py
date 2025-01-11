@@ -1,4 +1,3 @@
-from sqlite3 import OperationalError
 from typing import Optional
 
 import pytest
@@ -54,7 +53,7 @@ def test_try_add_column_to_existing_table_with_not_null_constraint(cursor):
         age: int
         weight: int
 
-    with pytest.raises(OperationalError):
+    with pytest.raises(Exception):
         User.update_table()
 
 
@@ -64,7 +63,7 @@ def test_try_add_column_to_existing_table_with_unique_constraint(cursor):
         age: int
         weight: int = DBField(default=0, unique=True)
 
-    with pytest.raises(OperationalError):
+    with pytest.raises(Exception):
         User.update_table()
 
 
@@ -76,14 +75,16 @@ def test_add_column_to_existing_table_with_default_value(cursor):
 
     User.update_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-        (2, "age", "INTEGER", 1, None, 0),
-        (3, "weight", "INTEGER", 0, "'10'", 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+            Column(name="age", type="INTEGER"),
+            Column(name="weight", type="INTEGER", default="'10'"),
+        ],
+    )
 
 
 def test_add_multiple_columns_to_existing_table(cursor):

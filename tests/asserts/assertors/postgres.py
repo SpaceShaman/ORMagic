@@ -20,11 +20,7 @@ class PostgresAssertor:
                     == f"nextval('{table_name}_{expected_column.name}_seq'::regclass)"
                 )
             else:
-                assert column[3] == (
-                    f"{expected_column.default}::{expected_column.type.lower()}"
-                    if expected_column.default
-                    else None
-                )
+                assert column[3] == self._get_default_value(expected_column)
             assert column[4] == expected_column.is_primary_key
 
     def assert_foreign_keys(
@@ -41,6 +37,13 @@ class PostgresAssertor:
             assert foreign_key[2] == expected_foreign_key.column_name_in_foreign_table
             assert foreign_key[3] == expected_foreign_key.on_delete
             assert foreign_key[4] == expected_foreign_key.on_update
+
+    def _get_default_value(self, column: Column):
+        if column.type != "INTEGER" and column.default:
+            return f"{column.default}::{column.type.lower()}"
+        if column.type == "INTEGER" and column.default:
+            return column.default.replace("'", "")
+        return column.default
 
     def _get_foreign_keys(self, table_name):
         self.cursor.execute(
