@@ -324,7 +324,7 @@ def test_save_object_with_many_to_many_relationship_without_related_objects(curs
     data = cursor.fetchall()
     assert data == []
 
-    cursor.execute("SELECT * FROM user_courses")
+    cursor.execute("SELECT * FROM courses_users")
     data = cursor.fetchall()
     assert data == []
 
@@ -356,9 +356,15 @@ def test_override_object_with_many_to_many_relationship(cursor):
     data = cursor.fetchall()
     assert data == [(1, "Python"), (2, "JavaScript"), (3, "Java")]
 
-    cursor.execute("SELECT * FROM user_courses")
-    data = cursor.fetchall()
-    assert data == [(1, 1, 3)]
+    # sourcery skip: no-conditionals-in-tests
+    if Settings().db_type == "postgresql":
+        cursor.execute("SELECT * FROM courses_users")
+        data = cursor.fetchall()
+        assert data == [(3, 3, 1)]
+    else:
+        cursor.execute("SELECT * FROM courses_users")
+        data = cursor.fetchall()
+        assert data == [(1, 3, 1)]
 
 
 def test_save_object_with_custom_primary_key_field_autoincrement(cursor):
