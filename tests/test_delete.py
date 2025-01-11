@@ -36,127 +36,123 @@ def test_delete_object_from_db(prepare_db, cursor):
 
 
 def test_delete_object_with_foreign_key_cascade(prepare_db, cursor):
-    cursor.execute("PRAGMA foreign_keys")
-    result = cursor.fetchone()
-    assert result[0] == 1
-
     class Post(DBModel):
         title: str
-        user: User = DBField(on_delete="CASCADE")
+        author: User = DBField(on_delete="CASCADE")
 
     Post.create_table()
     user = User(name="John", age=30).save()
-    Post(title="First post", user=user).save()
+    Post(title="First post", author=user).save()
 
     user.delete()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == []
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == []
 
 
 def test_delete_object_with_foreign_key_cascade_by_default(prepare_db, cursor):
     class Post(DBModel):
         title: str
-        user: User
+        author: User
 
     Post.create_table()
     user = User(name="John", age=30).save()
-    Post(title="First post", user=user).save()
+    Post(title="First post", author=user).save()
 
     user.delete()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == []
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == []
 
 
 def test_delete_object_with_foreign_key_set_null(prepare_db, cursor):
     class Post(DBModel):
         title: str
-        user: User = DBField(default=None, on_delete="SET NULL")
+        author: User = DBField(default=None, on_delete="SET NULL")
 
     Post.create_table()
     user = User(name="John", age=30).save()
-    Post(title="First post", user=user).save()
+    Post(title="First post", author=user).save()
 
     user.delete()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == []
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", None)]
 
 
 def test_delete_object_with_foreign_key_restrict(prepare_db, cursor):
     class Post(DBModel):
         title: str
-        user: User = DBField(on_delete="RESTRICT")
+        author: User = DBField(on_delete="RESTRICT")
 
     Post.create_table()
     user = User(name="John", age=30).save()
-    Post(title="First post", user=user).save()
+    Post(title="First post", author=user).save()
 
     with pytest.raises(IntegrityError):
         user.delete()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John", 30)]
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", 1)]
 
 
 def test_delete_object_with_foreign_key_set_default(prepare_db, cursor):
     class Post(DBModel):
         title: str
-        user: User = DBField(default=1, on_delete="SET DEFAULT")
+        author: User = DBField(default=1, on_delete="SET DEFAULT")
 
     Post.create_table()
     User(name="Jane", age=25).save()
     user = User(name="John", age=30).save()
-    Post(title="First post", user=user).save()
+    Post(title="First post", author=user).save()
 
     user.delete()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "Jane", 25)]
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", 1)]
 
 
 def test_delete_object_with_foreign_key_no_action(prepare_db, cursor):
     class Post(DBModel):
         title: str
-        user: User = DBField(on_delete="NO ACTION")
+        author: User = DBField(on_delete="NO ACTION")
 
     Post.create_table()
     user = User(name="John", age=30).save()
-    Post(title="First post", user=user).save()
+    Post(title="First post", author=user).save()
 
     with pytest.raises(IntegrityError):
         user.delete()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John", 30)]
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", 1)]
