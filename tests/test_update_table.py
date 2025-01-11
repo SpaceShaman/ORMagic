@@ -150,13 +150,15 @@ def test_rename_multiple_columns_in_existing_table(cursor):
 
     User.update_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "first_name", "TEXT", 1, None, 0),
-        (2, "years", "INTEGER", 1, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="first_name", type="TEXT"),
+            Column(name="years", type="INTEGER"),
+        ],
+    )
 
 
 def test_try_update_table_without_changes(cursor):
@@ -166,13 +168,15 @@ def test_try_update_table_without_changes(cursor):
 
     User.update_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert data == [
-        (0, "id", "INTEGER", 0, None, 1),
-        (1, "name", "TEXT", 1, None, 0),
-        (2, "age", "INTEGER", 1, None, 0),
-    ]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+            Column(name="age", type="INTEGER"),
+        ],
+    )
 
 
 def test_drop_column_from_existing_table(cursor):
@@ -181,10 +185,14 @@ def test_drop_column_from_existing_table(cursor):
 
     User.update_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert len(data) == 2
-    assert data == [(0, "id", "INTEGER", 0, None, 1), (1, "name", "TEXT", 1, None, 0)]
+    assert_table_schema(
+        cursor,
+        "users",
+        [
+            Column(name="id", type="INTEGER", is_primary_key=True),
+            Column(name="name", type="TEXT"),
+        ],
+    )
 
 
 def test_drop_multiple_columns_from_existing_table(cursor):
@@ -193,7 +201,8 @@ def test_drop_multiple_columns_from_existing_table(cursor):
 
     User.update_table()
 
-    res = cursor.execute("PRAGMA table_info(user)")
-    data = res.fetchall()
-    assert len(data) == 1
-    assert data == [(0, "id", "INTEGER", 0, None, 1)]
+    assert_table_schema(
+        cursor,
+        "users",
+        [Column(name="id", type="INTEGER", is_primary_key=True)],
+    )
