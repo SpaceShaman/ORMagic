@@ -1,6 +1,7 @@
 from sqlite3 import IntegrityError
 
 import pytest
+from psycopg2.errors import ForeignKeyViolation
 
 from ormagic import DBField, DBModel
 from ormagic.settings import Settings
@@ -104,7 +105,7 @@ def test_delete_object_with_foreign_key_restrict(prepare_db, cursor):
     user = User(name="John", age=30).save()
     Post(title="First post", author=user).save()
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises((IntegrityError, ForeignKeyViolation)):
         user.delete()
 
     cursor.execute("SELECT * FROM users")
@@ -146,7 +147,7 @@ def test_delete_object_with_foreign_key_no_action(prepare_db, cursor):
     user = User(name="John", age=30).save()
     Post(title="First post", author=user).save()
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises((IntegrityError, ForeignKeyViolation)):
         user.delete()
 
     cursor.execute("SELECT * FROM users")
