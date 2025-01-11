@@ -1,14 +1,11 @@
 import pytest
 
 from ormagic.models import DBModel
+from ormagic.settings import Settings
 
 
 @pytest.fixture
 def prepare_db(cursor):
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    )
-    cursor.connection.commit()
     data = [
         ("Alice", 90),
         ("Bob", 80),
@@ -20,7 +17,18 @@ def prepare_db(cursor):
         ("Helen", 20),
         ("Ivy", 10),
     ]
-    cursor.executemany("INSERT INTO user (name, age) VALUES (?, ?)", data)
+    if Settings().db_type == "postgresql":
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.executemany("INSERT INTO users (name, age) VALUES (%s, %s)", data)
+    else:
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.executemany("INSERT INTO users (name, age) VALUES (?, ?)", data)
     cursor.connection.commit()
 
 
