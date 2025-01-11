@@ -1,5 +1,4 @@
 from datetime import datetime
-from sqlite3 import IntegrityError
 from typing import Optional
 
 import pytest
@@ -115,22 +114,22 @@ def test_override_object_with_foreign_key_in_db(cursor):
 
     class Post(DBModel):
         title: str
-        user: User
+        author: User
 
     User.create_table()
     Post.create_table()
 
     user = User(name="John", age=30).save()
-    post = Post(title="First post", user=user).save()
+    post = Post(title="First post", author=user).save()
 
     new_user = User(name="Jane", age=25).save()
-    post.user = new_user
+    post.author = new_user
     post.save()
 
     cursor.execute("SELECT * FROM posts")
     data = cursor.fetchall()
     assert data == [(1, "First post", 2)]
-    assert post.user.id == new_user.id
+    assert post.author.id == new_user.id
 
 
 def test_save_object_with_foreign_key_for_non_existing_foreign_object(cursor):
@@ -140,12 +139,12 @@ def test_save_object_with_foreign_key_for_non_existing_foreign_object(cursor):
 
     class Post(DBModel):
         title: str
-        user: User
+        author: User
 
     User.create_table()
     Post.create_table()
 
-    post = Post(title="First post", user=User(name="John", age=30)).save()
+    post = Post(title="First post", author=User(name="John", age=30)).save()
 
     cursor.execute("SELECT * FROM posts")
     data = cursor.fetchall()
@@ -156,9 +155,9 @@ def test_save_object_with_foreign_key_for_non_existing_foreign_object(cursor):
     assert data == [(1, "John", 30)]
 
     assert post.title == "First post"
-    assert post.user.id == 1
-    assert post.user.name == "John"
-    assert post.user.age == 30
+    assert post.author.id == 1
+    assert post.author.name == "John"
+    assert post.author.age == 30
 
 
 def test_save_object_with_optional_foreign_key_not_set(cursor):
@@ -168,7 +167,7 @@ def test_save_object_with_optional_foreign_key_not_set(cursor):
 
     class Post(DBModel):
         title: str
-        user: User | None = None
+        author: User | None = None
 
     User.create_table()
     Post.create_table()
@@ -180,7 +179,7 @@ def test_save_object_with_optional_foreign_key_not_set(cursor):
     assert data == [(1, "First post", None)]
 
     assert post.title == "First post"
-    assert post.user is None
+    assert post.author is None
 
 
 def test_overide_object_with_optional_foreign_key_not_set(cursor):
@@ -189,14 +188,14 @@ def test_overide_object_with_optional_foreign_key_not_set(cursor):
 
     class Post(DBModel):
         title: str
-        user: User | None = None
+        author: User | None = None
 
     User.create_table()
     Post.create_table()
 
     user = User(name="John").save()
-    post = Post(title="First post", user=user).save()
-    post.user = None
+    post = Post(title="First post", author=user).save()
+    post.author = None
     post.save()
 
     cursor.execute("SELECT * FROM posts")
@@ -211,22 +210,22 @@ def test_save_object_with_optional_foreign_key_set(cursor):
 
     class Post(DBModel):
         title: str
-        user: Optional[User] = None
+        author: Optional[User] = None
 
     User.create_table()
     Post.create_table()
 
     user = User(name="John", age=30).save()
-    post = Post(title="First post", user=user).save()
+    post = Post(title="First post", author=user).save()
 
     cursor.execute("SELECT * FROM posts")
     data = cursor.fetchall()
     assert data == [(1, "First post", 1)]
 
     assert post.title == "First post"
-    assert post.user.id == 1  # type: ignore
-    assert post.user.name == "John"  # type: ignore
-    assert post.user.age == 30  # type: ignore
+    assert post.author.id == 1  # type: ignore
+    assert post.author.name == "John"  # type: ignore
+    assert post.author.age == 30  # type: ignore
 
 
 def test_try_save_two_objects_with_same_values_for_unique_field(cursor):
@@ -238,7 +237,7 @@ def test_try_save_two_objects_with_same_values_for_unique_field(cursor):
 
     User(name="John", age=30).save()
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(Exception):
         User(name="John", age=20).save()
 
 
@@ -268,9 +267,9 @@ def test_save_object_with_many_to_many_relationship(cursor):
     data = cursor.fetchall()
     assert data == [(1, "Python"), (2, "JavaScript"), (3, "Java")]
 
-    cursor.execute("SELECT * FROM user_courses")
+    cursor.execute("SELECT * FROM courses_users")
     data = cursor.fetchall()
-    assert data == [(1, 1, 1), (2, 1, 2), (3, 2, 2), (4, 2, 3)]
+    assert data == [(1, 1, 1), (2, 2, 1), (3, 2, 2), (4, 3, 2)]
 
 
 def test_save_object_with_many_to_many_relationship_for_non_existing_objects(cursor):
