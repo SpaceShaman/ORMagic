@@ -131,7 +131,7 @@ class DBModel(BaseModel):
         if not related_objects:
             return
         table_name = self._get_table_name()
-        related_table_name = related_objects[0].__class__.__name__.lower()
+        related_table_name = related_objects[0]._get_table_name()
         intermediate_table_name = get_intermediate_table_name(
             client, table_name, related_table_name
         )
@@ -210,7 +210,7 @@ class DBModel(BaseModel):
     ) -> list[dict[str, Any]]:
         table_name = cls._get_table_name()
         related_model = getattr(annotation, "__args__")[0]
-        related_table_name = related_model.__name__.lower()
+        related_table_name = related_model._get_table_name()
         intermediate_table_name = get_intermediate_table_name(
             client, table_name, related_table_name
         )
