@@ -5,13 +5,19 @@ from typing import Optional
 import pytest
 
 from ormagic import DBField, DBModel
+from ormagic.settings import Settings
 
 
 @pytest.fixture
 def prepare_db(cursor):
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    )
+    if Settings().db_type == "postgresql":
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+    else:
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
     cursor.connection.commit()
 
 
@@ -25,8 +31,8 @@ def test_save_data_to_db(prepare_db, cursor):
     User(name="Jane", age=25).save()
     User(name="Doe", age=35).save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John", 30), (2, "Jane", 25), (3, "Doe", 35)]
 
 
@@ -39,13 +45,13 @@ def test_save_object_to_db_and_return_it_self(prepare_db):
 
 
 def test_override_object_in_db(prepare_db, cursor):
-    cursor.execute("INSERT INTO user (name, age) VALUES ('John', 30)")
+    cursor.execute("INSERT INTO users (name, age) VALUES ('John', 30)")
     cursor.connection.commit()
 
     User(id=1, name="Jane", age=25).save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "Jane", 25)]
 
 
@@ -60,8 +66,8 @@ def test_save_object_with_datetime_field_to_db(prepare_db, cursor):
         name="John", created_at=datetime(2021, 1, 1, 12, 0, 0)
     ).save()
 
-    res = cursor.execute("SELECT * FROM userwithdatetime")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM userwithdatetimes")
+    data = cursor.fetchall()
     assert data == [(1, "John", "2021-01-01 12:00:00")]
     assert user.created_at == datetime(2021, 1, 1, 12, 0, 0)
 
@@ -75,8 +81,8 @@ def test_save_object_with_default_value_to_db(prepare_db, cursor):
 
     user = UserWithDefault(name="John").save()
 
-    res = cursor.execute("SELECT * FROM userwithdefault")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM userwithdefaults")
+    data = cursor.fetchall()
     assert data == [(1, "John", 30)]
     assert user.age == 30
 
@@ -88,18 +94,18 @@ def test_save_object_with_foreign_key_to_db(cursor):
 
     class Post(DBModel):
         title: str
-        user: User
+        author: User
 
     User.create_table()
     Post.create_table()
 
     user = User(name="John", age=30).save()
-    post = Post(title="First post", user=user).save()
+    post = Post(title="First post", author=user).save()
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", 1)]
-    assert post.user.id == user.id
+    assert post.author.id == user.id
 
 
 def test_override_object_with_foreign_key_in_db(cursor):
@@ -121,8 +127,8 @@ def test_override_object_with_foreign_key_in_db(cursor):
     post.user = new_user
     post.save()
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", 2)]
     assert post.user.id == new_user.id
 
@@ -141,12 +147,12 @@ def test_save_object_with_foreign_key_for_non_existing_foreign_object(cursor):
 
     post = Post(title="First post", user=User(name="John", age=30)).save()
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", 1)]
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John", 30)]
 
     assert post.title == "First post"
@@ -169,8 +175,8 @@ def test_save_object_with_optional_foreign_key_not_set(cursor):
 
     post = Post(title="First post").save()
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", None)]
 
     assert post.title == "First post"
@@ -193,8 +199,8 @@ def test_overide_object_with_optional_foreign_key_not_set(cursor):
     post.user = None
     post.save()
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", None)]
 
 
@@ -213,8 +219,8 @@ def test_save_object_with_optional_foreign_key_set(cursor):
     user = User(name="John", age=30).save()
     post = Post(title="First post", user=user).save()
 
-    res = cursor.execute("SELECT * FROM post")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM posts")
+    data = cursor.fetchall()
     assert data == [(1, "First post", 1)]
 
     assert post.title == "First post"
@@ -254,16 +260,16 @@ def test_save_object_with_many_to_many_relationship(cursor):
     User(name="John", courses=[course_0, course_1]).save()
     User(name="Jane", courses=[course_1, course_2]).save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John"), (2, "Jane")]
 
-    res = cursor.execute("SELECT * FROM course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM courses")
+    data = cursor.fetchall()
     assert data == [(1, "Python"), (2, "JavaScript"), (3, "Java")]
 
-    res = cursor.execute("SELECT * FROM user_course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM user_courses")
+    data = cursor.fetchall()
     assert data == [(1, 1, 1), (2, 1, 2), (3, 2, 2), (4, 2, 3)]
 
 
@@ -284,16 +290,16 @@ def test_save_object_with_many_to_many_relationship_for_non_existing_objects(cur
     Course(name="Java")
     User(name="John", courses=[course_0, course_1]).save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John")]
 
-    res = cursor.execute("SELECT * FROM course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM courses")
+    data = cursor.fetchall()
     assert data == [(1, "Python"), (2, "JavaScript")]
 
-    res = cursor.execute("SELECT * FROM user_course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM user_courses")
+    data = cursor.fetchall()
     assert data == [(1, 1, 1), (2, 1, 2)]
 
 
@@ -311,16 +317,16 @@ def test_save_object_with_many_to_many_relationship_without_related_objects(curs
 
     User(name="John").save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John")]
 
-    res = cursor.execute("SELECT * FROM course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM courses")
+    data = cursor.fetchall()
     assert data == []
 
-    res = cursor.execute("SELECT * FROM user_course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM user_courses")
+    data = cursor.fetchall()
     assert data == []
 
 
@@ -343,16 +349,16 @@ def test_override_object_with_many_to_many_relationship(cursor):
     user.courses = [course_2]
     user.save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John")]
 
-    res = cursor.execute("SELECT * FROM course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM courses")
+    data = cursor.fetchall()
     assert data == [(1, "Python"), (2, "JavaScript"), (3, "Java")]
 
-    res = cursor.execute("SELECT * FROM user_course")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM user_courses")
+    data = cursor.fetchall()
     assert data == [(1, 1, 3)]
 
 
@@ -365,8 +371,8 @@ def test_save_object_with_custom_primary_key_field_autoincrement(cursor):
 
     User(name="John").save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(1, "John")]
 
 
@@ -379,8 +385,8 @@ def test_save_object_with_custom_primary_key_field_and_set_id(cursor):
 
     User(custom_id=10, name="John").save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(10, "John")]
 
 
@@ -394,6 +400,6 @@ def test_override_object_with_custom_primary_key_field(cursor):
     User(custom_id=10, name="John").save()
     User(custom_id=10, name="Jane").save()
 
-    res = cursor.execute("SELECT * FROM user")
-    data = res.fetchall()
+    cursor.execute("SELECT * FROM users")
+    data = cursor.fetchall()
     assert data == [(10, "Jane")]
