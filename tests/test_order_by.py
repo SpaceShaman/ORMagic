@@ -3,16 +3,28 @@ from sqlite3 import OperationalError
 import pytest
 
 from ormagic.models import DBModel
+from ormagic.settings import Settings
 
 
 @pytest.fixture
 def prepare_db(cursor):
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL, height INTEGER NOT NULL)"
-    )
-    cursor.connection.commit()
     data = [("John", 30, 180), ("Jane", 25, 190), ("Doe", 35, 170), ("John", 35, 160)]
-    cursor.executemany("INSERT INTO user (name, age, height) VALUES (?, ?, ?)", data)
+    if Settings().db_type == "postgresql":
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL, height INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.executemany(
+            "INSERT INTO users (name, age, height) VALUES (%s, %s, %s)", data
+        )
+    else:
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL, height INTEGER NOT NULL)"
+        )
+        cursor.connection.commit()
+        cursor.executemany(
+            "INSERT INTO users (name, age, height) VALUES (?, ?, ?)", data
+        )
     cursor.connection.commit()
 
 
