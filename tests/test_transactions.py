@@ -8,7 +8,7 @@ def test_is_under_transaction():
     assert transaction._is_transaction is False
 
 
-def test_save_multiple_objects_under_transaction():
+def test_save_multiple_objects_under_transaction(cursor):
     class TestModel(DBModel):
         name: str
 
@@ -21,7 +21,7 @@ def test_save_multiple_objects_under_transaction():
     assert len(TestModel.all()) == 2
 
 
-def test_try_to_save_multiple_objects_with_rollbacks():
+def test_try_to_save_multiple_objects_with_rollbacks(cursor):
     class TestModel(DBModel):
         name: str
 
