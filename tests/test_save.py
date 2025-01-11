@@ -297,9 +297,9 @@ def test_save_object_with_many_to_many_relationship_for_non_existing_objects(cur
     data = cursor.fetchall()
     assert data == [(1, "Python"), (2, "JavaScript")]
 
-    cursor.execute("SELECT * FROM user_courses")
+    cursor.execute("SELECT * FROM courses_users")
     data = cursor.fetchall()
-    assert data == [(1, 1, 1), (2, 1, 2)]
+    assert data == [(1, 1, 1), (2, 2, 1)]
 
 
 def test_save_object_with_many_to_many_relationship_without_related_objects(cursor):
