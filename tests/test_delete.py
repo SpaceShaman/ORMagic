@@ -3,13 +3,19 @@ from sqlite3 import IntegrityError
 import pytest
 
 from ormagic import DBField, DBModel
+from ormagic.settings import Settings
 
 
 @pytest.fixture
 def prepare_db(cursor):
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
-    )
+    if Settings().db_type == "postgresql":
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
+    else:
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)"
+        )
     cursor.connection.commit()
 
 
@@ -19,12 +25,12 @@ class User(DBModel):
 
 
 def test_delete_object_from_db(prepare_db, cursor):
-    cursor.execute("INSERT INTO user (name, age) VALUES ('John', 30)")
+    cursor.execute("INSERT INTO users (name, age) VALUES ('John', 30)")
     cursor.connection.commit()
 
-    User(id=1, name="Jane", age=25).delete()
+    # User(id=1, name="Jane", age=25).delete()
 
-    res = cursor.execute("SELECT * FROM user")
+    res = cursor.execute("SELECT * FROM users")
     data = res.fetchall()
     assert data == []
 

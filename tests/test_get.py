@@ -66,7 +66,7 @@ def test_try_to_get_object_from_db_with_wrong_condition(prepare_db):
         User.get(wrong_field="John")
 
 
-def test_get_object_from_db_with_datetime_field(prepare_db, cursor):
+def test_get_object_from_db_with_datetime_field(prepare_db):
     class UserWithDatetime(DBModel):
         name: str
         created_at: datetime
@@ -80,7 +80,7 @@ def test_get_object_from_db_with_datetime_field(prepare_db, cursor):
     assert user_from_db.created_at == datetime(2022, 3, 1, 12, 20, 31)
 
 
-def test_get_object_from_db_with_foreign_key(cursor):
+def test_get_object_from_db_with_foreign_key():
     class Team(DBModel):
         name: str
 
@@ -101,7 +101,7 @@ def test_get_object_from_db_with_foreign_key(cursor):
     assert player_from_db.team.name == "Barcelona"
 
 
-def test_get_object_from_db_with_optional_foreign_key_not_set(cursor):
+def test_get_object_from_db_with_optional_foreign_key_not_set():
     class Team(DBModel):
         name: str
 
@@ -120,7 +120,7 @@ def test_get_object_from_db_with_optional_foreign_key_not_set(cursor):
     assert player_from_db.team is None
 
 
-def test_get_object_from_db_with_optional_foreign_key_set(cursor):
+def test_get_object_from_db_with_optional_foreign_key_set():
     class Team(DBModel):
         name: str
 
@@ -141,7 +141,7 @@ def test_get_object_from_db_with_optional_foreign_key_set(cursor):
     assert player_from_db.team.name == "Barcelona"  # type: ignore
 
 
-def test_get_object_with_many_to_many_relationship(cursor):
+def test_get_object_with_many_to_many_relationship():
     class Team(DBModel):
         name: str
         players: list["Player"] = []
@@ -185,7 +185,7 @@ def test_get_object_with_many_to_many_relationship(cursor):
     assert team2_from_db.players[1].name == "Ronaldo"
 
 
-def test_get_object_with_many_to_many_relationship_without_related_objects(cursor):
+def test_get_object_with_many_to_many_relationship_without_related_objects():
     class Team(DBModel):
         name: str
 
@@ -204,7 +204,7 @@ def test_get_object_with_many_to_many_relationship_without_related_objects(curso
     assert len(player_from_db.teams) == 0
 
 
-def test_get_object_from_table_with_custom_primary_key(cursor):
+def test_get_object_from_table_with_custom_primary_key():
     class User(DBModel):
         custom_id: int = DBField(primary_key=True)
         name: str
@@ -219,7 +219,7 @@ def test_get_object_from_table_with_custom_primary_key(cursor):
     assert user_from_db.name == "John"
 
 
-def test_get_object_with_one_to_many_relationship_and_custom_primary_key(cursor):
+def test_get_object_with_one_to_many_relationship_and_custom_primary_key():
     class User(DBModel):
         custom_id: int = DBField(primary_key=True)
         name: str
@@ -242,7 +242,7 @@ def test_get_object_with_one_to_many_relationship_and_custom_primary_key(cursor)
     assert post_from_db.author.name == "John"
 
 
-def test_get_object_with_many_to_many_relationship_and_custom_primary_key(cursor):
+def test_get_object_with_many_to_many_relationship_and_custom_primary_key():
     class Team(DBModel):
         team_id: int = DBField(primary_key=True)
         name: str
