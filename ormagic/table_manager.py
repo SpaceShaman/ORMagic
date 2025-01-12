@@ -15,7 +15,7 @@ from .field_utils import (
     is_many_to_many_field,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .models import DBModel
 
 
@@ -82,8 +82,6 @@ def _create_intermediate_table(
     related_primary_key = related_table._get_primary_key_field_name()
     if not client.is_table_exists(related_table_name):
         return
-    if get_intermediate_table_name(client, table_name, related_table_name):
-        return
     client.create_table(
         f"{table_name}_{related_table_name}",
         [
@@ -101,9 +99,8 @@ def get_intermediate_table_name(
 ) -> str:
     if client.is_table_exists(f"{table_name}_{related_table_name}"):
         return f"{table_name}_{related_table_name}"
-    elif client.is_table_exists(f"{related_table_name}_{table_name}"):
+    else:
         return f"{related_table_name}_{table_name}"
-    return ""
 
 
 def prepare_column_definition(field_name: str, field_info: FieldInfo) -> str:
