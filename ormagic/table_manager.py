@@ -19,6 +19,10 @@ if TYPE_CHECKING:
     from .models import DBModel
 
 
+class UpdateTableError(Exception):
+    pass
+
+
 def create_table(
     client: Client,
     table_name: str,
@@ -45,6 +49,8 @@ def update_table(
 ) -> None:
     if not client.is_table_exists(table_name):
         return create_table(client, table_name, primary_key, model_fields)
+    if _some_fields_is_unique(model_fields):
+        raise UpdateTableError("Cannot add unique field to existing table")
     existing_columns = client.get_column_names(table_name)
     new_columns = _get_model_field_names(model_fields)
     if existing_columns == new_columns:
@@ -60,6 +66,10 @@ def update_table(
     _add_new_columns_to_existing_table(
         client, table_name, model_fields, existing_columns
     )
+
+
+def _some_fields_is_unique(model_fields: dict[str, FieldInfo]) -> bool:
+    return any(is_unique_field(field_info) for field_info in model_fields.values())
 
 
 def _create_intermediate_table(
