@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-light.png">
-  <img src="docs/assets/logo-dark.png" alt="ORMagic">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/SpaceShaman/ORMagic/raw/master/docs/assets/logo-light.png">
+  <img src="https://github.com/SpaceShaman/ORMagic/raw/master/docs/assets/logo-dark.png" alt="ORMagic">
 </picture>
 
 <!--intro-start-->
@@ -13,6 +13,7 @@
 [![Linting: Ruff](https://img.shields.io/badge/linting-Ruff-black?logo=ruff&logoColor=black)](https://github.com/astral-sh/ruff)
 [![Pydantic](https://img.shields.io/badge/technology-Pydantic-blue?logo=pydantic&logoColor=blue)](https://docs.pydantic.dev)
 [![SQLite](https://img.shields.io/badge/technology-SQLite-blue?logo=sqlite&logoColor=blue)](https://www.sqlite.org)
+[![PostgreSQL](https://img.shields.io/badge/technology-PostgreSQL-blue?logo=postgresql&logoColor=blue)](https://www.postgresql.org)
 [![Pytest](https://img.shields.io/badge/testing-Pytest-red?logo=pytest&logoColor=red)](https://docs.pytest.org/)
 [![Material for MkDocs](https://img.shields.io/badge/docs-Material%20for%20MkDocs-yellow?logo=MaterialForMkDocs&logoColor=yellow)](https://spaceshaman.github.io/ORMagic/)
 
@@ -48,13 +49,16 @@ You can install ORMagic using pip:
 pip install ORMagic
 ```
 
-Or you can install the latest version from the GitHub repository:
+By default, ORMagic uses [SQLite](https://www.sqlite.org) as a database, so you don't need to install any additional dependencies.
+But if you want to use another database, you need to install the appropriate database driver, for example,
+for [PostgreSQL](https://www.postgresql.org) you need to install [psycopg2](https://github.com/psycopg/psycopg2), you can do it with the following command:
 
 ```bash
-git clone git@github.com:SpaceShaman/ORMagic.git
-cd ORMagic
-pip install .
+pip install ORMagic[postgres]
 ```
+
+Additionally, to use a database other than [SQLite](https://www.sqlite.org), you need to set the `DATABASE_URL` environment,
+more information about that you can find in the [documentation](https://spaceshaman.github.io/ORMagic/settings/).
 <!--installation-end-->
 
 ## Documentation
@@ -110,6 +114,10 @@ The full documentation is available at [spaceshaman.github.io/ORMagic/](https://
     - [x] Drop column
 - [x] Custom primary key
 - [x] Transactions
+- [x] Integration with databases
+    - [x] SQLite
+    - [x] PostgreSQL
+    - [ ] MySQL
 - [ ] Functions
     - [ ] Aggregate functions
     - [ ] String functions
@@ -117,7 +125,6 @@ The full documentation is available at [spaceshaman.github.io/ORMagic/](https://
     - [ ] Mathematical functions
     - [ ] Control flow functions
 - [ ] Migrations
-- [ ] Integration with other databases
 <!--roadmap-end-->
 
 ## Changelog
