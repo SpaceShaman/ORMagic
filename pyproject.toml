@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ORMagic"
-version = "0.16.0"
+version = "0.16.1"
 description = "ORMagic is a simple, fast, and lightweight ORM for Python, built on top of Pydantic."
 license = "MIT"
 authors = ["SpaceShaman <spaceshaman@tuta.io>"]
