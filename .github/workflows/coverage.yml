@@ -6,6 +6,20 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-22.04
+    # Service containers to run tests that require connections to postgres
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
