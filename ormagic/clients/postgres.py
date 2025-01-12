@@ -15,9 +15,12 @@ class PostgresClient:
         return connection
 
     def execute(self, sql: str, parameters: list | None = None) -> cursor:
+        from ormagic.transactions import transaction
+
         sql = sql.replace("?", "%s")
         self.cursor.execute(sql, parameters)
-        self.commit()
+        if not transaction._is_transaction:
+            self.commit()
         return self.cursor
 
     def close(self) -> None:
