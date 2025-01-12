@@ -57,7 +57,7 @@ for [PostgreSQL](https://www.postgresql.org) you need to install [psycopg2](http
 pip install ORMagic[postgres]
 ```
 
-Additionally, to use a database other than [SQLite](https://www.sqlite.org), you need to set the `DATABASE_URL` environment,
+Additionally, to use a database other than [SQLite](https://www.sqlite.org), you need to set the `ORMAGIC_DATABASE_URL` environment,
 more information about that you can find in the [documentation](https://spaceshaman.github.io/ORMagic/settings/).
 <!--installation-end-->
 
