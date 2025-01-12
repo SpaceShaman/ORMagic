@@ -48,7 +48,7 @@ class PostgresClient:
 
     def get_column_names(self, table_name: str) -> list[str]:
         cursor = self.execute(
-            f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}'"
+            f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' ORDER BY ordinal_position"
         )
         return [column[0] for column in cursor.fetchall()]
 

@@ -131,7 +131,8 @@ def _rename_columns_in_existing_table(
     client: Client, table_name: str, old_columns: list[str], new_columns: list[str]
 ) -> None:
     for old_column_name, new_column_name in dict(zip(old_columns, new_columns)).items():
-        client.rename_column(table_name, old_column_name, new_column_name)
+        if old_column_name != new_column_name:
+            client.rename_column(table_name, old_column_name, new_column_name)
 
 
 def _add_new_columns_to_existing_table(
