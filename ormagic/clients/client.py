@@ -3,9 +3,6 @@ from typing import Any, Generator, Protocol
 
 from ormagic.settings import Settings
 
-from .postgres import PostgresClient
-from .sqlite import SQLiteClient
-
 
 class DatabaseNotSupported(Exception):
     pass
@@ -49,8 +46,12 @@ class Client(Protocol):
 def get_client() -> Client:
     settings = Settings()
     if settings.db_type == "sqlite":
+        from .sqlite import SQLiteClient
+
         return SQLiteClient()
     elif settings.db_type == "postgresql":
+        from .postgres import PostgresClient
+
         return PostgresClient()
     raise DatabaseNotSupported(f"{settings.db_type} is not supported")
 
