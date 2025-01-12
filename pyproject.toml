@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "ORMagic"
-version = "0.15.0"
-description = "Simple ORM based on Pydantic and SQLite with minimalistic API"
+version = "0.16.0"
+description = "ORMagic is a simple, fast, and lightweight ORM for Python, built on top of Pydantic."
 license = "MIT"
 authors = ["SpaceShaman <spaceshaman@tuta.io>"]
 readme = "README.md"
 homepage = "https://spaceshaman.github.io/ORMagic/"
 documentation = "https://spaceshaman.github.io/ORMagic/"
 repository = "https://github.com/SpaceShaman/ORMagic"
-keywords = ["sql", "orm", "database", "sqlite", "db", "sqlite3", "pydantic", "fastapi"]
+keywords = ["sql", "orm", "database", "sqlite", "db", "sqlite3", "pydantic", "fastapi", "postgresql", "psycopg2", "postgres"]
 classifiers = [
     "Framework :: Pydantic",
     "Framework :: Pydantic :: 2",
