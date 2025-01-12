@@ -18,7 +18,7 @@
 [![Material for MkDocs](https://img.shields.io/badge/docs-Material%20for%20MkDocs-yellow?logo=MaterialForMkDocs&logoColor=yellow)](https://spaceshaman.github.io/ORMagic/)
 
 The main goal of ORMagic is to provide a simple and easy-to-use ORM for [Python](https://www.python.org/), that is easy to understand and use, while still providing the necessary features to interact with a database.
-Is based on the [Pydantic](https://docs.pydantic.dev) model and extends it with the ability to interact with [SQLite](https://www.sqlite.org) database.
+Is based on the [Pydantic](https://docs.pydantic.dev) model and extends it with the ability to interact with [SQLite](https://www.sqlite.org) and [PostgreSQL](https://www.postgresql.org) databases.
 
 ## Simple example
 
