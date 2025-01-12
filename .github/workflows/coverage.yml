@@ -37,7 +37,7 @@ jobs:
           path: ./.venv
           key: venv-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Run tests and collect coverage
         run: poetry run pytest --cov=ormagic --cov-report=xml
       - name: Upload coverage raports to Codecov
